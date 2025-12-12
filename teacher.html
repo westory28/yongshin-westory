@@ -4,22 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>교사 대시보드 - 방재석</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f5f5f4; margin: 0; padding: 0; }
-        
-        /* 테이블 및 버튼 스타일 */
         .admin-table th, .admin-table td { border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
         .admin-table th:not(:last-child), .admin-table td:not(:last-child) { border-right: 2px solid #d6d3d1; }
         .col-answer { background-color: #fffbeb; color: #b45309; font-weight: bold; }
@@ -29,9 +23,7 @@
         .page-btn.active { background-color: #4b5563; color: white; border-color: #4b5563; font-weight: bold; }
         .choice-btn { width: 100%; text-align: left; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; background-color: white; margin-bottom: 0.5rem; }
         .choice-btn.selected { border: 2px solid #d97706; background-color: #fffbeb; color: #92400e; font-weight: bold; }
-        .choice-badge { width: 1.5rem; height: 1.5rem; border-radius: 9999px; background-color: #e5e7eb; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; margin-right: 0.75rem; }
         .ox-btn { height: 60px; font-size: 1.5rem; font-weight: bold; width: 100%; border: 1px solid #ccc; border-radius: 8px; }
-        
         #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
         .q-image-thumb { max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid #ddd; cursor: zoom-in; }
         #image-zoom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; }
@@ -41,7 +33,7 @@
 </head>
 <body class="text-stone-800 min-h-screen">
 
-    <div id="loading-overlay"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-600 border-solid mb-4"></div><p class="text-xl font-bold">처리 중...</p></div>
+    <div id="loading-overlay"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-600 border-solid mb-4"></div><p class="text-xl font-bold">데이터 불러오는 중...</p></div>
     <div id="image-zoom-modal" onclick="document.getElementById('image-zoom-modal').style.display='none'"><img id="image-zoom-content" src=""></div>
 
     <div id="view-login-screen" style="display: flex;" class="items-center justify-center min-h-screen flex-col bg-stone-100 p-4">
@@ -72,15 +64,28 @@
                 <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
                     <h3 class="font-bold text-lg flex items-center">제출 현황 <span id="log-count" class="text-sm font-normal text-stone-500 ml-2"></span></h3>
                     <div class="flex gap-2 items-center">
-                        <select id="filter-class" onchange="app.renderLogs()" class="p-2 border rounded text-sm"><option value="all">전체 반</option><option value="1">1반</option><option value="2">2반</option><option value="3">3반</option><option value="4">4반</option><option value="5">5반</option><option value="6">6반</option><option value="7">7반</option><option value="8">8반</option><option value="9">9반</option><option value="10">10반</option></select>
+                        <span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">▼ 반을 선택하세요</span>
+                        <select id="select-class-trigger" onchange="app.loadByClass(this.value)" class="p-2 border-2 border-amber-500 rounded text-sm font-bold bg-amber-50 cursor-pointer">
+                            <option value="">반 선택 (대기중)</option>
+                            <option value="1">1반 데이터 불러오기</option>
+                            <option value="2">2반 데이터 불러오기</option>
+                            <option value="3">3반 데이터 불러오기</option>
+                            <option value="4">4반 데이터 불러오기</option>
+                            <option value="5">5반 데이터 불러오기</option>
+                            <option value="6">6반 데이터 불러오기</option>
+                            <option value="7">7반 데이터 불러오기</option>
+                            <option value="8">8반 데이터 불러오기</option>
+                            <option value="9">9반 데이터 불러오기</option>
+                            <option value="10">10반 데이터 불러오기</option>
+                            <option value="all">전체 (최근 50개만)</option>
+                        </select>
                         <select id="sort-logs" onchange="app.renderLogs()" class="p-2 border rounded text-sm"><option value="time">최신순</option><option value="number">번호순</option><option value="score_desc">점수 높은순</option></select>
-                        <button onclick="app.deleteSelectedLogs()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm font-bold"><i class="fas fa-trash"></i> 선택 삭제</button>
-                        <button onclick="app.loadServerLogs()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-bold"><i class="fas fa-sync-alt"></i></button>
+                        <button onclick="app.deleteSelectedLogs()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm font-bold"><i class="fas fa-trash"></i> 삭제</button>
                         <button onclick="app.downloadExcel()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-bold"><i class="fas fa-file-excel"></i> 엑셀</button>
                     </div>
                 </div>
                 <div class="overflow-auto max-h-[600px] border rounded bg-stone-50">
-                    <table class="w-full text-sm text-left admin-table"><thead class="bg-stone-200 text-stone-700 sticky top-0 font-bold"><tr><th class="p-3 w-10 text-center"><input type="checkbox" onchange="document.querySelectorAll('.log-checkbox').forEach(cb=>cb.checked=this.checked)"></th><th class="p-3">시간</th><th class="p-3">정보</th><th class="p-3">점수</th><th class="p-3">상태</th><th class="p-3">삭제</th></tr></thead><tbody id="teacher-log-body" class="bg-white"></tbody></table>
+                    <table class="w-full text-sm text-left admin-table"><thead class="bg-stone-200 text-stone-700 sticky top-0 font-bold"><tr><th class="p-3 w-10 text-center"><input type="checkbox" onchange="document.querySelectorAll('.log-checkbox').forEach(cb=>cb.checked=this.checked)"></th><th class="p-3">시간</th><th class="p-3">정보</th><th class="p-3">점수</th><th class="p-3">상태</th><th class="p-3">삭제</th></tr></thead><tbody id="teacher-log-body" class="bg-white"><tr><td colspan="6" class="p-10 text-center text-stone-500 font-bold">👆 위에서 반을 선택하면 데이터를 불러옵니다.</td></tr></tbody></table>
                 </div>
                 <div id="pagination-controls" class="flex justify-center gap-2 mt-4"></div>
             </div>
@@ -148,12 +153,10 @@
                 firebase.auth().onAuthStateChanged((user) => {
                     if (user) {
                         if(user.email === TEACHER_EMAIL) {
-                            // 화면 전환
                             document.getElementById('view-login-screen').style.display = 'none';
                             document.getElementById('view-dashboard').style.display = 'block';
-                            
                             this.loadQuestionsFromFirebase();
-                            this.loadServerLogs();
+                            // 초기에는 로그를 불러오지 않음 (반 선택 유도)
                             this.setTeacherTab('log');
                         } else {
                             alert("허용되지 않은 계정: " + user.email);
@@ -184,30 +187,63 @@
                     else btn.className = "px-5 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-bold shadow transition";
                 });
                 document.getElementById('tab-'+tab).style.display = 'block'; 
-                if(tab === 'log') this.loadServerLogs(); else if (tab === 'add') this.updateNextQuestionNumber(); else this.renderBank();
+                // 탭 전환 시 자동 로드 제거 (선택 시 로드)
+                if (tab === 'add') this.updateNextQuestionNumber(); else if (tab === 'bank') this.renderBank();
             },
-            loadServerLogs: function() {
-                if(!db) return;
-                document.getElementById('teacher-log-body').innerHTML = '<tr><td colspan="6" class="p-4 text-center">로딩 중...</td></tr>';
-                db.collection("quiz_results").orderBy("timestamp", "desc").get().then((querySnapshot) => {
-                    let logs = []; querySnapshot.forEach((doc) => { let d = doc.data(); d.docId = doc.id; logs.push(d); });
-                    this.state.logs = logs; this.state.logPage = 1; this.renderLogs(); document.getElementById('log-count').innerText = `(${logs.length}건)`;
+            // [핵심] 반 선택 시에만 서버에서 데이터 가져오기 (비용 절약)
+            loadByClass: function(cls) {
+                if(!db || !cls) return;
+                
+                this.showLoading(true);
+                let query = db.collection("quiz_results");
+                
+                if (cls === 'all') {
+                    // 전체 선택 시 최근 50개만
+                    query = query.orderBy("timestamp", "desc").limit(50);
+                } else {
+                    // 특정 반 선택 시 해당 반의 모든 데이터 (보통 많아야 50~100개)
+                    // 주의: 'class' 필드와 'timestamp' 필드 복합 인덱스가 필요할 수 있음. 
+                    // 에러 발생 시 콘솔창의 링크를 클릭해서 인덱스 생성 필요.
+                    query = query.where("class", "==", cls).orderBy("timestamp", "desc");
+                }
+
+                query.get().then((querySnapshot) => {
+                    let logs = []; 
+                    querySnapshot.forEach((doc) => { let d = doc.data(); d.docId = doc.id; logs.push(d); });
+                    
+                    this.state.logs = logs; 
+                    this.state.logPage = 1; 
+                    this.renderLogs(); 
+                    
+                    document.getElementById('log-count').innerText = `(${logs.length}건)`;
+                    this.showLoading(false);
                 }).catch(e => {
-                    console.error("기록 로드 에러:", e);
+                    this.showLoading(false);
+                    console.error(e);
+                    if(e.message.includes("index")) {
+                        alert("⚠️ 최초 1회 인덱스 설정이 필요합니다. F12 -> Console 창의 링크를 클릭해주세요.");
+                    } else {
+                        alert("로드 실패: " + e.message);
+                    }
                 });
             },
             renderLogs: function() {
-                const clsFilter = document.getElementById('filter-class').value;
+                // 클라이언트 필터링 제거 (이미 서버에서 필터링됨)
+                // const clsFilter = document.getElementById('filter-class').value;
                 const sortType = document.getElementById('sort-logs').value;
                 let filtered = [...this.state.logs];
-                if (clsFilter !== 'all') filtered = filtered.filter(l => l.class === clsFilter);
+                
+                // 정렬만 수행
                 if (sortType === 'number') filtered.sort((a,b) => parseInt(a.number) - parseInt(b.number));
                 else if (sortType === 'score_desc') filtered.sort((a,b) => b.score - a.score);
+                else if (sortType === 'score_asc') filtered.sort((a,b) => a.score - b.score);
+                
                 const start = (this.state.logPage - 1) * this.state.logsPerPage;
                 const end = start + this.state.logsPerPage;
                 const pageData = filtered.slice(start, end);
+                
                 let html = '';
-                if(filtered.length===0) html='<tr><td colspan="6" class="p-4 text-center">기록 없음</td></tr>';
+                if(filtered.length===0) html='<tr><td colspan="6" class="p-10 text-center text-stone-400">데이터가 없습니다.</td></tr>';
                 else pageData.forEach((d) => { html += `<tr class="border-b hover:bg-stone-50 cursor-pointer" onclick="app.showStudentDetail('${d.docId}')"><td class="p-3 text-center"><input type="checkbox" class="log-checkbox" value="${d.docId}" onclick="event.stopPropagation()"></td><td class="p-3 text-stone-500 text-xs">${d.timeString}</td><td class="p-3 font-medium">${d.class}반 ${d.number}번 ${d.name}</td><td class="p-3 font-bold text-amber-600">${d.score}</td><td class="p-3 text-xs">${d.status}</td><td class="p-3 text-center"><button onclick="app.deleteLog('${d.docId}')" class="text-red-500" onclick="event.stopPropagation()"><i class="fas fa-trash-alt"></i></button></td></tr>`; });
                 document.getElementById('teacher-log-body').innerHTML = html;
                 const totalPages = Math.ceil(filtered.length / this.state.logsPerPage);
@@ -241,8 +277,13 @@
                     return `<tr class="border-b hover:bg-stone-50"><td class="p-3 text-center"><input type="checkbox" class="q-checkbox" value="${q.id}"></td><td class="p-3 text-xs text-center">${q.id}</td><td class="p-3 text-xs text-gray-500">${q.unit || '기타'}</td><td class="p-3 text-center text-xs">${q.type}</td><td class="p-3 text-sm cursor-pointer text-blue-600" onclick="app.editQuestion(${q.id})">${q.question}</td><td class="p-3 text-center"><button onclick="app.previewQuestion(${q.id})"><i class="fas fa-eye"></i></button></td><td class="p-3 text-xs font-bold text-center col-answer">${q.answer}</td><td class="p-3 text-center w-24 text-xs font-bold">${rate}%<div class="rate-bar-bg"><div class="rate-bar-fill ${rate<60?'bg-red-500':'bg-green-500'}" style="width:${rate}%"></div></div></td></tr>`;
                 }).join('');
             },
-            deleteSelectedLogs: function() { const checked = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.value); if(checked.length && confirm("삭제?")) { const batch = db.batch(); checked.forEach(id => batch.delete(db.collection("quiz_results").doc(id))); batch.commit().then(() => { this.loadServerLogs(); }).catch(e=>alert("삭제 실패: "+e.message)); } },
-            deleteLog: function(docId) { if(confirm("삭제?")) { db.collection("quiz_results").doc(docId).delete().then(() => this.loadServerLogs()).catch(e=>alert("삭제 실패: "+e.message)); } },
+            deleteSelectedLogs: function() { const checked = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.value); if(checked.length && confirm("삭제?")) { const batch = db.batch(); checked.forEach(id => batch.delete(db.collection("quiz_results").doc(id))); batch.commit().then(() => { 
+                // 삭제 후 현재 선택된 반 데이터 다시 로드
+                this.loadByClass(document.getElementById('select-class-trigger').value); 
+            }).catch(e=>alert("삭제 실패: "+e.message)); } },
+            deleteLog: function(docId) { if(confirm("삭제?")) { db.collection("quiz_results").doc(docId).delete().then(() => {
+                this.loadByClass(document.getElementById('select-class-trigger').value); 
+            }).catch(e=>alert("삭제 실패: "+e.message)); } },
             deleteSelectedQuestions: function() { const checked = Array.from(document.querySelectorAll('.q-checkbox:checked')).map(cb => cb.value); if(checked.length && confirm("삭제?")) { const batch = db.batch(); checked.forEach(id => batch.delete(db.collection("quiz_questions").doc(id))); batch.commit().then(() => { this.loadQuestionsFromFirebase(); }).catch(e=>alert("삭제 실패: "+e.message)); } },
             resetServerQuestions: function() { if(confirm("전체 초기화?")) { db.collection("quiz_questions").get().then(s => { const batch = db.batch(); s.docs.forEach(d => batch.delete(d.ref)); return batch.commit(); }).then(() => { this.state.allQuestions=[]; this.renderBank(); }).catch(e=>alert("실패: "+e.message)); } },
             showStudentDetail: function(docId) { const log = this.state.logs.find(l => l.docId === docId); if(!log) return; let html = `<div class="font-bold mb-2">${log.class}반 ${log.number}번 ${log.name} (${log.score}점)</div>`; log.details.forEach((d,i)=>{ const q=this.state.allQuestions.find(x=>x.id===d.id); html+=`<div class="p-2 border mb-2 ${d.correct?'bg-green-50':'bg-red-50'}"><div class="text-sm font-bold">Q${i+1}. ${q?q.question:'삭제된 문제'}</div><div class="text-xs">답: ${d.u} (정답여부:${d.correct?'O':'X'})</div></div>`; }); document.getElementById('student-detail-content').innerHTML=html; document.getElementById('student-detail-modal').style.display='flex'; },
