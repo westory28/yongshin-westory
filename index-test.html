@@ -39,7 +39,7 @@
         #image-zoom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; }
         #image-zoom-content { max-width: 95%; max-height: 95%; border-radius: 4px; }
         
-        /* [추가] 실시간 카운터 배지 스타일 */
+        /* 실시간 카운터 배지 */
         .live-badge { 
             background: rgba(255, 255, 255, 0.2); 
             border: 1px solid rgba(255, 255, 255, 0.4); 
@@ -63,10 +63,9 @@
     <header class="bg-stone-900 text-white py-4 shadow-lg sticky top-0 z-40 cursor-pointer" onclick="app.goHome()">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <h1 class="text-lg md:text-xl font-bold tracking-tight truncate flex-1"><span class="mr-2">🧑‍🏫</span> 용신중학교 역사교사 방재석</h1>
-            
             <div class="live-badge">
                 <div class="live-dot"></div>
-                <span id="live-count-text">참여 열기: -명</span>
+                <span id="live-count-text">접속: ...</span>
             </div>
         </div>
     </header>
@@ -145,26 +144,32 @@
                     if (this.state.isQuizActive) { e.preventDefault(); e.returnValue = ''; }
                 });
 
-                // [추가] 실시간 참여자 수 감지 (Listener)
-                if(db) {
-                    // metadata 컬렉션의 stats 문서가 변경될 때마다 자동 실행
-                    db.collection("metadata").doc("stats").onSnapshot((doc) => {
-                        let count = 0;
-                        if (doc.exists) {
-                            count = doc.data().total_plays || 0;
+                // [중요] 페이지 로드 시 '외부 카운터 API'를 호출하여 접속자 수 증가 (무료, 파이어베이스 무관)
+                this.updateVisitCount();
+            },
+
+            // [추가] 외부 무료 카운터 API 사용 (CounterAPI)
+            updateVisitCount: function() {
+                const badgeText = document.getElementById("live-count-text");
+                // Namespace: westory28-history-quiz, Key: visits
+                // 이 URL은 호출할 때마다 카운트를 1씩 증가시키고 현재 값을 반환합니다.
+                fetch('https://api.counterapi.dev/v1/westory28-history-quiz/visits/up')
+                    .then(response => response.json())
+                    .then(data => {
+                        if(data && data.count) {
+                            badgeText.innerText = `접속: ${data.count}명`;
+                            // 깜빡임 효과
+                            const badge = document.querySelector('.live-badge');
+                            if(badge) {
+                                badge.style.backgroundColor = 'rgba(251, 191, 36, 0.4)';
+                                setTimeout(() => badge.style.backgroundColor = 'rgba(255, 255, 255, 0.2)', 300);
+                            }
                         }
-                        // UI 업데이트
-                        const textEl = document.getElementById("live-count-text");
-                        if(textEl) textEl.innerText = `참여 열기: ${count}명`;
-                        
-                        // 숫자가 바뀔 때 반짝이는 효과
-                        const badge = document.querySelector('.live-badge');
-                        if(badge) {
-                            badge.style.backgroundColor = 'rgba(251, 191, 36, 0.4)';
-                            setTimeout(() => badge.style.backgroundColor = 'rgba(255, 255, 255, 0.2)', 300);
-                        }
+                    })
+                    .catch(err => {
+                        console.log("Counter API Error:", err);
+                        badgeText.innerText = "접속: -명";
                     });
-                }
             },
 
             showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
@@ -240,7 +245,7 @@
                 const randomIds = new Set();
                 const pickCount = Math.min(5, totalCount); 
                 
-                // 최신 문제(뒤쪽 50개) 중 3개 우선 배정 (3+2 법칙)
+                // 최신 문제 우선 배정 (3개)
                 if (totalCount >= 5) {
                     const recentRange = 50; 
                     const startOfRecent = Math.max(1, totalCount - recentRange + 1);
@@ -363,15 +368,7 @@
             saveToFirebase: function(detailLogs = []) {
                 const status = document.getElementById('submission-status');
                 if(!db) { status.innerHTML = "⚠️ DB 연결 실패"; return; }
-                
-                // 1. 개인 기록 저장
                 const data = { timestamp: firebase.firestore.FieldValue.serverTimestamp(), timeString: new Date().toLocaleString(), class: this.state.student.class, number: this.state.student.number, name: this.state.student.name, score: this.state.score, status: this.state.isTimeOut ? "시간초과" : "완료", details: detailLogs };
-                
-                // 2. [추가] 전체 카운터(stats) 1 증가 (자동 생성)
-                db.collection("metadata").doc("stats").set({
-                    total_plays: firebase.firestore.FieldValue.increment(1)
-                }, { merge: true });
-
                 db.collection("quiz_results").add(data).then(() => { status.className = "bg-green-100 text-green-700 p-3 rounded text-sm mb-6 border border-green-200 font-bold"; status.innerHTML = '<i class="fas fa-check-circle"></i> 제출 완료!'; }).catch((error) => { console.error("Error: ", error); status.className = "bg-red-100 text-red-700 p-3 rounded text-sm mb-6 border border-red-200"; status.innerHTML = '⚠️ 전송 실패'; });
             },
             
