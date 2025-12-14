@@ -61,7 +61,7 @@
                     <select id="input-class" class="w-2/4 p-3 border border-stone-300 rounded"><option value="">반</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
                     <input type="number" id="input-number" placeholder="번호" class="w-1/4 p-3 border border-stone-300 rounded text-center">
                 </div>
-                <input type="text" id="input-name" placeholder="이름" class="w-full p-3 border border-stone-300 rounded">
+                <input type="text" id="input-name" placeholder="이름 (한글)" class="w-full p-3 border border-stone-300 rounded" oninput="this.value = this.value.replace(/[a-zA-Z]/g, '')">
                 <button onclick="app.startQuiz()" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg hover:bg-stone-700 transition shadow-lg mt-4">도전 시작 <i class="fas fa-play ml-2"></i></button>
             </div>
         </section>
@@ -120,11 +120,14 @@
         const app = {
             state: { student:{}, questions:[], allQuestions:[], currentIndex:0, answers:{}, score:0, timer:null, timeLeft:60, isTimeOut:false, isQuizActive: false },
             
-            init: function() { 
-                // 초기 실행 없음 (버튼 클릭 시 로드)
-            },
+            init: function() { },
 
             showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
+
+            // [핵심] 고유 키 생성 함수 (공백 제거하여 정확도 향상)
+            getStorageKey: function(cls, num, name) {
+                return `history_quiz_submit_time_v2_${cls.trim()}_${num.trim()}_${name.trim()}`;
+            },
 
             startQuiz: async function() {
                 const cls = document.getElementById('input-class').value;
@@ -133,29 +136,30 @@
 
                 if(!cls || !num || !name) { alert("학년, 반, 번호, 이름을 모두 입력하세요."); return; }
                 
-                // [수정] 이름에 영어(알파벳) 포함 여부 검사
+                // [이름 검증] 한 번 더 체크
                 if(/[a-zA-Z]/.test(name)) {
-                    alert("이름에 영어를 사용할 수 없습니다. 한글 이름을 입력해주세요.");
+                    alert("이름에 영어를 사용할 수 없습니다.");
+                    document.getElementById('input-name').value = ""; // 입력 초기화
                     return;
                 }
                 
-                this.showLoading(true);
-
-                // [수정] 새로고침 해도 10분 제한 유지 (브라우저 저장소 사용)
-                // 파이어베이스 DB를 읽지 않고 브라우저에 저장된 기록을 확인합니다.
-                const lastSubmitKey = `history_quiz_last_submit_${cls}_${num}_${name}`;
-                const lastSubmitTime = localStorage.getItem(lastSubmitKey);
+                // [10분 제한 체크] 파이어베이스가 아닌 로컬스토리지 사용
+                const storageKey = this.getStorageKey(cls, num, name);
+                const lastSubmitTime = localStorage.getItem(storageKey);
 
                 if (lastSubmitTime) {
                     const now = new Date().getTime();
                     const diffMins = (now - parseInt(lastSubmitTime)) / (1000 * 60);
 
+                    // 10분 미만이면 차단
                     if (diffMins < 10) {
-                        this.showLoading(false);
-                        alert(`⛔ 재응시 불가!\n\n부정행위 방지를 위해 10분 내 재응시가 제한됩니다.\n약 ${Math.ceil(10 - diffMins)}분 뒤에 시도해주세요.`);
-                        return;
+                        const waitTime = Math.ceil(10 - diffMins);
+                        alert(`⛔ 재응시 불가!\n\n부정행위 방지를 위해 10분 내 재응시가 제한됩니다.\n(새로고침을 해도 기록이 남습니다)\n\n약 ${waitTime}분 뒤에 다시 시도해주세요.`);
+                        return; // 여기서 함수 강제 종료 (문제 로드 안 함)
                     }
                 }
+
+                this.showLoading(true);
 
                 try {
                     // [문제 로드]
@@ -177,7 +181,7 @@
                 }
 
                 // 퀴즈 시작 세팅
-                this.state.student = { class:cls, number:num, name:name, storageKey: lastSubmitKey };
+                this.state.student = { class:cls, number:num, name:name };
                 this.state.questions = this.state.allQuestions; 
                 this.state.currentIndex = 0; 
                 this.state.answers = {}; 
@@ -202,9 +206,7 @@
                     if (metaDoc.exists) {
                         totalCount = metaDoc.data().total_questions || 132;
                     }
-                } catch(e) {
-                    // 권한 문제 등으로 실패 시 기본값 사용
-                }
+                } catch(e) {}
                 
                 const randomIds = new Set();
                 const pickCount = Math.min(5, totalCount); 
@@ -309,10 +311,10 @@
                 });
                 this.state.score = correct * 20; this.state.incorrectDetails = details;
                 
-                // [수정] 제출이 완료되는 시점에 브라우저에 시간 기록 (새로고침해도 유지됨)
-                if(this.state.student.storageKey) {
-                    localStorage.setItem(this.state.student.storageKey, new Date().getTime());
-                }
+                // [핵심] 종료 시점에 '확실하게' 로컬 스토리지에 시간 저장
+                const s = this.state.student;
+                const storageKey = this.getStorageKey(s.class, s.number, s.name);
+                localStorage.setItem(storageKey, new Date().getTime());
 
                 this.showView('view-results'); this.renderResults(); this.saveToFirebase(detailLogs);
             },
