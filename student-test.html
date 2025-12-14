@@ -12,7 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <style>
-        /* 모달 스크롤바 예쁘게 */
         .modal-scroll::-webkit-scrollbar { width: 8px; }
         .modal-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
         .modal-scroll::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
@@ -32,9 +31,7 @@
         
         <div class="bg-stone-800 p-8 text-white relative">
             <button onclick="window.history.back()" class="absolute left-6 top-6 text-stone-400 hover:text-white transition">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
+                ← 뒤로
             </button>
             <div class="flex flex-col items-center">
                 <div class="w-24 h-24 bg-stone-600 rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner">
@@ -42,7 +39,7 @@
                 </div>
                 <h2 id="profile-name" class="text-3xl font-bold mb-2">학생 이름</h2>
                 <p id="profile-info" class="text-stone-400">정보 로딩 중...</p>
-                <button onclick="app.logout()" class="mt-4 text-xs bg-stone-700 px-4 py-1.5 rounded-full hover:bg-stone-600 transition">
+                <button onclick="window.app.logout()" class="mt-4 text-xs bg-stone-700 px-4 py-1.5 rounded-full hover:bg-stone-600 transition">
                     로그아웃
                 </button>
             </div>
@@ -50,7 +47,7 @@
 
         <div class="grid grid-cols-3 border-b border-stone-200 bg-stone-50">
             <div class="p-6 text-center border-r border-stone-200">
-                <div class="text-xs text-stone-500 uppercase tracking-wider mb-1">총 응시 횟수</div>
+                <div class="text-xs text-stone-500 uppercase tracking-wider mb-1">총 응시</div>
                 <div id="stat-total" class="font-bold text-2xl text-stone-800">-</div>
             </div>
             <div class="p-6 text-center border-r border-stone-200">
@@ -66,7 +63,7 @@
         <div class="p-6 h-72 border-b border-stone-200 bg-white">
             <h3 class="text-sm font-bold text-stone-700 mb-4 flex items-center">
                 <span class="w-2 h-6 bg-amber-500 mr-2 rounded-sm"></span>
-                최근 성적 변화
+                &nbsp;최근 성적 변화
             </h3>
             <div class="h-full pb-8">
                 <canvas id="scoreChart"></canvas>
@@ -76,21 +73,21 @@
         <div class="bg-stone-50 min-h-[300px]">
             <h3 class="text-sm font-bold text-stone-700 p-6 pb-2 flex items-center">
                 <span class="w-2 h-6 bg-stone-500 mr-2 rounded-sm"></span>
-                상세 기록 (클릭하여 오답 노트 보기)
+                &nbsp;상세 기록 (클릭하여 오답 노트 보기)
             </h3>
             <div id="history-list" class="divide-y divide-stone-200">
                 </div>
         </div>
     </div>
 
-    <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-3xl h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-[fade-in_0.2s_ease-out]">
+    <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm" onclick="window.app.closeModal(event)">
+        <div class="bg-white w-full max-w-3xl h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-[fade-in_0.2s_ease-out]" onclick="event.stopPropagation()">
             <div class="p-5 border-b border-stone-200 flex justify-between items-center bg-stone-50">
                 <div>
                     <h3 class="font-bold text-xl text-stone-800">📄 오답 노트 & 해설</h3>
                     <p id="modal-date" class="text-sm text-stone-500 mt-1">-</p>
                 </div>
-                <button onclick="app.closeModal()" class="text-stone-400 hover:text-stone-700 p-2">
+                <button onclick="window.app.closeModal()" class="text-stone-400 hover:text-stone-700 p-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -101,7 +98,7 @@
                 </div>
 
             <div class="p-4 border-t border-stone-200 bg-white text-right">
-                <button onclick="app.closeModal()" class="bg-stone-800 text-white px-6 py-2 rounded-lg hover:bg-stone-700 transition font-bold">
+                <button onclick="window.app.closeModal()" class="bg-stone-800 text-white px-6 py-2 rounded-lg hover:bg-stone-700 transition font-bold">
                     닫기
                 </button>
             </div>
@@ -115,9 +112,10 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        const app = {
+        // [중요] app을 window 객체에 붙여서 HTML 어디서든 인식되게 함
+        window.app = {
             currentUser: null,
-            historyData: [], // 불러온 데이터를 저장해두는 곳
+            historyData: [], 
 
             init: function() {
                 auth.onAuthStateChanged((user) => {
@@ -133,7 +131,6 @@
 
             loadData: async function() {
                 try {
-                    // 유저 정보 로드
                     const userDoc = await db.collection('users').doc(this.currentUser.uid).get();
                     if (userDoc.exists) {
                         const u = userDoc.data();
@@ -141,7 +138,6 @@
                         document.getElementById('profile-info').innerText = `${u.class}반 ${u.number}번 | ${this.currentUser.email}`;
                     }
 
-                    // 퀴즈 기록 로드
                     const snapshot = await db.collection('quiz_results')
                         .where('uid', '==', this.currentUser.uid)
                         .orderBy('timestamp', 'desc')
@@ -155,7 +151,6 @@
                         return;
                     }
 
-                    // 데이터를 전역 변수에 저장 (모달에서 쓰기 위해)
                     this.historyData = [];
                     snapshot.forEach(doc => this.historyData.push(doc.data()));
 
@@ -165,15 +160,16 @@
 
                 } catch (e) {
                     console.error("데이터 로드 오류:", e);
+                    alert("데이터를 불러오는 중 오류가 발생했습니다.\n" + e.message);
                 }
                 document.getElementById('loading-overlay').style.display = 'none';
             },
 
             renderHistoryList: function() {
                 const container = document.getElementById('history-list');
-                // 클릭 시 openModal(index) 함수 실행하도록 설정
+                // onclick에서 window.app.openModal로 명확하게 호출
                 container.innerHTML = this.historyData.map((item, index) => `
-                    <div onclick="app.openModal(${index})" class="p-5 flex justify-between items-center bg-white hover:bg-amber-50 transition cursor-pointer border-l-4 border-transparent hover:border-amber-500 group">
+                    <div onclick="window.app.openModal(${index})" class="p-5 flex justify-between items-center bg-white hover:bg-amber-50 transition cursor-pointer border-l-4 border-transparent hover:border-amber-500 group border-b border-stone-100">
                         <div class="flex items-center gap-4">
                             <div class="bg-stone-100 p-3 rounded-lg text-stone-500 group-hover:bg-amber-100 group-hover:text-amber-600 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -182,8 +178,8 @@
                             </div>
                             <div>
                                 <div class="font-bold text-lg text-stone-700 group-hover:text-stone-900">
-                                    ${item.timeString.split('오')[0]}
-                                    <span class="text-xs font-normal text-stone-400 ml-1">${item.timeString.includes('오후')?'오후':'오전'} 응시</span>
+                                    ${item.timeString ? item.timeString.split('오')[0] : '날짜 없음'}
+                                    <span class="text-xs font-normal text-stone-400 ml-1">${item.timeString && item.timeString.includes('오후')?'오후':'오전'} 응시</span>
                                 </div>
                                 <div class="text-sm text-stone-500">클릭하여 오답/해설 보기</div>
                             </div>
@@ -192,86 +188,77 @@
                             <span class="text-2xl font-bold ${item.score >= 80 ? 'text-green-600' : (item.score >= 60 ? 'text-amber-600' : 'text-red-500')}">
                                 ${item.score}점
                             </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                            </svg>
+                            <span class="text-stone-300">❯</span>
                         </div>
                     </div>
                 `).join('');
             },
 
-            // 📌 모달 열기 (핵심 기능)
             openModal: function(index) {
-                const data = this.historyData[index];
-                const contentEl = document.getElementById('modal-content');
-                
-                document.getElementById('modal-date').innerText = `${data.timeString} 응시 기록`;
+                try {
+                    const data = this.historyData[index];
+                    const contentEl = document.getElementById('modal-content');
+                    
+                    if(data.timeString) {
+                        document.getElementById('modal-date').innerText = `${data.timeString} 응시 기록`;
+                    }
 
-                // 데이터에 'details'나 'quizData' 같은 상세 정보가 있는지 확인
-                // (선생님이 기존 퀴즈 저장 코드에서 'details'라는 이름으로 상세 정보를 저장했다고 가정)
-                // 만약 없다면, 기존 퀴즈 풀이 코드에서 저장할 때 상세 정보를 같이 저장하도록 수정해야 함.
-                
-                const questions = data.details || []; // 'details' 필드 사용 가정
+                    // 상세 데이터(details)가 없는 경우 예외 처리
+                    const questions = data.details || []; 
 
-                if (!questions || questions.length === 0) {
-                    contentEl.innerHTML = `
-                        <div class="flex flex-col items-center justify-center h-full text-stone-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <p class="text-lg font-bold">상세 풀이 정보가 없습니다.</p>
-                            <p class="text-sm mt-2">이전 버전에서 푼 문제이거나, 문제 저장 방식이 업데이트되지 않았습니다.</p>
-                        </div>
-                    `;
-                } else {
-                    // 상세 문제 렌더링
-                    contentEl.innerHTML = questions.map((q, i) => {
-                        const isCorrect = q.selected === q.answer;
-                        const userChoice = q.selected;
-                        const correctChoice = q.answer;
-
-                        return `
-                        <div class="bg-white p-6 rounded-xl shadow-sm border ${isCorrect ? 'border-stone-200' : 'border-red-200 bg-red-50'}">
-                            <div class="flex items-start gap-3 mb-4">
-                                <span class="bg-stone-800 text-white text-sm font-bold px-2 py-1 rounded">Q${i+1}</span>
-                                <h4 class="text-lg font-bold text-stone-800 flex-1">${q.question}</h4>
-                                <span class="text-2xl">${isCorrect ? '✅' : '❌'}</span>
+                    if (!questions || questions.length === 0) {
+                        contentEl.innerHTML = `
+                            <div class="flex flex-col items-center justify-center h-64 text-stone-400 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <p class="text-lg font-bold text-stone-600">상세 풀이 정보가 없습니다.</p>
+                                <p class="text-sm mt-2 text-stone-500">
+                                    이 기록은 점수만 저장되어 있습니다.<br>
+                                    (퀴즈 풀이 페이지 업데이트 전의 기록일 수 있습니다)
+                                </p>
                             </div>
-
-                            <div class="space-y-2 mb-4">
-                                ${q.choices.map((choice, idx) => {
-                                    // 보기 스타일링 로직
-                                    let styleClass = "p-3 rounded-lg border text-sm ";
-                                    const choiceNum = idx + 1;
-                                    
-                                    if (choiceNum === correctChoice) {
-                                        // 정답인 보기 (항상 초록색 강조)
-                                        styleClass += "bg-green-100 border-green-500 text-green-800 font-bold";
-                                    } else if (choiceNum === userChoice && !isCorrect) {
-                                        // 내가 고른 오답 (빨간색 강조)
-                                        styleClass += "bg-red-100 border-red-500 text-red-800 font-bold line-through";
-                                    } else {
-                                        // 일반 보기
-                                        styleClass += "bg-white border-stone-200 text-stone-600";
-                                    }
-
-                                    return `<div class="${styleClass}">${idx+1}. ${choice} ${choiceNum === userChoice ? '(내가 쓴 답)' : ''}</div>`;
-                                }).join('')}
-                            </div>
-
-                            <div class="bg-stone-100 p-4 rounded-lg text-sm text-stone-700 leading-relaxed">
-                                <span class="font-bold text-indigo-600">💡 해설:</span> ${q.commentary || '해설이 없습니다.'}
-                            </div>
-                        </div>
                         `;
-                    }).join('');
-                }
+                    } else {
+                        contentEl.innerHTML = questions.map((q, i) => {
+                            const isCorrect = q.selected === q.answer;
+                            return `
+                            <div class="bg-white p-6 rounded-xl shadow-sm border ${isCorrect ? 'border-stone-200' : 'border-red-200 bg-red-50'}">
+                                <div class="flex items-start gap-3 mb-4">
+                                    <span class="bg-stone-800 text-white text-sm font-bold px-2 py-1 rounded">Q${i+1}</span>
+                                    <h4 class="text-lg font-bold text-stone-800 flex-1">${q.question}</h4>
+                                    <span class="text-2xl">${isCorrect ? '✅' : '❌'}</span>
+                                </div>
+                                <div class="space-y-2 mb-4">
+                                    ${q.choices.map((choice, idx) => {
+                                        let styleClass = "p-3 rounded-lg border text-sm ";
+                                        const choiceNum = idx + 1;
+                                        if (choiceNum === q.answer) styleClass += "bg-green-100 border-green-500 text-green-800 font-bold";
+                                        else if (choiceNum === q.selected && !isCorrect) styleClass += "bg-red-100 border-red-500 text-red-800 font-bold line-through";
+                                        else styleClass += "bg-white border-stone-200 text-stone-600";
+                                        return `<div class="${styleClass}">${idx+1}. ${choice} ${choiceNum === q.selected ? '(내가 쓴 답)' : ''}</div>`;
+                                    }).join('')}
+                                </div>
+                                <div class="bg-stone-100 p-4 rounded-lg text-sm text-stone-700 leading-relaxed">
+                                    <span class="font-bold text-indigo-600">💡 해설:</span> ${q.commentary || '해설이 없습니다.'}
+                                </div>
+                            </div>
+                            `;
+                        }).join('');
+                    }
 
-                document.getElementById('detail-modal').classList.remove('hidden');
-                document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+                    document.getElementById('detail-modal').classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                } catch (e) {
+                    console.error(e);
+                    alert("상세 보기를 여는 중 오류가 났습니다: " + e.message);
+                }
             },
 
-            closeModal: function() {
+            closeModal: function(e) {
+                // 배경 클릭 시 닫기 (e가 있으면)
+                if(e && e.target.id !== 'detail-modal') return;
+                
                 document.getElementById('detail-modal').classList.add('hidden');
                 document.body.style.overflow = 'auto';
             },
@@ -285,7 +272,9 @@
             },
 
             renderChart: function(list) {
-                const ctx = document.getElementById('scoreChart').getContext('2d');
+                const ctxEl = document.getElementById('scoreChart');
+                if(!ctxEl) return;
+                const ctx = ctxEl.getContext('2d');
                 const reversedList = [...list].reverse();
                 new Chart(ctx, {
                     type: 'line',
@@ -294,13 +283,10 @@
                         datasets: [{
                             label: '점수',
                             data: reversedList.map(i => i.score),
-                            borderColor: '#d97706', // amber-600
+                            borderColor: '#d97706',
                             backgroundColor: 'rgba(217, 119, 6, 0.1)',
                             fill: true,
-                            tension: 0.3,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: '#d97706',
-                            pointRadius: 5
+                            tension: 0.3
                         }]
                     },
                     options: {
@@ -308,8 +294,8 @@
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: { 
-                            y: { beginAtZero: true, max: 100, grid: { display: true, borderDash: [2, 2] } },
-                            x: { grid: { display: false } }
+                            y: { beginAtZero: true, max: 100 },
+                            x: { display: false }
                         }
                     }
                 });
@@ -320,7 +306,7 @@
             }
         };
 
-        window.onload = function() { app.init(); };
+        window.onload = function() { window.app.init(); };
     </script>
 </body>
 </html>
