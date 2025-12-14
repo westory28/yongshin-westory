@@ -88,7 +88,7 @@
             <h2 class="text-2xl font-bold text-stone-900 mb-2">환영합니다!</h2>
             <p class="text-xl font-bold text-amber-600 mb-6"><span id="user-info-display"></span> 학생</p>
             
-            <p class="text-stone-500 text-sm mb-6 bg-stone-50 p-3 rounded">⚠️ <strong>주의사항</strong><br>시작 버튼을 누르면 <strong>11분간 재응시가 불가능</strong>합니다.<br>준비되면 시작하세요.</p>
+            <p class="text-stone-500 text-sm mb-6 bg-stone-50 p-3 rounded">⚠️ <strong>주의사항</strong><br>시작 버튼을 누르면 <strong>10분간 재응시가 불가능</strong>합니다.<br>준비되면 시작하세요.</p>
             
             <button onclick="location.href='student.html'" class="w-full bg-white border border-stone-300 text-stone-700 font-bold py-3 rounded-lg hover:bg-stone-50 transition shadow-sm mb-3">
                 📊 내 기록 보기
@@ -230,13 +230,14 @@
                 if(msg) document.getElementById('loading-text').innerText = msg;
             },
 
+            // [수정됨] goHome 함수에서 11분 -> 10분으로 안내 문구 변경
             goHome: function() {
-                if (this.state.isQuizActive) { if (confirm("포기하고 나가시겠습니까?\n(11분간 재응시 불가)")) location.reload(); } 
+                if (this.state.isQuizActive) { if (confirm("포기하고 나가시겠습니까?\n(10분간 재응시 불가)")) location.reload(); } 
                 else location.reload();
             },
 
             startQuiz: async function() {
-                // [서버 체크] 11분 차단 로직
+                // [서버 체크] 10분 차단 로직
                 this.showLoading(true, "응시 가능 여부 확인 중...");
                 
                 try {
@@ -257,9 +258,9 @@
                     await this.loadRandomQuestions();
                     if(!this.state.allQuestions || this.state.allQuestions.length === 0) throw new Error("문제 없음");
 
-                    // [중요] 서버에 11분 차단 시간 기록 (Start 시점)
+                    // [중요] [수정됨] 차단 시간을 11 -> 10으로 변경
                     await db.collection('users').doc(this.state.currentUser.uid).update({
-                        blockedUntil: now + (11 * 60 * 1000)
+                        blockedUntil: now + (10 * 60 * 1000)
                     });
 
                 } catch(e) {
