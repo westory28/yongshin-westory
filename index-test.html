@@ -39,7 +39,6 @@
         #image-zoom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; }
         #image-zoom-content { max-width: 95%; max-height: 95%; border-radius: 4px; }
         
-        /* 실시간 카운터 배지 */
         .live-badge { 
             background: rgba(255, 255, 255, 0.2); 
             border: 1px solid rgba(255, 255, 255, 0.4); 
@@ -50,10 +49,10 @@
             display: inline-flex; 
             align-items: center; 
             gap: 6px;
-            animation: pulse-border 2s infinite;
+            white-space: nowrap;
         }
-        .live-dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; }
-        @keyframes pulse-border { 0% { border-color: rgba(255,255,255,0.4); } 50% { border-color: #fbbf24; } 100% { border-color: rgba(255,255,255,0.4); } }
+        .live-dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: pulse-dot 2s infinite; }
+        @keyframes pulse-dot { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body class="text-stone-800 min-h-screen flex flex-col">
@@ -61,11 +60,11 @@
     <div id="image-zoom-modal" onclick="document.getElementById('image-zoom-modal').style.display='none'"><img id="image-zoom-content" src=""></div>
 
     <header class="bg-stone-900 text-white py-4 shadow-lg sticky top-0 z-40 cursor-pointer" onclick="app.goHome()">
-        <div class="container mx-auto px-4 flex justify-between items-center">
+        <div class="container mx-auto px-4 flex justify-between items-center gap-4">
             <h1 class="text-lg md:text-xl font-bold tracking-tight truncate flex-1"><span class="mr-2">🧑‍🏫</span> 용신중학교 역사교사 방재석</h1>
             <div class="live-badge">
                 <div class="live-dot"></div>
-                <span id="live-count-text">접속: ...</span>
+                <span id="live-count-text">총 도전: ...</span>
             </div>
         </div>
     </header>
@@ -144,32 +143,34 @@
                     if (this.state.isQuizActive) { e.preventDefault(); e.returnValue = ''; }
                 });
 
-                // [중요] 페이지 로드 시 '외부 카운터 API'를 호출하여 접속자 수 증가 (무료, 파이어베이스 무관)
+                // [중요] 카운터: 세션(창을 닫기 전)에 방문 기록이 없으면 +1, 있으면 그냥 조회만
                 this.updateVisitCount();
             },
 
-            // [추가] 외부 무료 카운터 API 사용 (CounterAPI)
+            // [수정된 카운터 로직] 새로고침 방지 (세션 스토리지 활용)
             updateVisitCount: function() {
                 const badgeText = document.getElementById("live-count-text");
-                // Namespace: westory28-history-quiz, Key: visits
-                // 이 URL은 호출할 때마다 카운트를 1씩 증가시키고 현재 값을 반환합니다.
-                fetch('https://api.counterapi.dev/v1/westory28-history-quiz/visits/up')
-                    .then(response => response.json())
-                    .then(data => {
-                        if(data && data.count) {
-                            badgeText.innerText = `접속: ${data.count}명`;
-                            // 깜빡임 효과
-                            const badge = document.querySelector('.live-badge');
-                            if(badge) {
-                                badge.style.backgroundColor = 'rgba(251, 191, 36, 0.4)';
-                                setTimeout(() => badge.style.backgroundColor = 'rgba(255, 255, 255, 0.2)', 300);
-                            }
-                        }
-                    })
-                    .catch(err => {
-                        console.log("Counter API Error:", err);
-                        badgeText.innerText = "접속: -명";
-                    });
+                const sessionKey = 'quiz_visited_session'; // 이번 창에서 방문했는지 체크하는 키
+
+                // 1. 세션에 기록이 없으면? -> 처음 온 것 -> 카운트 증가(/up) 요청
+                if (!sessionStorage.getItem(sessionKey)) {
+                    fetch('https://api.counterapi.dev/v1/westory28-history-quiz/visits/up')
+                        .then(res => res.json())
+                        .then(data => {
+                            badgeText.innerText = `총 도전: ${data.count}명`;
+                            sessionStorage.setItem(sessionKey, 'true'); // 방문했다고 도장 쾅!
+                        })
+                        .catch(err => { badgeText.innerText = "총 도전: -명"; });
+                } 
+                // 2. 세션에 기록이 있으면? -> 새로고침 한 것 -> 그냥 조회(/)만 요청
+                else {
+                    fetch('https://api.counterapi.dev/v1/westory28-history-quiz/visits/')
+                        .then(res => res.json())
+                        .then(data => {
+                            badgeText.innerText = `총 도전: ${data.count}명`;
+                        })
+                        .catch(err => { badgeText.innerText = "총 도전: -명"; });
+                }
             },
 
             showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
@@ -245,7 +246,6 @@
                 const randomIds = new Set();
                 const pickCount = Math.min(5, totalCount); 
                 
-                // 최신 문제 우선 배정 (3개)
                 if (totalCount >= 5) {
                     const recentRange = 50; 
                     const startOfRecent = Math.max(1, totalCount - recentRange + 1);
