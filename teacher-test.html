@@ -25,7 +25,10 @@
         .choice-btn { width: 100%; text-align: left; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; background-color: white; margin-bottom: 0.5rem; }
         .choice-btn.selected { border: 2px solid #d97706; background-color: #fffbeb; color: #92400e; font-weight: bold; }
         .ox-btn { height: 60px; font-size: 1.5rem; font-weight: bold; width: 100%; border: 1px solid #ccc; border-radius: 8px; }
-        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+        
+        /* 로딩 오버레이: 배경색을 조금 더 진하게 하여 차단된 느낌 강조 */
+        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; }
+        
         .q-image-thumb { max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid #ddd; cursor: zoom-in; }
         #image-zoom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; }
         #image-zoom-content { max-width: 95%; max-height: 95%; border-radius: 4px; }
@@ -34,7 +37,12 @@
 </head>
 <body class="text-stone-800 min-h-screen">
 
-    <div id="loading-overlay"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-600 border-solid mb-4"></div><p class="text-xl font-bold">처리 중...</p></div>
+    <div id="loading-overlay">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-white border-solid mb-4"></div>
+        <p class="text-xl font-bold">처리 중입니다...</p>
+        <p class="text-sm mt-2">잠시만 기다려 주세요.</p>
+    </div>
+
     <div id="image-zoom-modal" onclick="document.getElementById('image-zoom-modal').style.display='none'"><img id="image-zoom-content" src=""></div>
 
     <div id="view-login-screen" style="display: flex;" class="items-center justify-center min-h-screen flex-col bg-stone-100 p-4">
@@ -332,12 +340,19 @@
                 document.getElementById('pagination-controls').innerHTML = pHtml;
             },
             changeLogPage: function(p) { this.state.logPage = p; this.renderLogs(); },
+            
+            // [수정됨] 문제 로드 시 로딩 화면 띄움
             loadQuestionsFromFirebase: function() {
+                this.showLoading(true);
                 db.collection("quiz_questions").get().then((querySnapshot) => {
                     const loadedData = []; querySnapshot.forEach((doc) => { let data = doc.data(); data.id = parseInt(doc.id); loadedData.push(data); });
                     loadedData.sort((a, b) => a.id - b.id); this.state.allQuestions = loadedData; 
                     if(document.getElementById('tab-bank').style.display !== 'none') this.renderBank();
-                }).catch((e) => { console.error("문제 로드 에러:", e); });
+                    this.showLoading(false);
+                }).catch((e) => { 
+                    console.error("문제 로드 에러:", e); 
+                    this.showLoading(false);
+                });
             },
             calculateGlobalStats: function() {
                 if(!confirm("⚠️ 경고: 이 작업은 모든 학생 데이터를 다운로드합니다.\n데이터 양에 따라 시간이 걸리거나 비용이 발생할 수 있습니다.\n진행하시겠습니까?")) return;
@@ -374,7 +389,8 @@
                 }).then(() => {
                     alert("✅ 전체 통계가 갱신되었습니다.");
                     this.loadQuestionsFromFirebase(); 
-                    this.showLoading(false);
+                    // 로딩 끄기는 loadQuestionsFromFirebase가 끝날 때 처리됨 (단, 비동기 호출 시점이 겹칠 수 있으므로 안전하게)
+                    // loadQuestionsFromFirebase 내부에 showLoading(true/false)가 있으므로 여기선 놔둠
                 }).catch(e => {
                     this.showLoading(false);
                     alert("통계 갱신 실패: " + e.message);
@@ -469,23 +485,130 @@
                 el.className = "choice-btn p-3 border-2 border-amber-500 bg-amber-50 rounded cursor-pointer font-bold text-amber-900";
                 setTimeout(() => { alert(isCorrect ? "⭕ 정답입니다!" : "❌ 오답입니다!"); }, 100);
             },
-            deleteSelectedLogs: function() { const checked = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.value); if(checked.length && confirm("삭제?")) { const batch = db.batch(); checked.forEach(id => batch.delete(db.collection("quiz_results").doc(id))); batch.commit().then(() => { 
-                this.loadByClass(document.getElementById('select-class-trigger').value); 
-            }).catch(e=>alert("삭제 실패: "+e.message)); } },
-            deleteLog: function(docId) { if(confirm("삭제?")) { db.collection("quiz_results").doc(docId).delete().then(() => {
-                this.loadByClass(document.getElementById('select-class-trigger').value); 
-            }).catch(e=>alert("삭제 실패: "+e.message)); } },
-            deleteSelectedQuestions: function() { const checked = Array.from(document.querySelectorAll('.q-checkbox:checked')).map(cb => cb.value); if(checked.length && confirm("삭제?")) { const batch = db.batch(); checked.forEach(id => batch.delete(db.collection("quiz_questions").doc(id))); batch.commit().then(() => { this.loadQuestionsFromFirebase(); }).catch(e=>alert("삭제 실패: "+e.message)); } },
-            resetServerQuestions: function() { if(confirm("전체 초기화?")) { db.collection("quiz_questions").get().then(s => { const batch = db.batch(); s.docs.forEach(d => batch.delete(d.ref)); return batch.commit(); }).then(() => { this.state.allQuestions=[]; this.renderBank(); }).catch(e=>alert("실패: "+e.message)); } },
+            
+            // [수정됨] 삭제 기능에 로딩 추가
+            deleteSelectedLogs: function() { 
+                const checked = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.value); 
+                if(checked.length && confirm("삭제하시겠습니까?")) { 
+                    this.showLoading(true);
+                    const batch = db.batch(); 
+                    checked.forEach(id => batch.delete(db.collection("quiz_results").doc(id))); 
+                    batch.commit().then(() => { 
+                        this.loadByClass(document.getElementById('select-class-trigger').value); 
+                        // loadByClass가 끝나면 로딩이 꺼짐
+                    }).catch(e=>{
+                        this.showLoading(false);
+                        alert("삭제 실패: "+e.message);
+                    }); 
+                } 
+            },
+            deleteLog: function(docId) { 
+                if(confirm("이 기록을 삭제하시겠습니까?")) { 
+                    this.showLoading(true);
+                    db.collection("quiz_results").doc(docId).delete().then(() => {
+                        this.loadByClass(document.getElementById('select-class-trigger').value); 
+                    }).catch(e=>{
+                        this.showLoading(false);
+                        alert("삭제 실패: "+e.message);
+                    }); 
+                } 
+            },
+            deleteSelectedQuestions: function() { 
+                const checked = Array.from(document.querySelectorAll('.q-checkbox:checked')).map(cb => cb.value); 
+                if(checked.length && confirm("선택한 문제를 삭제하시겠습니까?")) { 
+                    this.showLoading(true);
+                    const batch = db.batch(); 
+                    checked.forEach(id => batch.delete(db.collection("quiz_questions").doc(id))); 
+                    batch.commit().then(() => { 
+                        this.loadQuestionsFromFirebase(); // 로딩은 이 함수 안에서 다시 처리됨
+                    }).catch(e=>{
+                        this.showLoading(false);
+                        alert("삭제 실패: "+e.message);
+                    }); 
+                } 
+            },
+            resetServerQuestions: function() { 
+                if(confirm("전체 초기화하시겠습니까?")) { 
+                    this.showLoading(true);
+                    db.collection("quiz_questions").get().then(s => { 
+                        const batch = db.batch(); 
+                        s.docs.forEach(d => batch.delete(d.ref)); 
+                        return batch.commit(); 
+                    }).then(() => { 
+                        this.state.allQuestions=[]; 
+                        this.renderBank(); 
+                        this.showLoading(false);
+                    }).catch(e=>{
+                        this.showLoading(false);
+                        alert("실패: "+e.message);
+                    }); 
+                } 
+            },
+            
             showStudentDetail: function(docId) { const log = this.state.logs.find(l => l.docId === docId); if(!log) return; let html = `<div class="font-bold mb-2">${log.class}반 ${log.number}번 ${log.name} (${log.score}점)</div>`; log.details.forEach((d,i)=>{ const q=this.state.allQuestions.find(x=>x.id===d.id); html+=`<div class="p-2 border mb-2 ${d.correct?'bg-green-50':'bg-red-50'}"><div class="text-sm font-bold">Q${i+1}. ${q?q.question:'삭제된 문제'}</div><div class="text-xs">답: ${d.u} (정답여부:${d.correct?'O':'X'})</div></div>`; }); document.getElementById('student-detail-content').innerHTML=html; document.getElementById('student-detail-modal').style.display='flex'; },
+            
             editQuestion: function(id) { const q = this.state.allQuestions.find(q => q.id === id); if(!q) return; document.getElementById('edit-q-id').value = q.id; document.getElementById('edit-q-unit').value = q.unit; document.getElementById('edit-q-type').value = q.type; document.getElementById('edit-q-text').value = q.question; document.getElementById('edit-q-answer').value = q.answer; document.getElementById('edit-q-exp').value = q.explanation; document.getElementById('edit-q-options').value = q.options ? q.options.join(', ') : ''; this.toggleOptionInput('edit'); document.getElementById('edit-q-image-base64').value = q.image || ''; const img = document.getElementById('edit-q-image-preview'); if(q.image) { img.src = q.image; img.style.display='block'; } else img.style.display='none'; document.getElementById('edit-modal').style.display='flex'; },
             closeEditModal: function() { document.getElementById('edit-modal').style.display='none'; },
-            saveEditedQuestion: function() { const id = parseInt(document.getElementById('edit-q-id').value); const updatedQ = { id, unit: document.getElementById('edit-q-unit').value, type: document.getElementById('edit-q-type').value, question: document.getElementById('edit-q-text').value, options: document.getElementById('edit-q-options').value.split(',').map(s=>s.trim()), answer: document.getElementById('edit-q-answer').value, explanation: document.getElementById('edit-q-exp').value, image: document.getElementById('edit-q-image-base64').value || null }; db.collection("quiz_questions").doc(String(id)).set(updatedQ).then(() => { alert("수정됨"); this.closeEditModal(); this.loadQuestionsFromFirebase(); }).catch(e=>alert("실패: "+e.message)); },
+            
+            // [수정됨] 문제 수정 저장 시 로딩 추가
+            saveEditedQuestion: function() { 
+                this.showLoading(true);
+                const id = parseInt(document.getElementById('edit-q-id').value); 
+                const updatedQ = { id, unit: document.getElementById('edit-q-unit').value, type: document.getElementById('edit-q-type').value, question: document.getElementById('edit-q-text').value, options: document.getElementById('edit-q-options').value.split(',').map(s=>s.trim()), answer: document.getElementById('edit-q-answer').value, explanation: document.getElementById('edit-q-exp').value, image: document.getElementById('edit-q-image-base64').value || null }; 
+                db.collection("quiz_questions").doc(String(id)).set(updatedQ).then(() => { 
+                    alert("수정되었습니다."); 
+                    this.closeEditModal(); 
+                    this.loadQuestionsFromFirebase(); 
+                }).catch(e=>{
+                    this.showLoading(false);
+                    alert("실패: "+e.message);
+                }); 
+            },
             toggleOptionInput: function(prefix) { const t = document.getElementById(prefix + '-q-type').value; document.getElementById('option-container-' + prefix).style.display = (t==='choice'||t==='order')?'block':'none'; },
             updateNextQuestionNumber: function() { const maxId = this.state.allQuestions.reduce((max, item) => Math.max(max, item.id), 0); document.getElementById('next-q-id-display').innerText = `다음 번호: ${maxId + 1}`; },
             handleImageUpload: function(input, prefix) { if(input.files[0]) { const reader = new FileReader(); reader.onload = (e) => { document.getElementById(prefix + '-q-image-base64').value = e.target.result; document.getElementById(prefix + '-q-image-preview').src = e.target.result; document.getElementById(prefix + '-q-image-preview').style.display='block'; }; reader.readAsDataURL(input.files[0]); } },
-            addCustomQuestion: function() { const newQ = { id: this.state.allQuestions.reduce((m,i)=>Math.max(m,i.id),0)+1, unit: document.getElementById('new-q-unit').value, type: document.getElementById('new-q-type').value, question: document.getElementById('new-q-text').value, options: document.getElementById('new-q-options').value.split(',').map(s=>s.trim()), answer: document.getElementById('new-q-answer').value, explanation: document.getElementById('new-q-exp').value, image: document.getElementById('new-q-image-base64').value || null }; db.collection("quiz_questions").doc(String(newQ.id)).set(newQ).then(() => { alert("추가됨"); this.loadQuestionsFromFirebase(); }).catch(e=>alert("실패: "+e.message)); },
-            uploadExcel: function() { const f = document.getElementById('excel-file').files[0]; if(!f) return; const r = new FileReader(); r.onload = async (e) => { const wb = XLSX.read(e.target.result, {type:'array'}); const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1}); let batch = db.batch(), cnt=0, id=this.state.allQuestions.reduce((m,i)=>Math.max(m,i.id),0); for(let i=1; i<rows.length; i++) { if(!rows[i][2]) continue; id++; batch.set(db.collection("quiz_questions").doc(String(id)), { id, unit: rows[i][0]||"기타", type: "choice", question: rows[i][2], options: (rows[i][3]||"").split(','), answer: String(rows[i][4]), explanation: rows[i][5]||"", image: null }); cnt++; if(cnt%400===0) { await batch.commit(); batch=db.batch(); } } await batch.commit(); alert(cnt+"개 추가됨"); this.loadQuestionsFromFirebase(); }; r.readAsArrayBuffer(f); },
+            
+            // [수정됨] 문제 추가 시 로딩 추가
+            addCustomQuestion: function() { 
+                this.showLoading(true);
+                const newQ = { id: this.state.allQuestions.reduce((m,i)=>Math.max(m,i.id),0)+1, unit: document.getElementById('new-q-unit').value, type: document.getElementById('new-q-type').value, question: document.getElementById('new-q-text').value, options: document.getElementById('new-q-options').value.split(',').map(s=>s.trim()), answer: document.getElementById('new-q-answer').value, explanation: document.getElementById('new-q-exp').value, image: document.getElementById('new-q-image-base64').value || null }; 
+                db.collection("quiz_questions").doc(String(newQ.id)).set(newQ).then(() => { 
+                    alert("추가되었습니다."); 
+                    this.loadQuestionsFromFirebase(); 
+                }).catch(e=>{
+                    this.showLoading(false);
+                    alert("실패: "+e.message);
+                }); 
+            },
+            
+            // [수정됨] 엑셀 업로드 시 로딩 추가
+            uploadExcel: function() { 
+                const f = document.getElementById('excel-file').files[0]; 
+                if(!f) return; 
+                this.showLoading(true); // 로딩 시작
+                const r = new FileReader(); 
+                r.onload = async (e) => { 
+                    try {
+                        const wb = XLSX.read(e.target.result, {type:'array'}); 
+                        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1}); 
+                        let batch = db.batch(), cnt=0, id=this.state.allQuestions.reduce((m,i)=>Math.max(m,i.id),0); 
+                        for(let i=1; i<rows.length; i++) { 
+                            if(!rows[i][2]) continue; 
+                            id++; 
+                            batch.set(db.collection("quiz_questions").doc(String(id)), { id, unit: rows[i][0]||"기타", type: "choice", question: rows[i][2], options: (rows[i][3]||"").split(','), answer: String(rows[i][4]), explanation: rows[i][5]||"", image: null }); 
+                            cnt++; 
+                            if(cnt%400===0) { await batch.commit(); batch=db.batch(); } 
+                        } 
+                        await batch.commit(); 
+                        alert(cnt+"개 문제가 추가되었습니다."); 
+                        this.loadQuestionsFromFirebase(); 
+                    } catch(e) {
+                        this.showLoading(false);
+                        alert("업로드 실패: " + e.message);
+                    }
+                }; 
+                r.readAsArrayBuffer(f); 
+            },
             downloadTemplate: function() { XLSX.writeFile(XLSX.utils.book_new(), "양식.xlsx"); },
             downloadExcel: function() { let csv="\uFEFF시간,반,번호,이름,점수\n"+this.state.logs.map(l=>`${l.timeString},${l.class},${l.number},${l.name},${l.score}`).join("\n"); const a=document.createElement("a"); a.href="data:text/csv;charset=utf-8,"+encodeURI(csv); a.download="결과.csv"; a.click(); }
         };
