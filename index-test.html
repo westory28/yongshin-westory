@@ -112,39 +112,27 @@
         try { 
             if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } 
             db = firebase.firestore(); 
-        } catch(e) { 
-            console.error("Firebase Init Error", e);
-        }
+        } catch(e) { console.error("Error", e); }
 
         const app = {
             state: { student:{}, questions:[], allQuestions:[], currentIndex:0, answers:{}, score:0, timer:null, timeLeft:60, isTimeOut:false, isQuizActive: false },
             
             init: function() { 
-                // 새로고침 방지를 위한 이벤트 등록
                 window.addEventListener('beforeunload', (e) => {
-                    if (this.state.isQuizActive) {
-                        e.preventDefault();
-                        e.returnValue = ''; 
-                    }
+                    if (this.state.isQuizActive) { e.preventDefault(); e.returnValue = ''; }
                 });
             },
 
             showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
 
-            // 홈 버튼 클릭 시 동작 (안전장치)
             goHome: function() {
                 if (this.state.isQuizActive) {
-                    if (confirm("📢 경고: 지금 나가면 '11분간 재응시'가 불가능합니다.\n(이미 시작 시간이 기록되었습니다)\n\n정말 나가시겠습니까?")) {
-                        location.reload(); 
-                    }
-                } else {
-                    location.reload();
-                }
+                    if (confirm("📢 경고: 지금 나가면 '11분간 재응시'가 불가능합니다.\n정말 나가시겠습니까?")) location.reload(); 
+                } else location.reload();
             },
 
-            // 키 생성 (공백 제거)
             getStorageKey: function(cls, num, name) {
-                return `block_v6_${cls.trim()}_${num.trim()}_${name.trim()}`;
+                return `block_v7_${cls.trim()}_${num.trim()}_${name.trim()}`;
             },
 
             startQuiz: async function() {
@@ -153,26 +141,18 @@
                 const name = document.getElementById('input-name').value.trim();
 
                 if(!cls || !num || !name) { alert("학년, 반, 번호, 이름을 모두 입력하세요."); return; }
+                if(/[a-zA-Z]/.test(name)) { alert("이름에 영어를 사용할 수 없습니다."); document.getElementById('input-name').value = ""; return; }
                 
-                // [이름 검증] 영어 입력 차단
-                if(/[a-zA-Z]/.test(name)) {
-                    alert("이름에 영어를 사용할 수 없습니다.");
-                    document.getElementById('input-name').value = "";
-                    return;
-                }
-                
-                // [1. 차단 확인] 입장 가능한지 검사
                 const storageKey = this.getStorageKey(cls, num, name);
                 const blockedUntil = localStorage.getItem(storageKey);
 
                 if (blockedUntil) {
                     const now = new Date().getTime();
                     if (now < parseInt(blockedUntil)) {
-                        const leftMs = parseInt(blockedUntil) - now;
-                        const leftMins = Math.ceil(leftMs / (1000 * 60));
+                        const leftMins = Math.ceil((parseInt(blockedUntil) - now) / (1000 * 60));
                         this.showLoading(false);
-                        alert(`⛔ 재응시 불가!\n\n이미 시험을 시작했거나 제출했습니다.\n(시작 시점부터 11분간 제한)\n\n약 ${leftMins}분 뒤에 다시 시도해주세요.`);
-                        return; // 진입 절대 불가
+                        alert(`⛔ 재응시 불가!\n\n시험을 시작했거나 제출했습니다.\n${leftMins}분 뒤에 다시 시도할 수 있습니다.`);
+                        return;
                     }
                 }
 
@@ -180,26 +160,16 @@
 
                 try {
                     await this.loadRandomQuestions();
-
-                    if(!this.state.allQuestions || this.state.allQuestions.length === 0) {
-                        throw new Error("로드된 문제가 없습니다.");
-                    }
-
+                    if(!this.state.allQuestions || this.state.allQuestions.length === 0) throw new Error("문제 없음");
                 } catch(e) {
-                    console.error("Error Detail:", e);
                     this.showLoading(false);
-                    if (e.code === 'permission-denied') alert("오류: 데이터베이스 접근 권한이 없습니다.");
-                    else alert("오류: " + e.message);
+                    alert("문제를 불러오는 중 오류가 발생했습니다.\n" + e.message);
                     return;
                 }
 
-                // [2. 즉시 족쇄 채우기] 문제 로드 성공 시, 바로 11분 차단 설정
-                // 이제 새로고침하거나 홈으로 나가도 기록이 남아 못 들어옴
-                const blockTime = new Date().getTime() + (11 * 60 * 1000); // 1분(풀이) + 10분(휴식)
-                localStorage.setItem(storageKey, blockTime);
+                localStorage.setItem(storageKey, new Date().getTime() + (11 * 60 * 1000));
 
-                // 퀴즈 시작
-                this.state.student = { class:cls, number:num, name:name };
+                this.state.student = { class:cls, number:num, name:name, storageKey: storageKey };
                 this.state.questions = this.state.allQuestions; 
                 this.state.currentIndex = 0; 
                 this.state.answers = {}; 
@@ -214,9 +184,12 @@
                 this.startTimer();
             },
 
+            // [수정된 함수] 최신 문제(번호가 큰 것)를 우선적으로 뽑는 로직
             loadRandomQuestions: async function() {
                 if(!db) return;
-                let totalCount = 189; 
+                
+                // 1. 전체 문제 수 확인
+                let totalCount = 189; // 기본값 189
                 try {
                     const metaDoc = await db.collection("metadata").doc("count_info").get();
                     if (metaDoc.exists) totalCount = metaDoc.data().total_questions || 189;
@@ -224,10 +197,26 @@
                 
                 const randomIds = new Set();
                 const pickCount = Math.min(5, totalCount); 
+                
+                // [알고리즘 수정] 최신 문제 우선 확보 (3개)
+                // 예: 전체 189개라면, 최근 50개(140~189) 중에서 3개를 먼저 뽑음
+                if (totalCount >= 5) {
+                    const recentRange = 50; // 최근 50개 중 선택
+                    const startOfRecent = Math.max(1, totalCount - recentRange + 1);
+                    
+                    // 최근 문제에서 3개 뽑기
+                    while(randomIds.size < 3) {
+                        const rand = Math.floor(Math.random() * (totalCount - startOfRecent + 1)) + startOfRecent;
+                        randomIds.add(rand.toString());
+                    }
+                }
+
+                // 나머지(2개)는 전체 범위(1 ~ totalCount)에서 랜덤으로 채움
                 while(randomIds.size < pickCount) {
                     const rand = Math.floor(Math.random() * totalCount) + 1;
                     randomIds.add(rand.toString());
                 }
+                
                 const targetIds = Array.from(randomIds);
 
                 const qSnapshot = await db.collection("quiz_questions")
@@ -240,6 +229,8 @@
                     data.id = parseInt(doc.id); 
                     loadedData.push(data); 
                 });
+                
+                // 다시 섞어서 순서 랜덤화
                 this.state.allQuestions = this.shuffleArray(loadedData);
             },
 
@@ -321,8 +312,6 @@
                     detailLogs.push({ id: q.id, correct: isC, u: u });
                 });
                 this.state.score = correct * 20; this.state.incorrectDetails = details;
-                
-                // 시간은 이미 시작할 때 저장했으므로, 여기선 갱신하지 않고 유지합니다. (11분 룰)
                 this.showView('view-results'); this.renderResults(); this.saveToFirebase(detailLogs);
             },
             
