@@ -128,6 +128,9 @@
                     <button onclick="document.getElementById('review-section').classList.toggle('hidden')" class="bg-white border-2 border-stone-200 text-stone-700 font-bold py-3 rounded hover:bg-stone-50">오답노트</button>
                     <button onclick="location.reload()" class="bg-stone-900 text-white font-bold py-3 rounded hover:bg-stone-700 shadow-lg">다시 도전</button>
                 </div>
+                <button onclick="location.href='student.html'" class="w-full mt-3 bg-white border border-stone-300 text-stone-700 font-bold py-3 rounded-lg hover:bg-stone-50 transition shadow-sm">
+                    📊 내 기록장 보기
+                </button>
             </div>
             <div id="review-section" class="hidden mt-6 bg-white p-6 rounded-xl shadow-lg border border-red-200">
                 <h3 class="font-bold text-lg mb-4 text-red-600 border-b pb-2">오답 확인</h3>
@@ -192,7 +195,7 @@
                 this.showLoading(false);
             },
 
-            // 최초 정보 등록
+            // [수정됨] 중복 체크 로직 추가
             registerUser: async function() {
                 const cls = document.getElementById('reg-class').value;
                 const num = document.getElementById('reg-number').value;
@@ -204,13 +207,35 @@
 
                 this.showLoading(true, "등록 중...");
                 try {
+                    // 1. 중복 체크 (읽기 최소화: limit(1) 사용)
+                    // 주의: 이 쿼리를 처음 실행하면 콘솔창에 인덱스 생성 링크가 뜰 수 있음. 클릭 필수!
+                    const checkSnapshot = await db.collection('users')
+                        .where('class', '==', cls)
+                        .where('number', '==', num)
+                        .limit(1)
+                        .get();
+
+                    if (!checkSnapshot.empty) {
+                        this.showLoading(false);
+                        alert(`❌ 가입 불가\n\n${cls}반 ${num}번은 이미 등록된 학생이 있습니다.\n본인의 번호가 맞다면 선생님께 문의하세요.`);
+                        return;
+                    }
+
+                    // 2. 중복 없으면 저장 진행
                     const profile = { class: cls, number: num, name: name, email: this.state.currentUser.email };
                     await db.collection('users').doc(this.state.currentUser.uid).set(profile);
                     this.state.userProfile = profile;
                     document.getElementById('user-info-display').innerText = `${cls}반 ${num}번 ${name}`;
                     this.showView('view-ready');
                 } catch(e) {
-                    alert("등록 오류: " + e.message);
+                    // 인덱스 에러 처리
+                    if(e.code === 'failed-precondition') {
+                         const link = e.message.match(/https:\/\/[^\s]+/);
+                         console.error("인덱스 필요:", link ? link[0] : "콘솔 확인");
+                         alert("시스템 초기화가 필요합니다.\n개발자 도구(F12) 콘솔창의 링크를 눌러 인덱스를 생성해주세요.");
+                    } else {
+                        alert("등록 오류: " + e.message);
+                    }
                 }
                 this.showLoading(false);
             },
@@ -230,7 +255,6 @@
                 if(msg) document.getElementById('loading-text').innerText = msg;
             },
 
-            // [수정됨] goHome 함수에서 11분 -> 10분으로 안내 문구 변경
             goHome: function() {
                 if (this.state.isQuizActive) { if (confirm("포기하고 나가시겠습니까?\n(10분간 재응시 불가)")) location.reload(); } 
                 else location.reload();
@@ -258,7 +282,7 @@
                     await this.loadRandomQuestions();
                     if(!this.state.allQuestions || this.state.allQuestions.length === 0) throw new Error("문제 없음");
 
-                    // [중요] [수정됨] 차단 시간을 11 -> 10으로 변경
+                    // [중요] 10분 차단
                     await db.collection('users').doc(this.state.currentUser.uid).update({
                         blockedUntil: now + (10 * 60 * 1000)
                     });
