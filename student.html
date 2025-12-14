@@ -1,81 +1,5 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>내 학습 기록 - 용신중학교</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f5f5f4; }
-        .serif { font-family: 'Noto Serif KR', serif; }
-        .score-good { color: #15803d; font-weight: bold; }
-        .score-bad { color: #b91c1c; font-weight: bold; }
-    </style>
-</head>
-<body class="text-stone-800 min-h-screen flex flex-col">
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 z-50 flex flex-col justify-center items-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-amber-600 border-solid mb-4"></div>
-        <p class="text-lg font-bold text-stone-600">내 기록장 가져오는 중...</p>
-    </div>
-
-    <header class="bg-stone-900 text-white py-4 shadow-lg sticky top-0 z-40">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <h1 class="text-lg font-bold tracking-tight cursor-pointer" onclick="location.href='index.html'"><i class="fas fa-chevron-left mr-2"></i> 홈으로</h1>
-            <button onclick="app.logout()" class="text-xs bg-stone-700 px-3 py-1 rounded hover:bg-stone-600">로그아웃</button>
-        </div>
-    </header>
-
-    <main class="flex-grow container mx-auto px-4 py-6 max-w-2xl">
-        <section class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 mb-6 flex items-center gap-4">
-            <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center text-3xl">🧑‍🎓</div>
-            <div>
-                <h2 class="text-xl font-bold text-stone-900" id="profile-name">학생 정보 로딩 중...</h2>
-                <p class="text-stone-500 text-sm" id="profile-info">...</p>
-            </div>
-        </section>
-
-        <div class="grid grid-cols-3 gap-3 mb-6">
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-stone-200 text-center">
-                <p class="text-xs text-stone-400 font-bold mb-1">총 응시</p>
-                <p class="text-2xl font-bold text-stone-800" id="stat-total">-</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-stone-200 text-center">
-                <p class="text-xs text-stone-400 font-bold mb-1">최고 점수</p>
-                <p class="text-2xl font-bold text-amber-600" id="stat-best">-</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow-sm border border-stone-200 text-center">
-                <p class="text-xs text-stone-400 font-bold mb-1">평균 점수</p>
-                <p class="text-2xl font-bold text-blue-600" id="stat-avg">-</p>
-            </div>
-        </div>
-
-        <section class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 mb-6">
-            <h3 class="font-bold text-stone-700 mb-4 text-sm"><i class="fas fa-chart-line mr-2"></i>최근 성적 변화</h3>
-            <canvas id="scoreChart" height="150"></canvas>
-        </section>
-
-        <section class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-stone-100 bg-stone-50 flex justify-between items-center">
-                <h3 class="font-bold text-stone-700 text-sm">📜 최근 기록 (20개)</h3>
-            </div>
-            <div id="history-list" class="divide-y divide-stone-100">
-                <div class="p-6 text-center text-stone-400 text-sm">기록을 불러오는 중입니다...</div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="bg-stone-100 py-6 mt-8 border-t border-stone-200 text-center"><p class="text-stone-400 text-xs font-bold font-mono">Copyright © 용신중학교 역사교사 방재석.</p></footer>
-
-    <script>
-        // [설정] 선생님의 파이어베이스 설정값을 여기에 똑같이 넣으세요
+<script>
+        // [설정] 선생님의 파이어베이스 설정값 (그대로 유지)
         const firebaseConfig = { apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU", authDomain: "history-quiz-yongsin.firebaseapp.com", projectId: "history-quiz-yongsin", storageBucket: "history-quiz-yongsin.firebasestorage.app", messagingSenderId: "177587430482", appId: "1:177587430482:web:d79cc145c11e335cc3ab8b", measurementId: "G-LHN97D7R2R" };
         
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
@@ -86,12 +10,28 @@
             currentUser: null,
 
             init: function() {
+                // [수정됨] 1. 세션 유지를 '로컬(영구)'로 강제 설정 후 상태 확인 시작
+                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                    .then(() => {
+                        this.checkAuth();
+                    })
+                    .catch((error) => {
+                        console.error("세션 설정 오류:", error);
+                        // 오류가 나도 일단 인증 확인 시도
+                        this.checkAuth();
+                    });
+            },
+
+            checkAuth: function() {
                 auth.onAuthStateChanged((user) => {
                     if (user) {
+                        console.log("로그인 확인됨:", user.email);
                         this.currentUser = user;
                         this.loadData();
                     } else {
-                        alert("로그인이 필요한 페이지입니다.");
+                        // [디버깅용] 왜 튕기는지 콘솔에 로그 남김
+                        console.log("로그인 상태 아님 (User is null)");
+                        alert("로그인 정보가 없습니다. 다시 로그인해주세요.");
                         window.location.href = 'index.html';
                     }
                 });
@@ -108,7 +48,6 @@
                     }
 
                     // 2. 내 퀴즈 기록 가져오기 (최신순 20개)
-                    // 복합 색인(Index) 오류가 뜨면 콘솔창의 링크를 클릭해서 생성해주세요.
                     const snapshot = await db.collection('quiz_results')
                         .where('uid', '==', this.currentUser.uid)
                         .orderBy('timestamp', 'desc')
@@ -131,11 +70,16 @@
 
                 } catch (e) {
                     console.error(e);
-                    // 만약 Index 에러라면 링크를 클릭해야 하므로 알림
                     if(e.code === 'failed-precondition') {
-                        alert("시스템 최적화 중입니다. (DB 색인 생성 필요)\n잠시 후 다시 시도해주세요.");
+                        // DB 색인(Index) 링크가 콘솔에 뜨면 클릭해야 함
+                        const link = e.message.match(/https:\/\/[^\s]+/);
+                        if(link) console.log("이 링크를 클릭해서 색인을 생성하세요:", link[0]);
+                        alert("시스템 최적화가 필요합니다. 관리자(선생님)에게 문의하거나 개발자 도구(F12)의 콘솔창 링크를 클릭하세요.");
                     } else {
-                        alert("데이터를 불러오는 중 오류가 발생했습니다.");
+                        // 인증 권한 오류일 경우
+                        if(e.code === 'permission-denied') {
+                             alert("데이터를 읽을 권한이 없습니다. Firebase 규칙(Rules)을 확인해주세요.");
+                        }
                     }
                 }
                 document.getElementById('loading-overlay').style.display = 'none';
@@ -172,7 +116,6 @@
             },
 
             renderChart: function(list) {
-                // 그래프는 시간 순서대로 보여줘야 하므로 뒤집기(reverse)
                 const reversedList = [...list].reverse();
                 const labels = reversedList.map((_, i) => `${i+1}회`);
                 const data = reversedList.map(i => i.score);
@@ -200,7 +143,7 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             y: { beginAtZero: true, max: 100, ticks: { stepSize: 20 } },
-                            x: { display: false } // X축 라벨 숨김 (깔끔하게)
+                            x: { display: false }
                         }
                     }
                 });
@@ -215,5 +158,3 @@
 
         window.onload = function() { app.init(); };
     </script>
-</body>
-</html>
