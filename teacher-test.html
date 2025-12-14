@@ -22,17 +22,9 @@
         .rate-bar-fill { height: 100%; transition: width 0.5s ease; }
         .page-btn { padding: 6px 12px; margin: 0 2px; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.9rem; }
         .page-btn.active { background-color: #4b5563; color: white; border-color: #4b5563; font-weight: bold; }
-        
-        /* 보기 버튼 스타일 (선택 시 효과 포함) */
-        .choice-btn { width: 100%; text-align: left; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; background-color: white; margin-bottom: 0.5rem; transition: all 0.2s; cursor: pointer; }
-        .choice-btn:hover { background-color: #f5f5f4; }
-        .choice-btn.selected { border: 2px solid #d97706; background-color: #fffbeb; color: #92400e; font-weight: bold; transform: scale(1.01); }
-        .choice-badge { width: 1.5rem; height: 1.5rem; border-radius: 9999px; background-color: #e5e7eb; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; margin-right: 0.75rem; }
-        .choice-btn.selected .choice-badge { background-color: #d97706; color: white; }
-
-        .ox-btn { height: 60px; font-size: 1.5rem; font-weight: bold; width: 100%; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
-        .ox-btn:hover { background-color: #f0f0f0; }
-        
+        .choice-btn { width: 100%; text-align: left; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; background-color: white; margin-bottom: 0.5rem; }
+        .choice-btn.selected { border: 2px solid #d97706; background-color: #fffbeb; color: #92400e; font-weight: bold; }
+        .ox-btn { height: 60px; font-size: 1.5rem; font-weight: bold; width: 100%; border: 1px solid #ccc; border-radius: 8px; }
         #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
         .q-image-thumb { max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid #ddd; cursor: zoom-in; }
         #image-zoom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; }
@@ -109,7 +101,13 @@
                         <span class="text-xs text-gray-500 flex items-center bg-white px-2 rounded border">💡 전체 통계는 [갱신] 버튼을 누를 때만 업데이트됩니다.</span>
                         <button onclick="app.calculateGlobalStats()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-xs font-bold shadow-md flex items-center"><i class="fas fa-sync mr-1"></i> 전체 통계 갱신 (서버 저장)</button>
                         
-                        <select id="bank-sort" onchange="app.renderBank()" class="p-2 border rounded text-xs"><option value="id">번호순</option><option value="unit">단원순</option><option value="type">유형순</option><option value="rate_asc">취약 유형순</option></select>
+                        <select id="bank-sort" onchange="app.renderBank()" class="p-2 border rounded text-xs">
+                            <option value="id">번호순</option>
+                            <option value="unit">단원순</option>
+                            <option value="type">유형순</option>
+                            <option value="rate_asc">취약 유형순 (정답률 낮음)</option>
+                            <option value="rate_desc">정답률 높은 순</option>
+                        </select>
                         <select id="bank-filter-unit" onchange="app.renderBank()" class="p-2 border rounded text-xs w-32"><option value="all">모든 단원</option><option value="I.">I. 고대</option><option value="II.">II. 종교/문화</option><option value="III.">III. 지역교류</option><option value="IV.">IV. 제국주의</option><option value="V.">V. 세계대전</option></select>
                         <button onclick="app.deleteSelectedQuestions()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-xs font-bold"><i class="fas fa-trash"></i> 삭제</button>
                     </div>
@@ -345,27 +343,37 @@
                 if(!confirm("⚠️ 경고: 이 작업은 모든 학생 데이터를 다운로드합니다.\n데이터 양에 따라 시간이 걸리거나 비용이 발생할 수 있습니다.\n진행하시겠습니까?")) return;
                 
                 this.showLoading(true);
+                // 1. 모든 결과 가져오기 (limit 없음)
                 db.collection("quiz_results").get().then(snapshot => {
                     const stats = {}; 
                     snapshot.forEach(doc => {
                         const data = doc.data();
                         if (data.details) {
                             data.details.forEach(item => {
-                                if (!stats[item.id]) stats[item.id] = { total: 0, correct: 0 };
-                                stats[item.id].total++;
-                                if (item.correct) stats[item.id].correct++;
+                                // id가 숫자인지 문자인지 확인하여 통일
+                                const qId = String(item.id);
+                                if (!stats[qId]) stats[qId] = { total: 0, correct: 0 };
+                                stats[qId].total++;
+                                if (item.correct) stats[qId].correct++;
                             });
                         }
                     });
+
+                    // 2. 각 문제 문서(quiz_questions)에 통계 정보 업데이트 (Batch 처리)
                     const batch = db.batch();
                     Object.keys(stats).forEach(qId => {
+                        // quiz_questions의 문서 ID는 문자열로 저장됨
                         const ref = db.collection("quiz_questions").doc(qId);
-                        batch.update(ref, { stat_total: stats[qId].total, stat_correct: stats[qId].correct });
+                        batch.update(ref, {
+                            stat_total: stats[qId].total,
+                            stat_correct: stats[qId].correct
+                        });
                     });
+
                     return batch.commit();
                 }).then(() => {
                     alert("✅ 전체 통계가 갱신되었습니다.");
-                    this.loadQuestionsFromFirebase();
+                    this.loadQuestionsFromFirebase(); 
                     this.showLoading(false);
                 }).catch(e => {
                     this.showLoading(false);
@@ -379,6 +387,9 @@
                 
                 const sortType = document.getElementById('bank-sort').value;
                 if (sortType === 'id') filtered.sort((a, b) => a.id - b.id);
+                // [추가] 단원순, 유형순 정렬 로직 추가
+                else if (sortType === 'unit') filtered.sort((a, b) => (a.unit || "").localeCompare(b.unit || ""));
+                else if (sortType === 'type') filtered.sort((a, b) => (a.type || "").localeCompare(b.type || ""));
                 else if (sortType.startsWith('rate')) {
                     filtered.sort((a, b) => { 
                         const rA = (a.stat_total > 0) ? a.stat_correct / a.stat_total : 0;
@@ -411,7 +422,6 @@
                     </tr>`;
                 }).join('');
             },
-            // [수정된 부분: 미리보기 인터랙션 구현]
             previewQuestion: function(id) { 
                 const q = this.state.allQuestions.find(x => x.id === id); 
                 if(!q) return; 
@@ -451,7 +461,6 @@
                 document.getElementById('preview-content').innerHTML = html;
                 document.getElementById('preview-modal').style.display = 'flex';
             },
-            // [추가] 미리보기 클릭 핸들러 (스타일 변경 및 정답 확인)
             handlePreviewClick: function(el, isCorrect) {
                 const parent = el.parentNode;
                 Array.from(parent.children).forEach(child => {
