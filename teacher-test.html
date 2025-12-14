@@ -24,7 +24,6 @@
         .page-btn.active { background-color: #4b5563; color: white; border-color: #4b5563; font-weight: bold; }
         .choice-btn { width: 100%; text-align: left; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; background-color: white; margin-bottom: 0.5rem; }
         .choice-btn.selected { border: 2px solid #d97706; background-color: #fffbeb; color: #92400e; font-weight: bold; }
-        .ox-btn { height: 60px; font-size: 1.5rem; font-weight: bold; width: 100%; border: 1px solid #ccc; border-radius: 8px; }
         
         /* 로딩 오버레이 */
         #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; }
@@ -172,10 +171,10 @@
                             <tr>
                                 <th class="p-3 w-16 text-center">반</th>
                                 <th class="p-3 w-16 text-center">번호</th>
-                                <th class="p-3">이름</th>
+                                <th class="p-3">이름 (기록조회)</th>
                                 <th class="p-3">이메일 (구글)</th>
                                 <th class="p-3 text-center">가입/수정일</th>
-                                <th class="p-3 text-center w-40">관리</th>
+                                <th class="p-3 text-center w-32">관리</th>
                             </tr>
                         </thead>
                         <tbody id="student-list-body" class="bg-white">
@@ -294,7 +293,6 @@
             },
             logout: function() { firebase.auth().signOut().then(() => location.reload()); },
             
-            // 로딩 오버레이 제어
             showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
             
             setTeacherTab: function(tab) {
@@ -517,6 +515,8 @@
                     this.state.students = list; this.renderStudentList(list); this.showLoading(false);
                 }).catch(e => { this.showLoading(false); console.error(e); alert("로드 실패: " + e.message); });
             },
+            
+            // [UI 개선] 이름 클릭 시 기록 조회, 아이콘 버튼 적용
             renderStudentList: function(list) {
                 document.getElementById('student-total-count').innerText = `(${list.length}명)`;
                 let html = '';
@@ -527,7 +527,10 @@
                         if(s.createdAt && s.createdAt.toDate) dateStr = s.createdAt.toDate().toLocaleDateString();
                         else if(s.timestamp && s.timestamp.toDate) dateStr = s.timestamp.toDate().toLocaleDateString();
                         const sName = s.name || '이름없음';
-                        html += `<tr class="border-b hover:bg-stone-50"><td class="p-3 text-center font-bold text-lg text-stone-700">${s.class}</td><td class="p-3 text-center font-bold text-lg text-stone-700">${s.number}</td><td class="p-3 font-bold">${sName}</td><td class="p-3 text-xs text-gray-500">${s.email || '-'}</td><td class="p-3 text-center text-xs text-gray-400">${dateStr}</td><td class="p-3 text-center"><button onclick="app.loadStudentHistory('${sName}', '${s.class}', '${s.number}')" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-1 rounded text-xs font-bold mr-1 border border-indigo-200"><i class="fas fa-history mr-1"></i>기록</button><button onclick="app.openStudentEdit('${s.docId}')" class="bg-stone-100 text-stone-600 hover:bg-stone-200 px-2 py-1 rounded text-xs font-bold mr-1">수정</button><button onclick="app.deleteStudent('${s.docId}')" class="bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1 rounded text-xs font-bold">삭제</button></td></tr>`;
+                        html += `<tr class="border-b hover:bg-stone-50 transition-colors"><td class="p-3 text-center font-bold text-lg text-stone-700">${s.class}</td><td class="p-3 text-center font-bold text-lg text-stone-700">${s.number}</td>
+                        <td class="p-3"><span onclick="app.loadStudentHistory('${sName}', '${s.class}', '${s.number}')" class="cursor-pointer font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-2 underline-offset-4 flex items-center gap-2" title="클릭하여 학습 기록 보기">${sName} <i class="fas fa-search-plus text-xs text-indigo-300"></i></span></td>
+                        <td class="p-3 text-xs text-gray-500">${s.email || '-'}</td><td class="p-3 text-center text-xs text-gray-400">${dateStr}</td>
+                        <td class="p-3 text-center"><div class="flex justify-center items-center gap-3"><button onclick="app.openStudentEdit('${s.docId}')" class="text-gray-400 hover:text-blue-600 transition p-2 rounded-full hover:bg-blue-50" title="정보 수정"><i class="fas fa-pen"></i></button><button onclick="app.deleteStudent('${s.docId}')" class="text-gray-400 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50" title="학생 삭제"><i class="fas fa-trash"></i></button></div></td></tr>`;
                     });
                 }
                 document.getElementById('student-list-body').innerHTML = html;
