@@ -40,7 +40,7 @@
     <div id="view-login-screen" style="display: flex;" class="items-center justify-center min-h-screen flex-col bg-stone-100 p-4">
         <div class="bg-white p-8 rounded-xl shadow-xl max-w-sm w-full text-center border-t-4 border-amber-600">
             <h1 class="text-2xl font-bold mb-2">교사 인증</h1>
-            <p class="text-stone-500 mb-8 text-sm">구글 계정으로 로그인하세요.</p>
+            <p class="text-stone-500 mb-8 text-sm">구글 계정으로 로그인하세요.<br>(60분 미활동 시 자동 로그아웃)</p>
             <button onclick="app.login()" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded shadow hover:bg-gray-50 flex items-center justify-center gap-2 transition cursor-pointer">
                 <i class="fab fa-google text-red-500"></i> 구글 계정으로 로그인
             </button>
@@ -54,7 +54,7 @@
                 <div class="flex items-center gap-4">
                     <div>
                         <h2 class="font-bold text-2xl text-stone-800"><i class="fas fa-chalkboard-teacher text-amber-600 mr-2"></i>교사 대시보드</h2>
-                        <p class="text-xs text-stone-500 mt-1">Firebase 연동됨</p>
+                        <p class="text-xs text-stone-500 mt-1">Firebase 연동됨 (자동 로그아웃 설정됨)</p>
                     </div>
                     <div class="flex bg-stone-100 p-1 rounded border border-stone-300 ml-4">
                         <input type="text" id="search-student-name" placeholder="학생 이름 검색" class="bg-transparent px-2 py-1 text-sm outline-none" onkeypress="if(event.key==='Enter') app.searchStudent()">
@@ -151,9 +151,12 @@
         } catch(e) { console.error("Firebase 초기화 실패", e); }
 
         const TEACHER_EMAIL = "westoria28@gmail.com";
+        const SESSION_TIMEOUT = 60 * 60 * 1000; // 60분 (ms 단위)
 
         const app = {
             state: { allQuestions:[], logs:[], questionStats: {}, logPage: 1, logsPerPage: 50 },
+            idleTimer: null,
+
             init: function() {
                 if (typeof firebase === 'undefined' || !firebase.auth) { alert("Firebase 로드 실패"); return; }
                 
@@ -164,21 +167,59 @@
                             document.getElementById('view-dashboard').style.display = 'block';
                             this.loadQuestionsFromFirebase();
                             this.setTeacherTab('log');
+                            this.startIdleTimer(); // 활동 감지 타이머 시작
                         } else {
                             alert("허용되지 않은 계정: " + user.email);
                             firebase.auth().signOut();
                         }
                     } else {
+                        this.stopIdleTimer(); // 로그아웃 시 타이머 중지
                         document.getElementById('view-login-screen').style.display = 'flex';
                         document.getElementById('view-dashboard').style.display = 'none';
                     }
                 });
             },
-            login: function() {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                firebase.auth().signInWithPopup(provider).catch(e => {
-                    alert("로그인 에러: " + e.message);
+
+            // 활동 감지 타이머 시작
+            startIdleTimer: function() {
+                this.resetIdleTimer();
+                // 사용자의 활동(마우스, 키보드, 클릭 등)이 감지되면 타이머 리셋
+                ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+                    document.addEventListener(evt, this.resetIdleTimerWrapper);
                 });
+            },
+
+            stopIdleTimer: function() {
+                clearTimeout(this.idleTimer);
+                ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+                    document.removeEventListener(evt, this.resetIdleTimerWrapper);
+                });
+            },
+
+            // 이벤트 리스너에서 this를 유지하기 위한 래퍼 함수
+            resetIdleTimerWrapper: function() {
+                app.resetIdleTimer();
+            },
+
+            resetIdleTimer: function() {
+                clearTimeout(this.idleTimer);
+                // 60분 후 로그아웃 실행
+                this.idleTimer = setTimeout(() => {
+                    alert("60분 동안 활동이 없어 자동 로그아웃됩니다.");
+                    app.logout();
+                }, SESSION_TIMEOUT);
+            },
+
+            login: function() {
+                // [중요] 세션 지속성을 SESSION으로 설정 (창 닫으면 로그아웃)
+                firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+                    .then(() => {
+                        const provider = new firebase.auth.GoogleAuthProvider();
+                        return firebase.auth().signInWithPopup(provider);
+                    })
+                    .catch((error) => {
+                        alert("로그인 에러: " + error.message);
+                    });
             },
             logout: function() {
                 firebase.auth().signOut().then(() => location.reload());
@@ -297,7 +338,7 @@
                     if(document.getElementById('tab-bank').style.display !== 'none') this.renderBank();
                 }).catch((e) => { console.error("문제 로드 에러:", e); });
             },
-            // [업데이트] 전체 학생의 답안을 전수 조사하여 문제별 통계를 계산하고 DB에 저장하는 함수
+            // 전체 통계 갱신 (서버 저장)
             calculateGlobalStats: function() {
                 if(!confirm("⚠️ 경고: 이 작업은 모든 학생 데이터를 다운로드합니다.\n데이터 양에 따라 시간이 걸리거나 비용이 발생할 수 있습니다.\n진행하시겠습니까?")) return;
                 
@@ -337,7 +378,7 @@
                     alert("통계 갱신 실패: " + e.message);
                 });
             },
-            // [업데이트] renderBank 함수: 저장된 통계(stat_total)가 있으면 그걸 우선 사용
+            // renderBank 함수: 저장된 통계(stat_total)가 있으면 그걸 우선 사용
             renderBank: function() {
                 // 더 이상 로컬 logs로 계산하지 않고, 문제 객체에 저장된 stat_ 정보를 사용
                 let filtered = [...this.state.allQuestions];
