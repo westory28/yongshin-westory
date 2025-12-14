@@ -120,7 +120,7 @@
             state: { student:{}, questions:[], allQuestions:[], currentIndex:0, answers:{}, score:0, timer:null, timeLeft:60, isTimeOut:false, isQuizActive: false },
             
             init: function() { 
-                // 새로고침 방지를 위한 이벤트
+                // 새로고침 방지를 위한 이벤트 등록
                 window.addEventListener('beforeunload', (e) => {
                     if (this.state.isQuizActive) {
                         e.preventDefault();
@@ -131,11 +131,10 @@
 
             showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
 
-            // 홈 버튼 클릭 시 (안전장치)
+            // 홈 버튼 클릭 시 동작 (안전장치)
             goHome: function() {
                 if (this.state.isQuizActive) {
-                    // 퀴즈 중이라면 경고
-                    if (confirm("📢 경고: 지금 나가면 '10분간 재응시'가 불가능합니다.\n(이미 시작 시간이 기록되었습니다)\n\n그래도 나가시겠습니까?")) {
+                    if (confirm("📢 경고: 지금 나가면 '11분간 재응시'가 불가능합니다.\n(이미 시작 시간이 기록되었습니다)\n\n정말 나가시겠습니까?")) {
                         location.reload(); 
                     }
                 } else {
@@ -143,8 +142,9 @@
                 }
             },
 
+            // 키 생성 (공백 제거)
             getStorageKey: function(cls, num, name) {
-                return `history_quiz_block_v5_${cls.trim()}_${num.trim()}_${name.trim()}`;
+                return `block_v6_${cls.trim()}_${num.trim()}_${name.trim()}`;
             },
 
             startQuiz: async function() {
@@ -154,27 +154,25 @@
 
                 if(!cls || !num || !name) { alert("학년, 반, 번호, 이름을 모두 입력하세요."); return; }
                 
-                // [이름 검증] 영어 포함 시 차단
+                // [이름 검증] 영어 입력 차단
                 if(/[a-zA-Z]/.test(name)) {
                     alert("이름에 영어를 사용할 수 없습니다.");
                     document.getElementById('input-name').value = "";
                     return;
                 }
                 
-                // [1. 11분 차단 검사]
+                // [1. 차단 확인] 입장 가능한지 검사
                 const storageKey = this.getStorageKey(cls, num, name);
                 const blockedUntil = localStorage.getItem(storageKey);
 
                 if (blockedUntil) {
                     const now = new Date().getTime();
-                    // 현재 시간이 차단 풀리는 시간보다 전이라면
                     if (now < parseInt(blockedUntil)) {
                         const leftMs = parseInt(blockedUntil) - now;
                         const leftMins = Math.ceil(leftMs / (1000 * 60));
-                        
                         this.showLoading(false);
-                        alert(`⛔ 재응시 불가!\n\n이미 시험을 시작했거나 제출했습니다.\n\n${leftMins}분 뒤에 다시 시도할 수 있습니다.`);
-                        return; // 진입 차단
+                        alert(`⛔ 재응시 불가!\n\n이미 시험을 시작했거나 제출했습니다.\n(시작 시점부터 11분간 제한)\n\n약 ${leftMins}분 뒤에 다시 시도해주세요.`);
+                        return; // 진입 절대 불가
                     }
                 }
 
@@ -195,14 +193,13 @@
                     return;
                 }
 
-                // [2. 시작 즉시 11분 차단 설정]
-                // 1분(문제풀이) + 10분(휴식) = 총 11분간 못 들어오게 막음
-                // 이제 새로고침하거나 도망가도 이 기록 때문에 못 들어옴
-                const blockTime = new Date().getTime() + (11 * 60 * 1000); 
+                // [2. 즉시 족쇄 채우기] 문제 로드 성공 시, 바로 11분 차단 설정
+                // 이제 새로고침하거나 홈으로 나가도 기록이 남아 못 들어옴
+                const blockTime = new Date().getTime() + (11 * 60 * 1000); // 1분(풀이) + 10분(휴식)
                 localStorage.setItem(storageKey, blockTime);
 
                 // 퀴즈 시작
-                this.state.student = { class:cls, number:num, name:name, storageKey: storageKey };
+                this.state.student = { class:cls, number:num, name:name };
                 this.state.questions = this.state.allQuestions; 
                 this.state.currentIndex = 0; 
                 this.state.answers = {}; 
@@ -325,10 +322,7 @@
                 });
                 this.state.score = correct * 20; this.state.incorrectDetails = details;
                 
-                // 제출 완료해도 시간은 갱신하지 않음 (시작할 때 이미 11분 잡아놨으므로)
-                // 만약 시작 시간 기준 11분이 너무 길다면 여기서 '현재시간 + 10분'으로 업데이트 해도 됨
-                // 여기선 강력한 차단을 위해 시작 기준 11분을 유지합니다.
-
+                // 시간은 이미 시작할 때 저장했으므로, 여기선 갱신하지 않고 유지합니다. (11분 룰)
                 this.showView('view-results'); this.renderResults(); this.saveToFirebase(detailLogs);
             },
             
