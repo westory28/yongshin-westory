@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
@@ -38,55 +39,63 @@
         .q-image-thumb { max-width: 100%; max-height: 250px; border-radius: 8px; margin: 10px auto; border: 1px solid #e5e7eb; display: block; object-fit: contain; cursor: zoom-in; transition: transform 0.2s; }
         #image-zoom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; }
         #image-zoom-content { max-width: 95%; max-height: 95%; border-radius: 4px; }
-        
-        .live-badge { 
-            background: rgba(255, 255, 255, 0.2); 
-            border: 1px solid rgba(255, 255, 255, 0.4); 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-size: 0.85rem; 
-            font-weight: bold; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 6px;
-            white-space: nowrap;
-        }
+        .live-badge { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.4); padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
         .live-dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: pulse-dot 2s infinite; }
         @keyframes pulse-dot { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body class="text-stone-800 min-h-screen flex flex-col">
-    <div id="loading-overlay"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-600 border-solid mb-4"></div><p class="text-xl font-bold text-stone-700">로딩 중...</p></div>
+    <div id="loading-overlay"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-600 border-solid mb-4"></div><p class="text-xl font-bold text-stone-700" id="loading-text">로딩 중...</p></div>
     <div id="image-zoom-modal" onclick="document.getElementById('image-zoom-modal').style.display='none'"><img id="image-zoom-content" src=""></div>
 
     <header class="bg-stone-900 text-white py-4 shadow-lg sticky top-0 z-40 cursor-pointer" onclick="app.goHome()">
         <div class="container mx-auto px-4 flex justify-between items-center gap-4">
             <h1 class="text-lg md:text-xl font-bold tracking-tight truncate flex-1"><span class="mr-2">🧑‍🏫</span> 용신중학교 역사교사 방재석</h1>
-            <div class="live-badge">
-                <div class="live-dot"></div>
-                <span id="live-count-text">총 도전: ...</span>
-            </div>
+            <div class="live-badge"><div class="live-dot"></div><span id="live-count-text">총 도전: ...</span></div>
         </div>
     </header>
 
     <main class="flex-grow container mx-auto px-4 py-6">
-        <section id="view-login" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg fade-in mt-8 border-t-4 border-amber-500">
-            <div class="text-center mb-8">
+        <section id="view-login" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg fade-in mt-8 border-t-4 border-amber-500 text-center">
+            <div class="mb-8">
                 <span class="bg-amber-100 text-amber-900 text-sm font-bold px-3 py-1 rounded-full">용신중학교 2학년 2학기 역사1</span>
-                <h2 class="text-2xl font-bold serif text-stone-900 mt-4">당신의 역사 실력은?</h2>
-                <p class="text-red-500 font-bold text-sm mt-2"><i class="fas fa-stopwatch mr-1"></i> 제한시간 60초 (5문제)</p>
+                <h2 class="text-2xl font-bold serif text-stone-900 mt-4">역사 퀴즈 평가</h2>
+                <p class="text-stone-500 mt-2 text-sm">학교 구글 계정으로 로그인하세요.</p>
             </div>
+            <button onclick="app.loginWithGoogle()" class="w-full bg-white border border-stone-300 text-stone-700 font-bold py-4 rounded-lg hover:bg-stone-50 transition shadow-sm flex items-center justify-center gap-3">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6"> 구글 계정으로 시작하기
+            </button>
+            <div class="mt-6 border-t border-stone-100 pt-4">
+                <a href="./student.html" class="text-stone-400 text-xs hover:text-amber-600 underline">내 기록 보기 (학생용 대시보드)</a>
+            </div>
+        </section>
+
+        <section id="view-register" class="hidden max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg fade-in mt-8 border-t-4 border-blue-500">
+            <h2 class="text-xl font-bold text-stone-900 mb-2">👋 첫 방문이시군요!</h2>
+            <p class="text-stone-500 text-sm mb-6">본인 확인을 위해 정보를 입력해주세요.<br>(한 번만 입력하면 됩니다)</p>
             <div class="space-y-4">
                 <div class="flex gap-2">
                     <div class="w-1/4 bg-stone-100 border border-stone-300 rounded flex items-center justify-center font-bold text-stone-600">2학년</div>
-                    <select id="input-class" class="w-2/4 p-3 border border-stone-300 rounded"><option value="">반</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
-                    <select id="input-number" class="w-1/4 p-3 border border-stone-300 rounded text-center">
-                        <option value="">번호</option>
-                    </select>
+                    <select id="reg-class" class="w-2/4 p-3 border border-stone-300 rounded"><option value="">반</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+                    <select id="reg-number" class="w-1/4 p-3 border border-stone-300 rounded text-center"><option value="">번호</option></select>
                 </div>
-                <input type="text" id="input-name" placeholder="이름 (한글만 입력)" class="w-full p-3 border border-stone-300 rounded" oninput="this.value = this.value.replace(/[a-zA-Z]/g, '')">
-                <button onclick="app.startQuiz()" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg hover:bg-stone-700 transition shadow-lg mt-4">도전 시작 <i class="fas fa-play ml-2"></i></button>
+                <input type="text" id="reg-name" placeholder="이름 (한글 2~4자)" class="w-full p-3 border border-stone-300 rounded">
+                <button onclick="app.registerUser()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-lg hover:bg-blue-700 transition shadow-lg">정보 등록 완료</button>
             </div>
+        </section>
+
+        <section id="view-ready" class="hidden max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg fade-in mt-8 border-t-4 border-green-500 text-center">
+            <h2 class="text-2xl font-bold text-stone-900 mb-2">환영합니다!</h2>
+            <p class="text-xl font-bold text-amber-600 mb-6"><span id="user-info-display"></span> 학생</p>
+            
+            <p class="text-stone-500 text-sm mb-6 bg-stone-50 p-3 rounded">⚠️ <strong>주의사항</strong><br>시작 버튼을 누르면 <strong>11분간 재응시가 불가능</strong>합니다.<br>준비되면 시작하세요.</p>
+            
+            <button onclick="location.href='student.html'" class="w-full bg-white border border-stone-300 text-stone-700 font-bold py-3 rounded-lg hover:bg-stone-50 transition shadow-sm mb-3">
+                📊 내 기록 보기
+            </button>
+
+            <button onclick="app.startQuiz()" class="w-full bg-green-600 text-white font-bold py-4 rounded-lg hover:bg-green-700 transition shadow-lg text-lg">도전 시작 <i class="fas fa-play ml-2"></i></button>
+            <button onclick="firebase.auth().signOut(); location.reload();" class="mt-4 text-stone-400 text-xs underline">로그아웃</button>
         </section>
 
         <section id="view-quiz" class="hidden max-w-2xl mx-auto fade-in">
@@ -138,98 +147,129 @@
         } catch(e) { console.error("Error", e); }
 
         const app = {
-            state: { student:{}, questions:[], allQuestions:[], currentIndex:0, answers:{}, score:0, timer:null, timeLeft:60, isTimeOut:false, isQuizActive: false },
+            state: { currentUser: null, userProfile: null, questions:[], allQuestions:[], currentIndex:0, answers:{}, score:0, timer:null, timeLeft:60, isTimeOut:false, isQuizActive: false },
             
             init: function() { 
-                window.addEventListener('beforeunload', (e) => {
-                    if (this.state.isQuizActive) { e.preventDefault(); e.returnValue = ''; }
-                });
+                window.addEventListener('beforeunload', (e) => { if (this.state.isQuizActive) { e.preventDefault(); e.returnValue = ''; } });
                 
-                const numSelect = document.getElementById('input-number');
-                for(let i=1; i<=35; i++) {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.innerText = i;
-                    numSelect.appendChild(opt);
-                }
+                // 번호 선택지 생성
+                const numSelect = document.getElementById('reg-number');
+                for(let i=1; i<=35; i++) { const opt = document.createElement('option'); opt.value = i; opt.innerText = i; numSelect.appendChild(opt); }
 
                 this.updateVisitCount();
+                
+                // [중요] 인증 상태 감지 리스너
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        this.state.currentUser = user;
+                        this.checkUserProfile(user.uid);
+                    } else {
+                        this.showView('view-login');
+                        this.showLoading(false);
+                    }
+                });
+            },
+
+            // 구글 로그인
+            loginWithGoogle: function() {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                firebase.auth().signInWithPopup(provider).catch((error) => {
+                    alert("로그인 실패: " + error.message);
+                });
+            },
+
+            // 유저 프로필(DB) 확인
+            checkUserProfile: async function(uid) {
+                this.showLoading(true, "정보 확인 중...");
+                const doc = await db.collection('users').doc(uid).get();
+                if (doc.exists) {
+                    this.state.userProfile = doc.data();
+                    document.getElementById('user-info-display').innerText = `${this.state.userProfile.class}반 ${this.state.userProfile.number}번 ${this.state.userProfile.name}`;
+                    this.showView('view-ready');
+                } else {
+                    this.showView('view-register');
+                }
+                this.showLoading(false);
+            },
+
+            // 최초 정보 등록
+            registerUser: async function() {
+                const cls = document.getElementById('reg-class').value;
+                const num = document.getElementById('reg-number').value;
+                const name = document.getElementById('reg-name').value.trim();
+
+                if(!cls || !num || !name) { alert("정보를 모두 입력해주세요."); return; }
+                const nameRegex = /^[가-힣]{2,4}$/;
+                if (!nameRegex.test(name)) { alert("이름은 2~4글자 한글만 가능합니다."); return; }
+
+                this.showLoading(true, "등록 중...");
+                try {
+                    const profile = { class: cls, number: num, name: name, email: this.state.currentUser.email };
+                    await db.collection('users').doc(this.state.currentUser.uid).set(profile);
+                    this.state.userProfile = profile;
+                    document.getElementById('user-info-display').innerText = `${cls}반 ${num}번 ${name}`;
+                    this.showView('view-ready');
+                } catch(e) {
+                    alert("등록 오류: " + e.message);
+                }
+                this.showLoading(false);
             },
 
             updateVisitCount: function() {
                 const badgeText = document.getElementById("live-count-text");
                 const sessionKey = 'quiz_visited_session'; 
-
                 if (!sessionStorage.getItem(sessionKey)) {
-                    fetch('https://api.counterapi.dev/v1/westory28-history-quiz/visits/up')
-                        .then(res => res.json())
-                        .then(data => {
-                            badgeText.innerText = `총 도전: ${data.count}명`;
-                            sessionStorage.setItem(sessionKey, 'true');
-                        })
-                        .catch(err => { badgeText.innerText = "총 도전: -명"; });
+                    fetch('https://api.counterapi.dev/v1/westory28-history-quiz/visits/up').then(res=>res.json()).then(d=>{ badgeText.innerText = `총 도전: ${d.count}명`; sessionStorage.setItem(sessionKey, 'true'); }).catch(()=>{});
                 } else {
-                    fetch('https://api.counterapi.dev/v1/westory28-history-quiz/visits/')
-                        .then(res => res.json())
-                        .then(data => { badgeText.innerText = `총 도전: ${data.count}명`; })
-                        .catch(err => { badgeText.innerText = "총 도전: -명"; });
+                    fetch('https://api.counterapi.dev/v1/westory28-history-quiz/visits/').then(res=>res.json()).then(d=>{ badgeText.innerText = `총 도전: ${d.count}명`; }).catch(()=>{});
                 }
             },
 
-            showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
-
-            goHome: function() {
-                if (this.state.isQuizActive) {
-                    if (confirm("📢 경고: 지금 나가면 '11분간 재응시'가 불가능합니다.\n정말 나가시겠습니까?")) location.reload(); 
-                } else location.reload();
+            showLoading: function(show, msg="로딩 중...") { 
+                document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; 
+                if(msg) document.getElementById('loading-text').innerText = msg;
             },
 
-            getStorageKey: function(cls, num, name) {
-                return `block_v7_${cls.trim()}_${num.trim()}_${name.trim()}`;
+            goHome: function() {
+                if (this.state.isQuizActive) { if (confirm("포기하고 나가시겠습니까?\n(11분간 재응시 불가)")) location.reload(); } 
+                else location.reload();
             },
 
             startQuiz: async function() {
-                const cls = document.getElementById('input-class').value;
-                const num = document.getElementById('input-number').value;
-                const name = document.getElementById('input-name').value.trim();
-
-                if(!cls || !num || !name) { alert("학년, 반, 번호, 이름을 모두 입력하세요."); return; }
+                // [서버 체크] 11분 차단 로직
+                this.showLoading(true, "응시 가능 여부 확인 중...");
                 
-                const nameRegex = /^[가-힣]{2,4}$/;
-                if (!nameRegex.test(name)) {
-                    alert("이름은 2~4글자의 한글로만 입력해주세요.\n(자음, 모음, 특수문자, 숫자, 공백 불가)");
-                    document.getElementById('input-name').value = ""; 
-                    document.getElementById('input-name').focus();
-                    return;
-                }
-                
-                const storageKey = this.getStorageKey(cls, num, name);
-                const blockedUntil = localStorage.getItem(storageKey);
-
-                if (blockedUntil) {
+                try {
+                    // DB에서 최신 유저 정보(차단 시간) 다시 가져오기
+                    const userDoc = await db.collection('users').doc(this.state.currentUser.uid).get();
+                    const userData = userDoc.data();
+                    const blockedUntil = userData.blockedUntil || 0;
                     const now = new Date().getTime();
-                    if (now < parseInt(blockedUntil)) {
-                        const leftMins = Math.ceil((parseInt(blockedUntil) - now) / (1000 * 60));
+
+                    if (now < blockedUntil) {
+                        const leftMins = Math.ceil((blockedUntil - now) / (1000 * 60));
                         this.showLoading(false);
-                        alert(`⛔ 재응시 불가!\n\n시험을 시작했거나 제출했습니다.\n${leftMins}분 뒤에 다시 시도할 수 있습니다.`);
+                        alert(`⛔ 재응시 불가!\n\n${leftMins}분 뒤에 다시 시도할 수 있습니다.`);
                         return;
                     }
-                }
 
-                this.showLoading(true);
-
-                try {
+                    // 문제 로드
                     await this.loadRandomQuestions();
                     if(!this.state.allQuestions || this.state.allQuestions.length === 0) throw new Error("문제 없음");
+
+                    // [중요] 서버에 11분 차단 시간 기록 (Start 시점)
+                    await db.collection('users').doc(this.state.currentUser.uid).update({
+                        blockedUntil: now + (11 * 60 * 1000)
+                    });
+
                 } catch(e) {
                     this.showLoading(false);
-                    alert("문제를 불러오는 중 오류가 발생했습니다.\n" + e.message);
+                    alert("오류 발생: " + e.message);
                     return;
                 }
 
-                localStorage.setItem(storageKey, new Date().getTime() + (11 * 60 * 1000));
-
-                this.state.student = { class:cls, number:num, name:name, storageKey: storageKey };
+                // 퀴즈 시작
+                this.state.student = this.state.userProfile; // 프로필 정보 복사
                 this.state.questions = this.state.allQuestions; 
                 this.state.currentIndex = 0; 
                 this.state.answers = {}; 
@@ -246,41 +286,22 @@
 
             loadRandomQuestions: async function() {
                 if(!db) return;
-                
                 let totalCount = 189; 
-                try {
-                    const metaDoc = await db.collection("metadata").doc("count_info").get();
-                    if (metaDoc.exists) totalCount = metaDoc.data().total_questions || 189;
-                } catch(e) {}
+                try { const metaDoc = await db.collection("metadata").doc("count_info").get(); if (metaDoc.exists) totalCount = metaDoc.data().total_questions || 189; } catch(e) {}
                 
                 const randomIds = new Set();
                 const pickCount = Math.min(5, totalCount); 
                 
                 if (totalCount >= 5) {
-                    const recentRange = 50; 
-                    const startOfRecent = Math.max(1, totalCount - recentRange + 1);
-                    while(randomIds.size < 3) {
-                        const rand = Math.floor(Math.random() * (totalCount - startOfRecent + 1)) + startOfRecent;
-                        randomIds.add(rand.toString());
-                    }
+                    const recentRange = 50; const startOfRecent = Math.max(1, totalCount - recentRange + 1);
+                    while(randomIds.size < 3) { const rand = Math.floor(Math.random() * (totalCount - startOfRecent + 1)) + startOfRecent; randomIds.add(rand.toString()); }
                 }
-
-                while(randomIds.size < pickCount) {
-                    const rand = Math.floor(Math.random() * totalCount) + 1;
-                    randomIds.add(rand.toString());
-                }
+                while(randomIds.size < pickCount) { const rand = Math.floor(Math.random() * totalCount) + 1; randomIds.add(rand.toString()); }
+                
                 const targetIds = Array.from(randomIds);
-
-                const qSnapshot = await db.collection("quiz_questions")
-                    .where(firebase.firestore.FieldPath.documentId(), 'in', targetIds)
-                    .get();
-
+                const qSnapshot = await db.collection("quiz_questions").where(firebase.firestore.FieldPath.documentId(), 'in', targetIds).get();
                 const loadedData = [];
-                qSnapshot.forEach((doc) => { 
-                    let data = doc.data(); 
-                    data.id = parseInt(doc.id); 
-                    loadedData.push(data); 
-                });
+                qSnapshot.forEach((doc) => { let data = doc.data(); data.id = parseInt(doc.id); loadedData.push(data); });
                 this.state.allQuestions = this.shuffleArray(loadedData);
             },
 
@@ -357,13 +378,7 @@
                 let correct = 0; let details = []; let detailLogs = [];
                 this.state.questions.forEach(q => {
                     const u = (this.state.answers[q.id]||"").toString().replace(/\s+/g,'').trim(); const a = q.answer.toString().replace(/\s+/g,'').trim();
-                    
-                    // [수정] 빈 답안이면 무조건 오답 처리 (빈칸 체크 강화)
-                    let isC = false;
-                    if(u.length > 0) {
-                        isC = (q.type === 'word' || q.type === 'blank') ? (u.includes(a)||a.includes(u)) : (u === a);
-                    }
-                    
+                    let isC = false; if(u.length > 0) { isC = (q.type === 'word' || q.type === 'blank') ? (u.includes(a)||a.includes(u)) : (u === a); }
                     if(isC) correct++; else details.push({q:q.question, u:u||"미입력", a:q.answer, exp:q.explanation});
                     detailLogs.push({ id: q.id, correct: isC, u: u });
                 });
@@ -384,7 +399,8 @@
             saveToFirebase: function(detailLogs = []) {
                 const status = document.getElementById('submission-status');
                 if(!db) { status.innerHTML = "⚠️ DB 연결 실패"; return; }
-                const data = { timestamp: firebase.firestore.FieldValue.serverTimestamp(), timeString: new Date().toLocaleString(), class: this.state.student.class, number: this.state.student.number, name: this.state.student.name, score: this.state.score, status: this.state.isTimeOut ? "시간초과" : "완료", details: detailLogs };
+                const data = { timestamp: firebase.firestore.FieldValue.serverTimestamp(), timeString: new Date().toLocaleString(), class: this.state.student.class, number: this.state.student.number, name: this.state.student.name, score: this.state.score, status: this.state.isTimeOut ? "시간초과" : "완료", details: detailLogs, uid: this.state.currentUser.uid };
+                db.collection("metadata").doc("stats").set({ total_plays: firebase.firestore.FieldValue.increment(1) }, { merge: true });
                 db.collection("quiz_results").add(data).then(() => { status.className = "bg-green-100 text-green-700 p-3 rounded text-sm mb-6 border border-green-200 font-bold"; status.innerHTML = '<i class="fas fa-check-circle"></i> 제출 완료!'; }).catch((error) => { console.error("Error: ", error); status.className = "bg-red-100 text-red-700 p-3 rounded text-sm mb-6 border border-red-200"; status.innerHTML = '⚠️ 전송 실패'; });
             },
             
