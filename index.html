@@ -6,8 +6,10 @@
     <title>용신중학교 역사 평가</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -42,7 +44,7 @@
     <div id="loading-overlay"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-600 border-solid mb-4"></div><p class="text-xl font-bold text-stone-700">로딩 중...</p></div>
     <div id="image-zoom-modal" onclick="document.getElementById('image-zoom-modal').style.display='none'"><img id="image-zoom-content" src=""></div>
 
-    <header class="bg-stone-900 text-white py-4 shadow-lg sticky top-0 z-40">
+    <header class="bg-stone-900 text-white py-4 shadow-lg sticky top-0 z-40 cursor-pointer" onclick="app.goHome()">
         <div class="container mx-auto px-4"><h1 class="text-lg md:text-xl font-bold tracking-tight truncate"><span class="mr-2">🧑‍🏫</span> 용신중학교 역사교사 방재석</h1></div>
     </header>
 
@@ -59,7 +61,7 @@
                     <select id="input-class" class="w-2/4 p-3 border border-stone-300 rounded"><option value="">반</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
                     <input type="number" id="input-number" placeholder="번호" class="w-1/4 p-3 border border-stone-300 rounded text-center">
                 </div>
-                <input type="text" id="input-name" placeholder="이름" class="w-full p-3 border border-stone-300 rounded">
+                <input type="text" id="input-name" placeholder="이름 (한글만 입력)" class="w-full p-3 border border-stone-300 rounded" oninput="this.value = this.value.replace(/[a-zA-Z]/g, '')">
                 <button onclick="app.startQuiz()" class="w-full bg-stone-900 text-white font-bold py-4 rounded-lg hover:bg-stone-700 transition shadow-lg mt-4">도전 시작 <i class="fas fa-play ml-2"></i></button>
             </div>
         </section>
@@ -105,64 +107,183 @@
 
     <script>
         const firebaseConfig = { apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU", authDomain: "history-quiz-yongsin.firebaseapp.com", projectId: "history-quiz-yongsin", storageBucket: "history-quiz-yongsin.firebasestorage.app", messagingSenderId: "177587430482", appId: "1:177587430482:web:d79cc145c11e335cc3ab8b", measurementId: "G-LHN97D7R2R" };
-        let db; try { if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } db = firebase.firestore(); } catch(e) { alert("Firebase 오류"); }
+        
+        let db; 
+        try { 
+            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } 
+            db = firebase.firestore(); 
+        } catch(e) { 
+            console.error("Firebase Init Error", e);
+        }
 
         const app = {
             state: { student:{}, questions:[], allQuestions:[], currentIndex:0, answers:{}, score:0, timer:null, timeLeft:60, isTimeOut:false, isQuizActive: false },
-            init: function() { this.loadQuestionsFromFirebase(); },
-            showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
-            loadQuestionsFromFirebase: function() {
-                if(!db) return;
-                this.showLoading(true);
-                db.collection("quiz_questions").get().then((querySnapshot) => {
-                    const loadedData = [];
-                    querySnapshot.forEach((doc) => { let data = doc.data(); data.id = parseInt(doc.id); loadedData.push(data); });
-                    loadedData.sort((a, b) => a.id - b.id);
-                    this.state.allQuestions = loadedData;
-                    this.showLoading(false);
-                }).catch((error) => { this.showLoading(false); this.state.allQuestions = []; });
+            
+            init: function() { 
+                // 새로고침 방지를 위한 이벤트
+                window.addEventListener('beforeunload', (e) => {
+                    if (this.state.isQuizActive) {
+                        e.preventDefault();
+                        e.returnValue = ''; 
+                    }
+                });
             },
+
+            showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
+
+            // 홈 버튼 클릭 시 (안전장치)
+            goHome: function() {
+                if (this.state.isQuizActive) {
+                    // 퀴즈 중이라면 경고
+                    if (confirm("📢 경고: 지금 나가면 '10분간 재응시'가 불가능합니다.\n(이미 시작 시간이 기록되었습니다)\n\n그래도 나가시겠습니까?")) {
+                        location.reload(); 
+                    }
+                } else {
+                    location.reload();
+                }
+            },
+
+            getStorageKey: function(cls, num, name) {
+                return `history_quiz_block_v5_${cls.trim()}_${num.trim()}_${name.trim()}`;
+            },
+
             startQuiz: async function() {
                 const cls = document.getElementById('input-class').value;
                 const num = document.getElementById('input-number').value;
                 const name = document.getElementById('input-name').value.trim();
-                if(!cls || !num || !name) { alert("정보를 모두 입력하세요."); return; }
+
+                if(!cls || !num || !name) { alert("학년, 반, 번호, 이름을 모두 입력하세요."); return; }
+                
+                // [이름 검증] 영어 포함 시 차단
+                if(/[a-zA-Z]/.test(name)) {
+                    alert("이름에 영어를 사용할 수 없습니다.");
+                    document.getElementById('input-name').value = "";
+                    return;
+                }
+                
+                // [1. 11분 차단 검사]
+                const storageKey = this.getStorageKey(cls, num, name);
+                const blockedUntil = localStorage.getItem(storageKey);
+
+                if (blockedUntil) {
+                    const now = new Date().getTime();
+                    // 현재 시간이 차단 풀리는 시간보다 전이라면
+                    if (now < parseInt(blockedUntil)) {
+                        const leftMs = parseInt(blockedUntil) - now;
+                        const leftMins = Math.ceil(leftMs / (1000 * 60));
+                        
+                        this.showLoading(false);
+                        alert(`⛔ 재응시 불가!\n\n이미 시험을 시작했거나 제출했습니다.\n\n${leftMins}분 뒤에 다시 시도할 수 있습니다.`);
+                        return; // 진입 차단
+                    }
+                }
+
                 this.showLoading(true);
+
                 try {
-                    const logsRef = db.collection("quiz_results");
-                    const snapshot = await logsRef.where("class", "==", cls).where("number", "==", num).where("name", "==", name).get();
-                    let recentSubmission = null;
-                    snapshot.forEach(doc => { const data = doc.data(); if (data.timestamp) { const date = data.timestamp.toDate(); if (!recentSubmission || date > recentSubmission) recentSubmission = date; } });
-                    if (recentSubmission) { const diffMins = (new Date() - recentSubmission) / (1000 * 60); if (diffMins < 10) { this.showLoading(false); alert(`이미 제출하셨습니다. ${Math.ceil(10 - diffMins)}분 뒤에 시도하세요.`); return; } }
-                } catch(e) {}
+                    await this.loadRandomQuestions();
+
+                    if(!this.state.allQuestions || this.state.allQuestions.length === 0) {
+                        throw new Error("로드된 문제가 없습니다.");
+                    }
+
+                } catch(e) {
+                    console.error("Error Detail:", e);
+                    this.showLoading(false);
+                    if (e.code === 'permission-denied') alert("오류: 데이터베이스 접근 권한이 없습니다.");
+                    else alert("오류: " + e.message);
+                    return;
+                }
+
+                // [2. 시작 즉시 11분 차단 설정]
+                // 1분(문제풀이) + 10분(휴식) = 총 11분간 못 들어오게 막음
+                // 이제 새로고침하거나 도망가도 이 기록 때문에 못 들어옴
+                const blockTime = new Date().getTime() + (11 * 60 * 1000); 
+                localStorage.setItem(storageKey, blockTime);
+
+                // 퀴즈 시작
+                this.state.student = { class:cls, number:num, name:name, storageKey: storageKey };
+                this.state.questions = this.state.allQuestions; 
+                this.state.currentIndex = 0; 
+                this.state.answers = {}; 
+                this.state.score = 0; 
+                this.state.timeLeft = 60; 
+                this.state.isTimeOut = false; 
+                this.state.isQuizActive = true; 
+                
                 this.showLoading(false);
-                this.state.student = { class:cls, number:num, name:name };
-                if(this.state.allQuestions.length === 0) { alert("문제 없음"); return; }
-                const unitGroups = {}; this.state.allQuestions.forEach(q => { const u = q.unit || "기타"; if(!unitGroups[u]) unitGroups[u] = []; unitGroups[u].push(q); });
-                const targetUnits = ["I. 문명의 발생과 고대 세계의 형성", "II. 세계 종교의 확산과 지역 문화의 형성", "III. 지역 세계의 교류와 변화", "IV. 제국주의 침략과 국민 국가 건설 운동", "V. 세계 대전과 사회 변동"];
-                const selectedQuestions = []; const usedIds = new Set();
-                targetUnits.forEach(u => { if(unitGroups[u] && unitGroups[u].length > 0) { const q = unitGroups[u][Math.floor(Math.random() * unitGroups[u].length)]; selectedQuestions.push(q); usedIds.add(q.id); } });
-                if (selectedQuestions.length < 5) { const remaining = this.state.allQuestions.filter(q => !usedIds.has(q.id)); const shuffled = this.shuffleArray(remaining); for(let i=0; i<5-selectedQuestions.length; i++) if(shuffled[i]) selectedQuestions.push(shuffled[i]); }
-                this.state.questions = this.shuffleArray(selectedQuestions);
-                this.state.currentIndex = 0; this.state.answers = {}; this.state.score = 0; this.state.timeLeft = 60; this.state.isTimeOut = false; this.state.isQuizActive = true; 
-                this.showView('view-quiz'); this.renderQuestion(); this.startTimer();
+                this.showView('view-quiz'); 
+                this.renderQuestion(); 
+                this.startTimer();
             },
+
+            loadRandomQuestions: async function() {
+                if(!db) return;
+                let totalCount = 132; 
+                try {
+                    const metaDoc = await db.collection("metadata").doc("count_info").get();
+                    if (metaDoc.exists) totalCount = metaDoc.data().total_questions || 132;
+                } catch(e) {}
+                
+                const randomIds = new Set();
+                const pickCount = Math.min(5, totalCount); 
+                while(randomIds.size < pickCount) {
+                    const rand = Math.floor(Math.random() * totalCount) + 1;
+                    randomIds.add(rand.toString());
+                }
+                const targetIds = Array.from(randomIds);
+
+                const qSnapshot = await db.collection("quiz_questions")
+                    .where(firebase.firestore.FieldPath.documentId(), 'in', targetIds)
+                    .get();
+
+                const loadedData = [];
+                qSnapshot.forEach((doc) => { 
+                    let data = doc.data(); 
+                    data.id = parseInt(doc.id); 
+                    loadedData.push(data); 
+                });
+                this.state.allQuestions = this.shuffleArray(loadedData);
+            },
+
             shuffleArray: function(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; },
-            startTimer: function() { if(this.state.timer) clearInterval(this.state.timer); const bar = document.getElementById('timer-bar'), txt = document.getElementById('timer-text'); bar.style.width='100%'; txt.innerText='60초'; this.state.timer = setInterval(() => { this.state.timeLeft--; txt.innerText = this.state.timeLeft + '초'; bar.style.width = (this.state.timeLeft/60)*100 + '%'; if(this.state.timeLeft<=10) { bar.classList.add('timer-urgent'); txt.classList.add('animate-pulse'); } if(this.state.timeLeft<=0) { clearInterval(this.state.timer); this.state.isTimeOut=true; alert("종료"); this.finishQuiz(); } }, 1000); },
+            
+            startTimer: function() { 
+                if(this.state.timer) clearInterval(this.state.timer); 
+                const bar = document.getElementById('timer-bar'), txt = document.getElementById('timer-text'); 
+                bar.style.width='100%'; txt.innerText='60초'; 
+                this.state.timer = setInterval(() => { 
+                    this.state.timeLeft--; 
+                    txt.innerText = this.state.timeLeft + '초'; 
+                    bar.style.width = (this.state.timeLeft/60)*100 + '%'; 
+                    if(this.state.timeLeft<=10) { bar.classList.add('timer-urgent'); txt.classList.add('animate-pulse'); } 
+                    if(this.state.timeLeft<=0) { clearInterval(this.state.timer); this.state.isTimeOut=true; alert("종료"); this.finishQuiz(); } 
+                }, 1000); 
+            },
+
             renderQuestion: function() {
                 const q = this.state.questions[this.state.currentIndex];
                 this.tempAnswer = this.state.answers[q.id] || null;
-                document.getElementById('quiz-progress-text').innerText = `${this.state.currentIndex+1}/5`;
+                document.getElementById('quiz-progress-text').innerText = `${this.state.currentIndex+1}/${this.state.questions.length}`;
                 document.getElementById('question-badge').innerText = {'choice':'객관식','blank':'단답','word':'단답','order':'순서','ox':'O/X'}[q.type];
                 document.getElementById('student-question-unit').innerText = q.unit || "기타";
-                const img = document.getElementById('question-image'); if(q.image) { img.src=q.image; img.parentNode.classList.remove('hidden'); } else img.parentNode.classList.add('hidden');
-                document.getElementById('question-text').innerText = q.question;
+                const img = document.getElementById('question-image'); 
+                if(q.image) { img.src=q.image; img.parentNode.classList.remove('hidden'); } else img.parentNode.classList.add('hidden');
+                document.getElementById('question-text').innerHTML = this.linkify(q.question);
+                
                 const area = document.getElementById('answer-area'); area.innerHTML = ''; 
                 document.getElementById('btn-prev').classList.toggle('hidden', this.state.currentIndex === 0);
                 document.getElementById('btn-next').className = this.state.currentIndex === 0 ? "w-full bg-amber-600 text-white font-bold py-4 rounded-lg hover:bg-amber-700 transition shadow-md" : "w-2/3 bg-amber-600 text-white font-bold py-4 rounded-lg hover:bg-amber-700 transition shadow-md";
+                
                 if(q.type === 'choice') { 
                     const grid = document.createElement('div'); grid.className="grid grid-cols-1 gap-3"; 
-                    q.options.forEach((opt,i) => { const btn = document.createElement('div'); const isSelected = this.tempAnswer === opt; btn.className = `choice-btn ${isSelected ? 'selected' : ''}`; btn.innerHTML = `<span class="choice-badge">${i+1}</span> ${opt}`; btn.onclick = () => { this.state.answers[q.id] = opt; this.renderQuestion(); }; grid.appendChild(btn); }); area.appendChild(grid); 
+                    q.options.forEach((opt,i) => { 
+                        const btn = document.createElement('div'); const isSelected = this.tempAnswer === opt; 
+                        btn.className = `choice-btn ${isSelected ? 'selected' : ''}`; 
+                        btn.innerHTML = `<span class="choice-badge">${i+1}</span> ${this.linkify(opt)}`; 
+                        btn.onclick = () => { this.state.answers[q.id] = opt; this.renderQuestion(); }; 
+                        grid.appendChild(btn); 
+                    }); area.appendChild(grid); 
                 } else if(q.type === 'ox') { 
                     const box = document.createElement('div'); box.className="flex gap-4 h-40"; 
                     const btnO = document.createElement('button'); btnO.className=`flex-1 ox-btn btn-o ${this.tempAnswer==='O'?'selected':''}`; btnO.innerText="O"; btnO.onclick=()=>{ this.state.answers[q.id]='O'; this.renderQuestion(); }; 
@@ -180,8 +301,19 @@
                     if(this.tempAnswer) inp.value = this.tempAnswer; inp.oninput = (e) => { this.tempAnswer=e.target.value; this.state.answers[q.id] = e.target.value; }; inp.onkeydown = (e) => { if(e.key==='Enter') this.submitAnswer(); }; area.appendChild(inp); 
                 }
             },
+
+            linkify: function(text) {
+                if(!text) return "";
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                return text.replace(urlRegex, function(url) {
+                    return '<a href="' + url + '" target="_blank" class="text-blue-600 underline font-bold" onclick="event.stopPropagation()">링크 열기</a>';
+                });
+            },
+
             prevQuestion: function() { const q = this.state.questions[this.state.currentIndex]; if (this.state.currentIndex > 0) { this.state.currentIndex--; this.renderQuestion(); } },
+            
             submitAnswer: function() { const q = this.state.questions[this.state.currentIndex]; let ans = this.state.answers[q.id]; if(q.type==='order') { if(!ans || ans.split('-').length !== q.options.length) { alert("순서를 완성하세요"); return; } } else if(!ans) { alert("정답을 입력하세요"); return; } if(this.state.currentIndex < 4) { this.state.currentIndex++; this.renderQuestion(); } else this.finishQuiz(); },
+            
             finishQuiz: function() {
                 clearInterval(this.state.timer); this.state.isQuizActive = false;
                 let correct = 0; let details = []; let detailLogs = [];
@@ -192,15 +324,31 @@
                     detailLogs.push({ id: q.id, correct: isC, u: u });
                 });
                 this.state.score = correct * 20; this.state.incorrectDetails = details;
+                
+                // 제출 완료해도 시간은 갱신하지 않음 (시작할 때 이미 11분 잡아놨으므로)
+                // 만약 시작 시간 기준 11분이 너무 길다면 여기서 '현재시간 + 10분'으로 업데이트 해도 됨
+                // 여기선 강력한 차단을 위해 시작 기준 11분을 유지합니다.
+
                 this.showView('view-results'); this.renderResults(); this.saveToFirebase(detailLogs);
             },
-            renderResults: function() { document.getElementById('result-name').innerText = this.state.student.name; document.getElementById('score-text').innerText = this.state.score; const ctx = document.getElementById('scoreChart').getContext('2d'); if(window.myChart) window.myChart.destroy(); window.myChart = new Chart(ctx, { type:'doughnut', data:{labels:['정답','오답'], datasets:[{data:[this.state.score, 100-this.state.score], backgroundColor:['#d97706','#e5e7eb'], borderWidth:0}]}, options:{cutout:'80%', plugins:{legend:{display:false}}} }); const list = document.getElementById('review-list'); list.innerHTML = this.state.incorrectDetails.length===0 ? '<div class="text-center py-4">만점입니다! 🎉</div>' : this.state.incorrectDetails.map(d => `<div class="border-b pb-3 last:border-0"><p class="font-bold text-stone-800 mb-1">Q. ${d.q}</p><div class="flex gap-2 text-xs mb-2"><span class="text-red-600 bg-red-50 px-2 py-1 rounded">내 답: ${d.u}</span><span class="text-green-600 bg-green-50 px-2 py-1 rounded font-bold">정답: ${d.a}</span></div><p class="text-xs text-stone-500 bg-stone-50 p-2 rounded">${d.exp}</p></div>`).join(''); },
+            
+            renderResults: function() { 
+                document.getElementById('result-name').innerText = this.state.student.name; 
+                document.getElementById('score-text').innerText = this.state.score; 
+                const ctx = document.getElementById('scoreChart').getContext('2d'); 
+                if(window.myChart) window.myChart.destroy(); 
+                window.myChart = new Chart(ctx, { type:'doughnut', data:{labels:['정답','오답'], datasets:[{data:[this.state.score, 100-this.state.score], backgroundColor:['#d97706','#e5e7eb'], borderWidth:0}]}, options:{cutout:'80%', plugins:{legend:{display:false}}} }); 
+                const list = document.getElementById('review-list'); 
+                list.innerHTML = this.state.incorrectDetails.length===0 ? '<div class="text-center py-4">만점입니다! 🎉</div>' : this.state.incorrectDetails.map(d => `<div class="border-b pb-3 last:border-0"><p class="font-bold text-stone-800 mb-1">Q. ${this.linkify(d.q)}</p><div class="flex gap-2 text-xs mb-2"><span class="text-red-600 bg-red-50 px-2 py-1 rounded">내 답: ${d.u}</span><span class="text-green-600 bg-green-50 px-2 py-1 rounded font-bold">정답: ${d.a}</span></div><p class="text-xs text-stone-500 bg-stone-50 p-2 rounded">${this.linkify(d.exp)}</p></div>`).join(''); 
+            },
+            
             saveToFirebase: function(detailLogs = []) {
                 const status = document.getElementById('submission-status');
                 if(!db) { status.innerHTML = "⚠️ DB 연결 실패"; return; }
                 const data = { timestamp: firebase.firestore.FieldValue.serverTimestamp(), timeString: new Date().toLocaleString(), class: this.state.student.class, number: this.state.student.number, name: this.state.student.name, score: this.state.score, status: this.state.isTimeOut ? "시간초과" : "완료", details: detailLogs };
                 db.collection("quiz_results").add(data).then(() => { status.className = "bg-green-100 text-green-700 p-3 rounded text-sm mb-6 border border-green-200 font-bold"; status.innerHTML = '<i class="fas fa-check-circle"></i> 제출 완료!'; }).catch((error) => { console.error("Error: ", error); status.className = "bg-red-100 text-red-700 p-3 rounded text-sm mb-6 border border-red-200"; status.innerHTML = '⚠️ 전송 실패'; });
             },
+            
             showView: function(id) { document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); window.scrollTo(0,0); }
         };
         window.onload = function() { app.init(); };
