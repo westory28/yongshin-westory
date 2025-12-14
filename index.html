@@ -1,17 +1,22 @@
 <script>
         const firebaseConfig = { apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU", authDomain: "history-quiz-yongsin.firebaseapp.com", projectId: "history-quiz-yongsin", storageBucket: "history-quiz-yongsin.firebasestorage.app", messagingSenderId: "177587430482", appId: "1:177587430482:web:d79cc145c11e335cc3ab8b", measurementId: "G-LHN97D7R2R" };
-        let db; try { if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } db = firebase.firestore(); } catch(e) { alert("Firebase 오류"); }
+        
+        let db; 
+        try { 
+            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } 
+            db = firebase.firestore(); 
+        } catch(e) { 
+            console.error("Firebase 초기화 오류:", e);
+            alert("시스템 오류: 관리자에게 문의하세요. (Firebase Init Fail)"); 
+        }
 
         const app = {
             state: { student:{}, questions:[], allQuestions:[], currentIndex:0, answers:{}, score:0, timer:null, timeLeft:60, isTimeOut:false, isQuizActive: false },
             
-            init: function() { 
-                // 초기 로드 시에는 아무것도 하지 않음 (버튼 누를 때 로드)
-            },
+            init: function() { }, // 초기화 시 자동 실행 없음
 
             showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
 
-            // [핵심 1] 10분 제한 검사 + 비용 절약형 문제 로드 통합
             startQuiz: async function() {
                 const cls = document.getElementById('input-class').value;
                 const num = document.getElementById('input-number').value;
@@ -22,14 +27,14 @@
                 this.showLoading(true);
 
                 try {
-                    // 1. [부정행위 방지] 10분 내 응시 기록 확인
+                    // [부정행위 방지] 10분 내 재응시 체크
                     const logsRef = db.collection("quiz_results");
                     const snapshot = await logsRef
                         .where("class", "==", cls)
                         .where("number", "==", num)
                         .where("name", "==", name)
-                        .orderBy("timestamp", "desc") // 최신순 정렬
-                        .limit(1) // 가장 최근 것 1개만 가져오기 (비용 절약)
+                        .orderBy("timestamp", "desc")
+                        .limit(1)
                         .get();
 
                     if (!snapshot.empty) {
@@ -41,31 +46,35 @@
 
                             if (diffMins < 10) {
                                 this.showLoading(false);
-                                alert(`⛔ 재응시 불가!\n\n${Math.ceil(10 - diffMins)}분 뒤에 다시 시도할 수 있습니다.\n(부정행위 방지를 위해 10분 대기)`);
-                                return; // 여기서 강제 종료
+                                alert(`⛔ 재응시 불가!\n\n${Math.ceil(10 - diffMins)}분 뒤에 다시 시도할 수 있습니다.`);
+                                return; 
                             }
                         }
                     }
 
-                    // 2. [비용 절약] 통과했다면, 이제 문제를 가져옵니다.
+                    // [문제 로드]
                     await this.loadRandomQuestions();
 
+                    // 문제가 하나도 안 뽑혔을 경우 (안전장치)
+                    if(!this.state.allQuestions || this.state.allQuestions.length === 0) {
+                        throw new Error("로드된 문제가 없습니다.");
+                    }
+
                 } catch(e) {
-                    console.error("Error:", e);
-                    // 에러 시(인덱스 문제 등) 학생이 피해보지 않도록 일단 진행시키는 예외 처리
-                    // 만약 엄격하게 하려면 여기서 return;
-                    if(this.state.allQuestions.length === 0) await this.loadRandomQuestions(); 
+                    console.error("Error Detail:", e);
+                    this.showLoading(false);
+                    // 구체적인 에러 메시지 출력
+                    if (e.code === 'permission-denied') {
+                        alert("오류: 데이터베이스 접근 권한이 없습니다. (규칙 설정 확인 필요)");
+                    } else {
+                        alert("문제를 불러오는 중 오류가 발생했습니다.\n" + e.message);
+                    }
+                    return;
                 }
 
-                // 3. 시험 시작 설정
+                // 퀴즈 시작 세팅
                 this.state.student = { class:cls, number:num, name:name };
-                if(this.state.allQuestions.length === 0) { 
-                    this.showLoading(false); 
-                    alert("문제를 불러오지 못했습니다. 다시 시도해주세요."); 
-                    return; 
-                }
-
-                this.state.questions = this.state.allQuestions; // 이미 5개가 로드됨
+                this.state.questions = this.state.allQuestions; 
                 this.state.currentIndex = 0; 
                 this.state.answers = {}; 
                 this.state.score = 0; 
@@ -79,25 +88,34 @@
                 this.startTimer();
             },
 
-            // [핵심 2] 랜덤 5문제만 콕 집어 가져오기 (비용 최적화)
             loadRandomQuestions: async function() {
                 if(!db) return;
                 
-                // 1. 전체 문제 수 확인 (metadata)
-                const metaDoc = await db.collection("metadata").doc("count_info").get();
-                if (!metaDoc.exists) throw new Error("메타데이터 없음");
+                let totalCount = 132; // [안전장치] 메타데이터 없으면 기본값 132 사용
+
+                try {
+                    const metaDoc = await db.collection("metadata").doc("count_info").get();
+                    if (metaDoc.exists) {
+                        totalCount = metaDoc.data().total_questions || 132;
+                    } else {
+                        console.warn("⚠️ 메타데이터 없음. 기본값(132)을 사용합니다.");
+                    }
+                } catch(e) {
+                    console.warn("⚠️ 메타데이터 읽기 실패. 기본값(132)을 사용합니다.", e);
+                }
                 
-                const totalCount = metaDoc.data().total_questions || 132; // 기본값 132
-                
-                // 2. 랜덤 번호 5개 추첨
+                // 랜덤 번호 5개 추첨
                 const randomIds = new Set();
-                while(randomIds.size < 5) {
+                // 안전장치: 전체 문제 수보다 적게 뽑아야 무한루프 안 돔
+                const pickCount = Math.min(5, totalCount); 
+                
+                while(randomIds.size < pickCount) {
                     const rand = Math.floor(Math.random() * totalCount) + 1;
                     randomIds.add(rand.toString());
                 }
                 const targetIds = Array.from(randomIds);
 
-                // 3. 해당 번호 문제만 가져오기
+                // 해당 번호 문제 가져오기
                 const qSnapshot = await db.collection("quiz_questions")
                     .where(firebase.firestore.FieldPath.documentId(), 'in', targetIds)
                     .get();
@@ -109,7 +127,6 @@
                     loadedData.push(data); 
                 });
 
-                // 문제 섞기
                 this.state.allQuestions = this.shuffleArray(loadedData);
             },
 
@@ -131,13 +148,12 @@
             renderQuestion: function() {
                 const q = this.state.questions[this.state.currentIndex];
                 this.tempAnswer = this.state.answers[q.id] || null;
-                document.getElementById('quiz-progress-text').innerText = `${this.state.currentIndex+1}/5`;
+                document.getElementById('quiz-progress-text').innerText = `${this.state.currentIndex+1}/${this.state.questions.length}`;
                 document.getElementById('question-badge').innerText = {'choice':'객관식','blank':'단답','word':'단답','order':'순서','ox':'O/X'}[q.type];
                 document.getElementById('student-question-unit').innerText = q.unit || "기타";
                 const img = document.getElementById('question-image'); 
                 if(q.image) { img.src=q.image; img.parentNode.classList.remove('hidden'); } else img.parentNode.classList.add('hidden');
                 
-                // [링크 기능 추가] 문제 텍스트에 URL이 있으면 링크로 변환
                 document.getElementById('question-text').innerHTML = this.linkify(q.question);
                 
                 const area = document.getElementById('answer-area'); area.innerHTML = ''; 
@@ -149,7 +165,6 @@
                     q.options.forEach((opt,i) => { 
                         const btn = document.createElement('div'); const isSelected = this.tempAnswer === opt; 
                         btn.className = `choice-btn ${isSelected ? 'selected' : ''}`; 
-                        // 보기에도 링크 기능 적용
                         btn.innerHTML = `<span class="choice-badge">${i+1}</span> ${this.linkify(opt)}`; 
                         btn.onclick = () => { this.state.answers[q.id] = opt; this.renderQuestion(); }; 
                         grid.appendChild(btn); 
@@ -172,7 +187,6 @@
                 }
             },
 
-            // URL 자동 링크 변환 함수
             linkify: function(text) {
                 if(!text) return "";
                 const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -205,7 +219,6 @@
                 if(window.myChart) window.myChart.destroy(); 
                 window.myChart = new Chart(ctx, { type:'doughnut', data:{labels:['정답','오답'], datasets:[{data:[this.state.score, 100-this.state.score], backgroundColor:['#d97706','#e5e7eb'], borderWidth:0}]}, options:{cutout:'80%', plugins:{legend:{display:false}}} }); 
                 const list = document.getElementById('review-list'); 
-                // [링크 기능 적용] 오답노트 해설에도 링크가 있으면 클릭 가능하게
                 list.innerHTML = this.state.incorrectDetails.length===0 ? '<div class="text-center py-4">만점입니다! 🎉</div>' : this.state.incorrectDetails.map(d => `<div class="border-b pb-3 last:border-0"><p class="font-bold text-stone-800 mb-1">Q. ${this.linkify(d.q)}</p><div class="flex gap-2 text-xs mb-2"><span class="text-red-600 bg-red-50 px-2 py-1 rounded">내 답: ${d.u}</span><span class="text-green-600 bg-green-50 px-2 py-1 rounded font-bold">정답: ${d.a}</span></div><p class="text-xs text-stone-500 bg-stone-50 p-2 rounded">${this.linkify(d.exp)}</p></div>`).join(''); 
             },
             
