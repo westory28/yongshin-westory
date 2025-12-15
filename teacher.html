@@ -70,10 +70,16 @@
                         <h2 class="font-bold text-2xl text-stone-800"><i class="fas fa-chalkboard-teacher text-amber-600 mr-2"></i>교사 대시보드</h2>
                         <p class="text-xs text-stone-500 mt-1">Firebase 연동됨 (자동 로그아웃 설정됨)</p>
                     </div>
-                    <div class="flex bg-stone-100 p-1 rounded border border-stone-300 ml-4">
-                        <input type="text" id="search-student-name" placeholder="학생 이름 검색" class="bg-transparent px-2 py-1 text-sm outline-none" onkeypress="if(event.key==='Enter') app.searchStudent()">
+                    
+                    <div class="hidden md:flex bg-stone-100 p-1 rounded border border-stone-300 ml-4">
+                        <input type="text" id="search-student-desktop" placeholder="학생 이름 검색" class="bg-transparent px-2 py-1 text-sm outline-none" onkeypress="if(event.key==='Enter') app.searchStudent()">
                         <button onclick="app.searchStudent()" class="bg-stone-800 text-white px-3 py-1 rounded text-xs font-bold hover:bg-stone-700">검색</button>
                     </div>
+
+                    <button onclick="document.getElementById('mobile-search-modal').style.display='flex'; document.getElementById('search-student-mobile').focus();" 
+                            class="md:hidden ml-auto text-stone-500 hover:text-stone-800 bg-stone-100 p-2 rounded-full w-10 h-10 flex items-center justify-center shadow-sm">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
                 <button onclick="app.logout()" class="bg-stone-200 hover:bg-stone-300 text-stone-700 px-4 py-2 rounded text-sm font-bold">로그아웃</button>
             </div>
@@ -181,6 +187,20 @@
                             </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-search-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+        <div class="modal-overlay absolute inset-0" onclick="document.getElementById('mobile-search-modal').style.display='none'"></div>
+        <div class="bg-white p-6 rounded-lg shadow-xl z-10 w-full max-w-sm mx-4">
+            <h3 class="font-bold text-lg mb-4 text-stone-800">학생 검색</h3>
+            <div class="flex gap-2">
+                <input type="text" id="search-student-mobile" placeholder="이름을 입력하세요" class="flex-1 p-3 border rounded text-sm outline-none bg-stone-50" onkeypress="if(event.key==='Enter') app.searchStudent()">
+                <button onclick="app.searchStudent()" class="bg-stone-800 text-white px-4 py-2 rounded font-bold hover:bg-stone-700">검색</button>
+            </div>
+            <div class="mt-4 text-center">
+                <button onclick="document.getElementById('mobile-search-modal').style.display='none'" class="text-sm text-gray-500 underline">닫기</button>
             </div>
         </div>
     </div>
@@ -345,24 +365,31 @@
                 });
             },
             
-            // [검색 기능 수정] - 검색 결과에서도 팝업 기능을 사용하도록 변경
+            // [검색 기능 수정] - PC/모바일 통합 및 팝업 결과창 사용
             searchStudent: function() {
-                const name = document.getElementById('search-student-name').value.trim();
+                // PC 입력값 우선 확인, 없으면 모바일 입력값 확인
+                let name = document.getElementById('search-student-desktop').value.trim();
+                if (!name) name = document.getElementById('search-student-mobile').value.trim();
+
                 if(!name) { alert("이름을 입력하세요"); return; }
+                
+                // 모바일 모달이 열려있다면 닫기
+                document.getElementById('mobile-search-modal').style.display = 'none';
+
                 this.showLoading(true);
                 db.collection("quiz_results").where("name", "==", name).orderBy("timestamp", "desc").get().then(snapshot => {
                     let logs = [];
                     snapshot.forEach(doc => { let d = doc.data(); d.docId = doc.id; logs.push(d); });
                     if(logs.length === 0) { alert("검색 결과가 없습니다."); this.showLoading(false); return; }
                     
-                    // ★ 중요: 검색 결과를 전역 변수에 저장 (상세 보기 팝업을 위해)
+                    // ★ 상세 보기를 위해 상태 저장
                     this.state.currentStudentHistory = logs;
 
                     let totalScore = logs.reduce((sum, l) => sum + l.score, 0);
                     let avg = Math.round(totalScore / logs.length);
                     let html = `<div class="bg-blue-50 p-4 rounded mb-4 border border-blue-200"><h4 class="font-bold text-lg text-blue-800">${name} 학생 검색 결과</h4><p class="text-sm">총 응시: <b>${logs.length}회</b> / 평균 점수: <b>${avg}점</b></p></div><div class="space-y-2">`;
                     
-                    // 카드 리스트 생성 (팝업 연결)
+                    // 카드 리스트 생성 (클릭 시 팝업 띄우기)
                     logs.forEach((l, index) => {
                         let scoreColor = l.score >= 80 ? 'text-green-600' : (l.score >= 50 ? 'text-amber-600' : 'text-red-500');
                         html += `
@@ -382,6 +409,11 @@
                     html += `</div>`;
                     document.getElementById('stats-content').innerHTML = html;
                     document.getElementById('stats-modal').style.display = 'flex';
+                    
+                    // 입력창 초기화
+                    document.getElementById('search-student-desktop').value = '';
+                    document.getElementById('search-student-mobile').value = '';
+                    
                     this.showLoading(false);
                 }).catch(e => {
                     this.showLoading(false);
