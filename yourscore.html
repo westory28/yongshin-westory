@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* 기본 스타일: 깔끔하고 가독성 중심 */
+        /* 기본 스타일 */
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f5f7fa; margin: 0; padding: 0; color: #333; }
         
         /* 헤더 */
@@ -24,19 +24,16 @@
         .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
 
         /* 타이틀 영역 */
-        .page-header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 15px; }
+        .page-header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 15px; }
         .page-title { font-size: 24px; font-weight: 700; color: #111; margin: 0; }
         .btn-logout { background-color: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .btn-logout:hover { background-color: #5a6268; }
-
-        /* 로그인 섹션 */
-        #loginSection { max-width: 400px; margin: 100px auto; text-align: center; background: #fff; padding: 50px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .btn-google { background-color: #fff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; font-size: 15px; width: 100%; cursor: pointer; border-radius: 4px; margin-top: 20px; transition: background 0.2s; }
-        .btn-google:hover { background-color: #f8f9fa; }
-
-        /* 대시보드 그리드 */
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 340px; gap: 25px; }
-        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        
+        /* 경고 박스 (요청하신 문구 복구) */
+        .alert-box { 
+            background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+            padding: 15px; border-radius: 6px; margin-bottom: 25px; 
+            font-size: 14px; font-weight: bold; text-align: center; line-height: 1.6;
+        }
 
         /* 컨트롤 패널 (필터) */
         .control-panel {
@@ -52,14 +49,11 @@
         }
         select:focus { border-color: #4a90e2; outline: none; }
 
-        /* 알림 박스 */
-        .info-box { 
-            background-color: #e8f0fe; color: #1967d2; 
-            padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; 
-            font-size: 13px; line-height: 1.5; display: flex; align-items: center; gap: 8px;
-        }
+        /* 대시보드 그리드 */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 340px; gap: 25px; }
+        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
-        /* 과목 카드 스타일 (단정함) */
+        /* 과목 카드 스타일 */
         .subject-card { 
             background: #fff; border-radius: 8px; margin-bottom: 15px; 
             border: 1px solid #e1e4e8; border-left: 5px solid #ccc; 
@@ -67,43 +61,23 @@
         }
         .subject-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
         
-        .card-header { 
-            padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; 
-        }
+        .card-header { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .subject-name { font-size: 18px; font-weight: 700; color: #222; }
-        
         .score-info { text-align: right; }
         .total-score { font-size: 20px; font-weight: bold; color: #333; }
-        .grade-badge { 
-            display: inline-block; padding: 2px 8px; border-radius: 4px; 
-            font-size: 12px; font-weight: bold; color: #fff; margin-left: 8px; vertical-align: middle;
-        }
+        .grade-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #fff; margin-left: 8px; vertical-align: middle; }
         .toggle-text { font-size: 12px; color: #999; margin-top: 4px; }
 
-        .card-body { 
-            padding: 0 25px 25px 25px; display: none; background-color: #fafbfc; 
-            border-top: 1px solid #eee; 
-        }
+        .card-body { padding: 0 25px 25px 25px; display: none; background-color: #fafbfc; border-top: 1px solid #eee; }
         .card-body.expanded { display: block; }
 
         /* 입력 폼 */
-        .input-item { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 0; border-bottom: 1px dashed #eee; 
-        }
+        .input-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
         .input-item:last-child { border-bottom: none; }
-        
         .item-label { font-size: 14px; color: #333; }
         .item-sub { font-size: 12px; color: #888; margin-top: 2px; }
-        .type-tag { 
-            font-size: 11px; padding: 2px 5px; border-radius: 3px; 
-            background: #eee; color: #555; margin-right: 6px; 
-        }
-
-        .score-input { 
-            width: 70px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; 
-            text-align: center; font-size: 15px; 
-        }
+        .type-tag { font-size: 11px; padding: 2px 5px; border-radius: 3px; background: #eee; color: #555; margin-right: 6px; }
+        .score-input { width: 70px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 15px; }
 
         /* 오른쪽 사이드바 (차트) */
         .chart-panel { 
@@ -113,15 +87,26 @@
         .chart-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;}
         .chart-wrapper { position: relative; height: 300px; width: 100%; }
 
-        /* 유틸리티 */
+        /* ★ 등급 가이드 바 (복구됨) */
+        .grade-scale-bar { 
+            display: flex; height: 30px; border-radius: 6px; overflow: hidden; margin-top: 20px; 
+            font-weight: bold; color: white; text-shadow: 0 1px 1px rgba(0,0,0,0.2); font-size: 11px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .scale-segment { flex: 1; display: flex; justify-content: center; align-items: center; }
+
+        /* 로그인 섹션 */
+        #loginSection { max-width: 400px; margin: 100px auto; text-align: center; background: #fff; padding: 50px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .btn-google { background-color: #fff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; font-size: 15px; width: 100%; cursor: pointer; border-radius: 4px; margin-top: 20px; transition: background 0.2s; }
+
         .hidden { display: none !important; }
         
-        /* 등급 색상 (표준적이고 차분한 톤) */
-        .color-A { color: #d6336c; } .bg-A { background-color: #d6336c; } /* 90~ */
-        .color-B { color: #f76707; } .bg-B { background-color: #f76707; } /* 80~ */
-        .color-C { color: #f59f00; } .bg-C { background-color: #f59f00; } /* 70~ */
-        .color-D { color: #37b24d; } .bg-D { background-color: #37b24d; } /* 60~ */
-        .color-E { color: #1c7ed6; } .bg-E { background-color: #1c7ed6; } /* ~59 */
+        /* 등급 색상 */
+        .bg-A { background-color: #fa5252; } /* 빨강 */
+        .bg-B { background-color: #fd7e14; } /* 주황 */
+        .bg-C { background-color: #fab005; } /* 노랑 */
+        .bg-D { background-color: #51cf66; } /* 초록 */
+        .bg-E { background-color: #339af0; } /* 파랑 */
 
     </style>
 </head>
@@ -148,8 +133,9 @@
                 <button class="btn-logout" onclick="logout()">로그아웃</button>
             </div>
 
-            <div class="info-box">
-                ℹ️ <strong>개인정보 보호 안내:</strong> 입력하신 점수는 서버(DB)에 저장되지 않으며, 현재 사용 중인 기기에만 임시 저장됩니다.
+            <div class="alert-box">
+                ⚠️ 이 결과는 참고용 시뮬레이션이며, 정확한 성적은 <u>나이스(NEIS)</u> 및 <u>성적 통지표</u>를 확인하세요.<br>
+                <span style="font-size:12px; font-weight:normal; color:#664d03;">(입력한 점수는 서버에 저장되지 않고 내 컴퓨터에만 임시로 남습니다.)</span>
             </div>
 
             <div class="control-panel">
@@ -197,12 +183,12 @@
                         <div class="chart-wrapper">
                             <canvas id="gradeChart"></canvas>
                         </div>
-                        <div style="margin-top:15px; font-size:12px; color:#666; text-align:center;">
-                            <span class="color-A">●</span>A &nbsp;
-                            <span class="color-B">●</span>B &nbsp;
-                            <span class="color-C">●</span>C &nbsp;
-                            <span class="color-D">●</span>D &nbsp;
-                            <span class="color-E">●</span>E
+                        <div class="grade-scale-bar">
+                            <div class="scale-segment bg-A">A (90~)</div>
+                            <div class="scale-segment bg-B">B (80~)</div>
+                            <div class="scale-segment bg-C">C (70~)</div>
+                            <div class="scale-segment bg-D">D (60~)</div>
+                            <div class="scale-segment bg-E">E (~59)</div>
                         </div>
                     </div>
                 </div>
@@ -236,11 +222,11 @@
         const FIXED_SUBJECT_ORDER = ['국어', '영어', '수학', '과학', '역사', '기가', '한문', '일본어', '미술', '체육'];
 
         function getGradeInfo(score) {
-            if (score >= 90) return { grade: 'A', colorCode: '#d6336c', class: 'bg-A' };
-            if (score >= 80) return { grade: 'B', colorCode: '#f76707', class: 'bg-B' };
-            if (score >= 70) return { grade: 'C', colorCode: '#f59f00', class: 'bg-C' };
-            if (score >= 60) return { grade: 'D', colorCode: '#37b24d', class: 'bg-D' };
-            return { grade: 'E', colorCode: '#1c7ed6', class: 'bg-E' };
+            if (score >= 90) return { grade: 'A', colorCode: '#fa5252', class: 'bg-A' };
+            if (score >= 80) return { grade: 'B', colorCode: '#fd7e14', class: 'bg-B' };
+            if (score >= 70) return { grade: 'C', colorCode: '#fab005', class: 'bg-C' };
+            if (score >= 60) return { grade: 'D', colorCode: '#51cf66', class: 'bg-D' };
+            return { grade: 'E', colorCode: '#339af0', class: 'bg-E' };
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -280,7 +266,6 @@
             }
         };
 
-        // 총점 계산 (LocalStorage)
         function calculateTotal(plan) {
             let total = 0;
             plan.items.forEach((item, idx) => {
@@ -294,12 +279,11 @@
             const gradeFilter = document.getElementById('gradeFilter').value;
             const yearFilter = document.getElementById('yearFilter').value;
             const semesterFilter = document.getElementById('semesterFilter').value;
-            const sortMode = document.getElementById('sortFilter').value; // ★ 정렬 옵션 값
+            const sortMode = document.getElementById('sortFilter').value;
             
             const container = document.getElementById('subjectsList');
             container.innerHTML = '';
 
-            // 1. 학기 필터링
             let filteredPlans = allGradingPlans.filter(plan => {
                 const pGrade = plan.targetGrade || "2"; 
                 const pYear = plan.academicYear || "2025";
@@ -307,21 +291,16 @@
                 return String(pGrade) === gradeFilter && pYear === yearFilter && pSem === semesterFilter;
             });
 
-            // 2. 점수 미리 계산 (정렬을 위해)
             filteredPlans = filteredPlans.map(plan => ({
                 ...plan,
                 currentScore: calculateTotal(plan)
             }));
 
-            // 3. 정렬 로직 적용
             if (sortMode === 'score_high') {
-                // 성적 높은 순
                 filteredPlans.sort((a, b) => b.currentScore - a.currentScore);
             } else if (sortMode === 'name') {
-                // 가나다 순
                 filteredPlans.sort((a, b) => a.subject.localeCompare(b.subject));
             } else {
-                // 기본: 교과표 순서
                 filteredPlans.sort((a, b) => {
                     let idxA = FIXED_SUBJECT_ORDER.indexOf(a.subject);
                     let idxB = FIXED_SUBJECT_ORDER.indexOf(b.subject);
@@ -333,7 +312,7 @@
 
             if (filteredPlans.length === 0) {
                 container.innerHTML = `<div style="text-align:center; padding:50px; color:#888; background:#fff; border-radius:8px; border:1px solid #eee;">
-                    해당 학기(${gradeFilter}학년 ${yearFilter} ${semesterFilter})의 평가 계획 데이터가 없습니다.</div>`;
+                    해당 학기(${gradeFilter}학년 ${yearFilter} ${semesterFilter})의 데이터가 없습니다.</div>`;
                 updateChart([], [], []);
                 return;
             }
@@ -418,7 +397,6 @@
             badgeEl.closest('.subject-card').style.borderLeftColor = colorCode;
 
             if(myChart) {
-                // 차트 라벨이 정렬에 따라 바뀌었으므로, 현재 과목명을 찾아야 함
                 const idx = myChart.data.labels.indexOf(plan.subject);
                 if(idx !== -1) {
                     myChart.data.datasets[0].data[idx] = total;
