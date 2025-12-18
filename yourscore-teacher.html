@@ -21,6 +21,17 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+        
+        /* 로그인 화면 스타일 */
+        #loginSection {
+            max-width: 400px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        #loginSection input {
+            margin-bottom: 15px;
+        }
+
         h1 {
             text-align: center;
             color: #2c3e50;
@@ -64,7 +75,7 @@
             border-radius: 8px;
             background-color: #fafafa;
             margin-bottom: 20px;
-            min-height: 50px; /* 상자가 보이도록 최소 높이 설정 */
+            min-height: 50px;
         }
         .criteria-row {
             display: flex;
@@ -83,7 +94,7 @@
         .c-max { flex: 1; }          
         .c-ratio { flex: 1; }        
         
-        /* 삭제 버튼 */
+        /* 버튼 스타일 */
         .remove-btn {
             background-color: #e74c3c;
             color: white;
@@ -93,11 +104,6 @@
             cursor: pointer;
             white-space: nowrap;
         }
-        .remove-btn:hover {
-            background-color: #c0392b;
-        }
-
-        /* 버튼 */
         .btn {
             padding: 12px 24px;
             border: none;
@@ -106,18 +112,13 @@
             font-size: 16px;
             font-weight: 600;
         }
-        .btn-add {
-            background-color: #3498db;
-            color: white;
-            margin-bottom: 20px;
-        }
-        .btn-save {
-            background-color: #2ecc71;
-            color: white;
-            width: 100%;
-            font-size: 18px;
-        }
-        .btn-save:hover { background-color: #27ae60; }
+        .btn-add { background-color: #3498db; color: white; margin-bottom: 20px; }
+        .btn-save { background-color: #2ecc71; color: white; width: 100%; font-size: 18px; }
+        .btn-login { background-color: #3498db; color: white; width: 100%; font-size: 16px; }
+        .btn-logout { background-color: #95a5a6; color: white; float: right; padding: 8px 15px; font-size: 14px; }
+
+        /* 유틸리티 */
+        .hidden { display: none !important; }
 
         @media (max-width: 768px) {
             .criteria-row { flex-direction: column; gap: 10px; }
@@ -127,8 +128,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>📝 평가 기준 관리</h1>
+
+    <div id="loginSection" class="container">
+        <h1>🔐 선생님 로그인</h1>
+        <input type="email" id="email" placeholder="이메일 주소" onkeypress="if(event.keyCode==13) login()">
+        <input type="password" id="password" placeholder="비밀번호" onkeypress="if(event.keyCode==13) login()">
+        <button class="btn btn-login" onclick="login()">로그인</button>
+    </div>
+
+    <div id="dashboardSection" class="container hidden">
+        <button class="btn btn-logout" onclick="logout()">로그아웃</button>
+        <div style="clear: both;"></div> <h1>📝 평가 기준 관리</h1>
 
         <div class="form-row">
             <div class="form-group" style="flex: 0 0 150px;">
@@ -156,9 +166,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        // 수정됨: 기능별로 올바른 공구함에서 가져옵니다.
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        // 로그인 기능(Auth) 가져오기
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
@@ -174,7 +184,44 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // 행 추가 함수
+        // ★ 핵심: 로그인 상태 감지기 (문지기)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 로그인 성공 시: 로그인 창 숨기고, 대시보드 보여줌
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('dashboardSection').classList.remove('hidden');
+            } else {
+                // 로그아웃 상태 시: 대시보드 숨기고, 로그인 창 보여줌
+                document.getElementById('loginSection').classList.remove('hidden');
+                document.getElementById('dashboardSection').classList.add('hidden');
+            }
+        });
+
+        // 1. 로그인 함수
+        window.login = async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if(!email || !password) { alert("이메일과 비밀번호를 입력해주세요."); return; }
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // 성공하면 onAuthStateChanged가 자동으로 화면을 전환해줍니다.
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert("로그인 실패: 이메일이나 비밀번호를 확인해주세요.\n(" + error.code + ")");
+            }
+        };
+
+        // 2. 로그아웃 함수
+        window.logout = async () => {
+            if(confirm("정말 로그아웃 하시겠습니까?")) {
+                await signOut(auth);
+                location.reload();
+            }
+        };
+
+        // 3. 행 추가 함수
         window.addRow = () => {
             const div = document.createElement('div');
             div.className = 'criteria-row';
@@ -188,7 +235,6 @@
                 <input type="number" placeholder="반영비율(%)" class="c-ratio" min="1" max="100" required>
                 <button class="remove-btn" onclick="removeRow(this)">삭제</button>
             `;
-            // 이제 criteriaList가 존재하므로 에러가 나지 않습니다.
             document.getElementById('criteriaList').appendChild(div);
         };
 
@@ -196,21 +242,16 @@
             button.parentElement.remove();
         };
 
-        // 초기 화면에 빈 칸 하나 추가
+        // 초기 화면 설정 (빈 칸 추가)
         addRow();
 
-        // 저장 함수
+        // 4. 저장 함수
         window.saveToFirebase = async () => {
             const user = auth.currentUser;
-            
-            if (!user) {
-                alert("⚠️ 로그인이 확인되지 않습니다.\n기존 교사 대시보드에서 로그인 후 이용해주세요.");
-                return;
-            }
+            if (!user) { alert("로그인이 필요합니다."); return; }
 
             const semester = document.getElementById('semesterSelect').value;
             const subject = document.getElementById('subjectName').value.trim();
-            
             if (!subject) { alert("과목명을 입력해주세요."); return; }
 
             const rows = document.querySelectorAll('.criteria-row');
@@ -223,10 +264,7 @@
                 const maxScore = row.querySelector('.c-max').value;
                 const ratio = row.querySelector('.c-ratio').value;
 
-                if (!name || !maxScore || !ratio) {
-                    alert("모든 빈칸을 채워주세요.");
-                    return;
-                }
+                if (!name || !maxScore || !ratio) { alert("모든 빈칸을 채워주세요."); return; }
 
                 totalRatio += Number(ratio);
                 items.push({
@@ -237,8 +275,8 @@
                 });
             }
 
-            if (items.length === 0) { alert("평가 항목을 최소 1개 이상 추가해주세요."); return; }
-            if (totalRatio !== 100) { alert(`반영 비율의 합이 ${totalRatio}% 입니다. 100%가 되어야 합니다.`); return; }
+            if (items.length === 0) { alert("최소 1개 이상의 항목을 추가해주세요."); return; }
+            if (totalRatio !== 100) { alert(`반영 비율 합계가 ${totalRatio}% 입니다. 100%여야 합니다.`); return; }
 
             try {
                 await addDoc(collection(db, "grading_plans"), {
@@ -248,8 +286,7 @@
                     createdAt: new Date(),
                     teacherEmail: user.email
                 });
-                
-                alert(`✅ [${semester}] ${subject} 평가 기준 저장이 완료되었습니다!`);
+                alert(`✅ [${semester}] ${subject} 저장 완료!`);
                 location.reload(); 
             } catch (e) {
                 console.error("Error: ", e);
