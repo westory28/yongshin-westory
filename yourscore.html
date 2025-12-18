@@ -2,162 +2,353 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>나의 등급 시뮬레이터</title>
     <style>
-        .result-box { border: 2px solid #333; padding: 15px; margin-top: 20px; border-radius: 10px; }
-        .simulation-tip { color: #d32f2f; font-weight: bold; margin-top: 10px; }
+        /* 기본 스타일 */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* 선택 및 입력 영역 */
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 25px;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        
+        .input-group {
+            background-color: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .input-label {
+            font-weight: 600;
+            font-size: 15px;
+            color: #555;
+        }
+        .input-sub {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+        input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        /* 결과 카드 스타일 */
+        .result-card {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 30px;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+        .score-display {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .grade-badge {
+            background-color: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        
+        /* 시뮬레이션 메시지 */
+        .simulation-box {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .simulation-box strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        /* 로딩/초기 상태 */
+        .hidden { display: none; }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>📊 성적 시뮬레이터</h1>
-    
-    <label>과목 선택: </label>
-    <select id="subjectSelect"></select>
+    <div class="container">
+        <h1>📊 성적 목표 계산기</h1>
+        <p class="subtitle">입력한 점수는 서버에 저장되지 않고<br>브라우저에 자동 저장됩니다.</p>
 
-    <div id="inputContainer" style="margin-top: 20px;"></div>
+        <label for="subjectSelect" style="font-weight:bold; display:block; margin-bottom:8px;">과목 선택</label>
+        <select id="subjectSelect">
+            <option value="" disabled selected>과목을 선택해주세요</option>
+        </select>
 
-    <div class="result-box">
-        <h3>현재 성적: <span id="currentScore">0</span>점 (<span id="currentGrade">E</span>)</h3>
-        <div id="simulationResult" class="simulation-tip"></div>
+        <div id="inputContainer">
+            </div>
+
+        <div id="resultArea" class="hidden">
+            <div class="result-card">
+                <div>현재 환산 점수</div>
+                <div class="score-display">
+                    <span id="currentScore">0.0</span>
+                    <span class="grade-badge" id="currentGrade">E</span>
+                </div>
+            </div>
+            <div id="simulationResult" class="simulation-box hidden"></div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        const firebaseConfig = { /* 선생님의 config 값 */ };
+        // 선생님의 설정 키 적용
+        const firebaseConfig = {
+          apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
+          authDomain: "history-quiz-yongsin.firebaseapp.com",
+          projectId: "history-quiz-yongsin",
+          storageBucket: "history-quiz-yongsin.firebasestorage.app",
+          messagingSenderId: "177587430482",
+          appId: "1:177587430482:web:1188e0f661368040c3ab8b",
+          measurementId: "G-YG2SLS45D8"
+        };
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let currentPlan = []; // 현재 선택된 과목의 기준 데이터
+        let currentPlanItems = [];
 
-        // 1. 과목 불러오기
+        // 1. 과목 목록 불러오기 (학기 순 정렬)
         async function loadSubjects() {
-            const querySnapshot = await getDocs(collection(db, "grading_plans"));
+            // 날짜순(최신순) 혹은 학기순으로 정렬해서 가져오면 좋습니다
+            const q = query(collection(db, "grading_plans"), orderBy("createdAt", "desc"));
+            const querySnapshot = await getDocs(q);
+            
             const select = document.getElementById("subjectSelect");
             
             querySnapshot.forEach((doc) => {
+                const data = doc.data();
                 const option = document.createElement("option");
                 option.value = doc.id;
-                option.text = doc.data().subject;
-                option.dataset.plan = JSON.stringify(doc.data().items);
+                // [학기] 과목명 형태로 표시
+                const semesterLabel = data.semester ? `[${data.semester}] ` : '';
+                option.text = `${semesterLabel}${data.subject}`;
+                
+                // 데이터셋에 평가 기준 리스트 저장
+                option.dataset.plan = JSON.stringify(data.items);
                 select.appendChild(option);
             });
 
             select.addEventListener('change', renderInputs);
-            if(querySnapshot.size > 0) renderInputs(); // 첫 항목 자동 로드
         }
 
-        // 2. 입력칸 생성 및 로컬 스토리지 데이터 로드
+        // 2. 입력칸 생성
         function renderInputs() {
             const select = document.getElementById("subjectSelect");
+            if (!select.value) return;
+
             const items = JSON.parse(select.options[select.selectedIndex].dataset.plan);
-            currentPlan = items;
+            currentPlanItems = items;
             
             const container = document.getElementById("inputContainer");
-            container.innerHTML = ""; // 초기화
+            container.innerHTML = "";
+            document.getElementById("resultArea").classList.remove("hidden");
 
-            // 로컬 스토리지 키: subjectID_itemName
             const subjectId = select.value;
 
             items.forEach((item, index) => {
-                const savedScore = localStorage.getItem(`${subjectId}_${index}`) || "";
+                // 로컬스토리지에서 저장된 값 불러오기
+                const savedScore = localStorage.getItem(`score_${subjectId}_${index}`) || "";
                 
                 const div = document.createElement("div");
+                div.className = "input-group";
                 div.innerHTML = `
-                    <label>${item.name} (${item.maxScore}점 만점, ${item.ratio}%): </label>
+                    <div>
+                        <div class="input-label">${item.name}</div>
+                        <div class="input-sub">만점: ${item.maxScore}점 / 반영: ${item.ratio}%</div>
+                    </div>
                     <input type="number" class="score-input" data-index="${index}" 
-                           placeholder="점수 입력" value="${savedScore}" 
-                           max="${item.maxScore}">
+                           placeholder="점수" value="${savedScore}"
+                           min="0" max="${item.maxScore}">
                 `;
                 container.appendChild(div);
             });
 
-            // 이벤트 리스너 다시 연결
+            // 이벤트 리스너 연결
             document.querySelectorAll('.score-input').forEach(input => {
                 input.addEventListener('input', handleInput);
             });
             
-            calculateAndSimulate(); // 초기 계산
+            calculateAndSimulate(); // 즉시 계산
         }
 
-        // 3. 점수 입력 처리 (로컬 저장 + 계산 트리거)
+        // 3. 입력 핸들러 (저장 + 계산)
         function handleInput(e) {
             const subjectId = document.getElementById("subjectSelect").value;
             const index = e.target.dataset.index;
-            const value = e.target.value;
+            let value = e.target.value;
 
-            // ★ 핵심: 서버 전송 없이 내 컴퓨터(브라우저)에만 저장
-            localStorage.setItem(`${subjectId}_${index}`, value);
+            // 만점 초과 입력 방지
+            const max = parseFloat(currentPlanItems[index].maxScore);
+            if(parseFloat(value) > max) {
+                value = max; // 만점으로 강제 조정
+                e.target.value = max; 
+            }
+
+            localStorage.setItem(`score_${subjectId}_${index}`, value);
             calculateAndSimulate();
         }
 
-        // 4. 계산 및 시뮬레이션 로직
+        // 4. 핵심 로직: 계산 및 시뮬레이션
         function calculateAndSimulate() {
             let totalConverted = 0;
-            let totalRatio = 0;
             let remainingItems = [];
-
+            
             const inputs = document.querySelectorAll('.score-input');
             
-            // 현재 점수 계산
             inputs.forEach((input, idx) => {
-                const score = parseFloat(input.value);
-                const item = currentPlan[idx];
+                const rawScore = parseFloat(input.value);
+                const item = currentPlanItems[idx];
 
-                if (!isNaN(score)) {
-                    // 환산 공식: (내점수 / 만점) * 반영비율
-                    totalConverted += (score / item.maxScore) * item.ratio;
+                if (!isNaN(rawScore)) {
+                    // 환산 점수 누적
+                    totalConverted += (rawScore / item.maxScore) * item.ratio;
                 } else {
-                    // 점수가 입력되지 않은 항목은 '남은 시험'으로 분류
                     remainingItems.push(item);
                 }
-                totalRatio += item.ratio;
             });
 
-            // 등급 산출 (소수점 1자리 반올림)
+            // 화면 표시 (소수점 1자리)
             const finalScore = totalConverted.toFixed(1);
+            document.getElementById('currentScore').innerText = finalScore;
+            
+            // 등급 판정
             let grade = "E";
             if (finalScore >= 90) grade = "A";
             else if (finalScore >= 80) grade = "B";
             else if (finalScore >= 70) grade = "C";
             else if (finalScore >= 60) grade = "D";
-
-            document.getElementById('currentScore').innerText = finalScore;
             document.getElementById('currentGrade').innerText = grade;
 
-            // 시뮬레이션: A등급(90점) 까지 남은 점수 계산
-            const targetScore = 90;
-            const gap = targetScore - totalConverted;
+            // 시뮬레이션 메시지 로직
             const simBox = document.getElementById('simulationResult');
+            simBox.classList.remove("hidden");
+            
+            // 목표 계산 함수
+            const checkTarget = (target) => {
+                const gap = target - totalConverted;
+                if (gap <= 0) return { possible: true, gap: 0, msg: "이미 달성!" };
+                
+                // 남은 시험의 환산 만점 총합
+                let maxPossibleRemaining = 0;
+                remainingItems.forEach(i => maxPossibleRemaining += i.ratio);
 
-            if (gap <= 0) {
-                simBox.innerText = "🎉 이미 A등급 기준을 달성했습니다!";
-                simBox.style.color = "green";
-            } else if (remainingItems.length === 0) {
-                simBox.innerText = "모든 시험이 끝났습니다. 최종 등급이 확정되었습니다.";
-                simBox.style.color = "black";
-            } else {
-                // 남은 항목이 하나일 때 구체적인 점수 제시 (가장 흔한 케이스)
-                if (remainingItems.length === 1) {
-                    const item = remainingItems[0];
-                    // 공식 역산: (필요점수 / 만점 * 비율) = 부족한점수
-                    // 필요점수 = (부족한점수 * 만점) / 비율
-                    const requiredRawScore = (gap * item.maxScore) / item.ratio;
-                    
-                    if (requiredRawScore > item.maxScore) {
-                        simBox.innerText = `😓 남은 ${item.name}에서 만점을 받아도 A등급은 어렵습니다. (최대 ${item.maxScore}점)`;
-                    } else {
-                        simBox.innerText = `💡 팁: 남은 '${item.name}'에서 ${Math.ceil(requiredRawScore)}점 이상 받으면 A등급 가능!`;
-                    }
-                } else {
-                    // 남은 항목이 여러 개일 때
-                    simBox.innerText = `💡 A등급까지 환산점수 ${gap.toFixed(1)}점이 더 필요합니다. 남은 시험에서 힘내세요!`;
+                if (gap > maxPossibleRemaining) {
+                    return { possible: false, gap: gap }; // 불가능
                 }
+                return { possible: true, gap: gap }; // 가능
+            };
+
+            // 1단계: A등급(90) 도전
+            const planA = checkTarget(90);
+
+            if (remainingItems.length === 0) {
+                // 모든 시험 끝남
+                simBox.innerHTML = `<strong>수고하셨습니다!</strong>최종 등급은 ${grade}입니다.`;
+                simBox.style.backgroundColor = "#e2e3e5";
+                simBox.style.color = "#383d41";
+                simBox.style.borderColor = "#d6d8db";
+            } 
+            else if (planA.gap <= 0) {
+                // 이미 A등급 확보
+                simBox.innerHTML = `<strong>🎉 축하합니다!</strong>남은 시험 결과와 상관없이 A등급 확정입니다!`;
+                simBox.style.backgroundColor = "#d4edda";
+                simBox.style.color = "#155724";
+                simBox.style.borderColor = "#c3e6cb";
+            }
+            else if (planA.possible) {
+                // A등급 가능
+                const item = remainingItems[0]; // 다음 시험 하나만 예시로
+                
+                if(remainingItems.length === 1) {
+                    // 딱 하나 남았을 때 정확한 점수 제시
+                    // 필요점수 = (부족한환산점수 * 만점) / 비율
+                    const needRaw = (planA.gap * item.maxScore) / item.ratio;
+                    simBox.innerHTML = `<strong>💡 A등급을 목표로 한다면?</strong>남은 '${item.name}'에서 <br>최소 <u>${Math.ceil(needRaw)}점</u> 이상 받아야 해요!`;
+                } else {
+                    simBox.innerHTML = `<strong>💡 A등급까지 ${planA.gap.toFixed(1)}점 남았어요!</strong>남은 시험들에서 평균적으로 잘 본다면 충분히 가능해요.`;
+                }
+                simBox.style.backgroundColor = "#fff3cd";
+                simBox.style.color = "#856404";
+                simBox.style.borderColor = "#ffeeba";
+            } 
+            else {
+                // A등급 불가능 -> B등급(80) 제안 (현실적 조언)
+                const planB = checkTarget(80);
+                if (planB.possible) {
+                     const item = remainingItems[0];
+                     if(remainingItems.length === 1) {
+                        const needRaw = (planB.gap * item.maxScore) / item.ratio;
+                        simBox.innerHTML = `<strong>💪 포기하지 마세요! (B등급 작전)</strong>A등급은 어렵지만, '${item.name}'에서 <br><u>${Math.ceil(needRaw)}점</u>을 넘기면 B등급은 가능해요!`;
+                     } else {
+                        simBox.innerHTML = `<strong>💪 힘내세요!</strong>A등급은 조금 어렵지만, 남은 시험을 잘 보면 B등급은 충분히 받을 수 있어요!`;
+                     }
+                } else {
+                    simBox.innerHTML = `<strong>끝까지 최선을 다해봐요!</strong>남은 시험에서 유종의 미를 거두어 봅시다. 화이팅!`;
+                }
+                simBox.style.backgroundColor = "#f8d7da";
+                simBox.style.color = "#721c24";
+                simBox.style.borderColor = "#f5c6cb";
             }
         }
-        
-        // 초기 실행
+
         loadSubjects();
     </script>
 </body>
