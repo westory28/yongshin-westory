@@ -2,74 +2,250 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>평가 기준 관리자 (선생님용)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교사 대시보드 - 평가 기준 관리</title>
+    <style>
+        /* 기본 스타일 및 레이아웃 */
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        /* 폼 스타일 */
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box; /* 패딩 포함 너비 계산 */
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        /* 평가 항목 리스트 스타일 */
+        #criteriaList {
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #fafafa;
+            margin-bottom: 20px;
+        }
+        .criteria-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .criteria-row input {
+            flex: 1; /* 공간을 균등하게 차지 */
+        }
+        /* 삭제 버튼 스타일 */
+        .remove-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .remove-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* 메인 버튼 스타일 */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            display: inline-block;
+        }
+        .btn-add {
+            background-color: #3498db;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .btn-add:hover {
+            background-color: #2980b9;
+        }
+        .btn-save {
+            background-color: #2ecc71;
+            color: white;
+            width: 100%;
+            font-size: 18px;
+        }
+        .btn-save:hover {
+            background-color: #27ae60;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .criteria-row {
+                flex-direction: column;
+            }
+            .criteria-row input, .remove-btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .remove-btn {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h2>📝 평가 기준 등록</h2>
-    <input type="text" id="subjectName" placeholder="과목명 (예: 한국사)" />
-    <div id="criteriaList">
-        <div class="criteria-row">
-            <input type="text" placeholder="항목명 (예: 중간고사)" class="c-name">
-            <input type="number" placeholder="만점" class="c-max">
-            <input type="number" placeholder="반영비율(%)" class="c-ratio">
+    <div class="container">
+        <h1>📝 평가 기준 관리</h1>
+
+        <div class="form-group">
+            <label for="subjectName">과목명</label>
+            <input type="text" id="subjectName" placeholder="예: 한국사, 통합사회">
         </div>
+
+        <label>평가 항목 및 반영 비율</label>
+        <div id="criteriaList">
+            </div>
+        
+        <div style="text-align: right;">
+            <button class="btn btn-add" onclick="addRow()">+ 평가 항목 추가</button>
+        </div>
+
+        <button class="btn btn-save" onclick="saveToFirebase()">💾 기준 저장하기</button>
     </div>
-    <button onclick="addRow()">+ 항목 추가</button>
-    <button onclick="saveToFirebase()">💾 기준 저장하기</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // 기존 파이어베이스 설정값 붙여넣기
+        // 선생님의 파이어베이스 설정 키
         const firebaseConfig = {
-  apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
-  authDomain: "history-quiz-yongsin.firebaseapp.com",
-  projectId: "history-quiz-yongsin",
-  storageBucket: "history-quiz-yongsin.firebasestorage.app",
-  messagingSenderId: "177587430482",
-  appId: "1:177587430482:web:1188e0f661368040c3ab8b",
-  measurementId: "G-YG2SLS45D8"
-};
+          apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
+          authDomain: "history-quiz-yongsin.firebaseapp.com",
+          projectId: "history-quiz-yongsin",
+          storageBucket: "history-quiz-yongsin.firebasestorage.app",
+          messagingSenderId: "177587430482",
+          appId: "1:177587430482:web:1188e0f661368040c3ab8b",
+          measurementId: "G-YG2SLS45D8"
+        };
+
+        // 파이어베이스 초기화
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 행 추가 로직
+        // 행 추가 함수
         window.addRow = () => {
             const div = document.createElement('div');
             div.className = 'criteria-row';
             div.innerHTML = `
-                <input type="text" placeholder="항목명" class="c-name">
-                <input type="number" placeholder="만점" class="c-max">
-                <input type="number" placeholder="반영비율(%)" class="c-ratio">
+                <input type="text" placeholder="항목명 (예: 1차 지필)" class="c-name" required>
+                <input type="number" placeholder="만점 (예: 100)" class="c-max" min="1" required>
+                <input type="number" placeholder="반영비율 (%) (예: 30)" class="c-ratio" min="1" max="100" required>
+                <button class="remove-btn" onclick="removeRow(this)">삭제</button>
             `;
             document.getElementById('criteriaList').appendChild(div);
         };
 
-        // 저장 로직
+        // 행 삭제 함수
+        window.removeRow = (button) => {
+            button.parentElement.remove();
+        };
+
+        // 초기 행 하나 추가
+        addRow();
+
+        // 파이어베이스 저장 함수
         window.saveToFirebase = async () => {
-            const subject = document.getElementById('subjectName').value;
+            const subject = document.getElementById('subjectName').value.trim();
+            
+            if (!subject) {
+                alert("과목명을 입력해주세요.");
+                return;
+            }
+
             const rows = document.querySelectorAll('.criteria-row');
             const items = [];
+            let totalRatio = 0;
 
-            rows.forEach(row => {
+            for (const row of rows) {
+                const name = row.querySelector('.c-name').value.trim();
+                const maxScore = row.querySelector('.c-max').value;
+                const ratio = row.querySelector('.c-ratio').value;
+
+                if (!name || !maxScore || !ratio) {
+                    alert("모든 평가 항목의 내용을 입력해주세요.");
+                    return;
+                }
+
+                totalRatio += Number(ratio);
                 items.push({
-                    name: row.querySelector('.c-name').value,
-                    maxScore: Number(row.querySelector('.c-max').value),
-                    ratio: Number(row.querySelector('.c-ratio').value)
+                    name: name,
+                    maxScore: Number(maxScore),
+                    ratio: Number(ratio)
                 });
-            });
+            }
+
+            if (items.length === 0) {
+                 alert("최소 한 개 이상의 평가 항목을 추가해주세요.");
+                 return;
+            }
+
+            if (totalRatio !== 100) {
+                alert(`반영 비율의 합이 ${totalRatio}% 입니다. 100%가 되도록 맞춰주세요.`);
+                return;
+            }
 
             try {
+                // Firestore에 데이터 저장
                 await addDoc(collection(db, "grading_plans"), {
                     subject: subject,
                     items: items,
                     createdAt: new Date()
                 });
-                alert("저장되었습니다! 학생 페이지에서 확인할 수 있습니다.");
+                alert(`'${subject}' 과목의 평가 기준이 성공적으로 저장되었습니다!`);
+                // 저장 후 입력폼 초기화
+                document.getElementById('subjectName').value = '';
+                document.getElementById('criteriaList').innerHTML = '';
+                addRow(); // 기본 행 하나 다시 추가
             } catch (e) {
-                console.error("Error: ", e);
-                alert("저장 실패");
+                console.error("Error adding document: ", e);
+                alert("저장 중 오류가 발생했습니다. 다시 시도해주세요.");
             }
         };
     </script>
