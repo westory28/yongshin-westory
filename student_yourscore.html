@@ -1,40 +1,541 @@
-<style>
-    /* 헤더 고정 스타일 */
-    header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
-    
-    /* 네비게이션 컨테이너 */
-    .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
-    
-    /* 네비게이션 링크 */
-    .header-nav { display: flex; height: 100%; gap: 1.5rem; }
-    .nav-link { font-weight: 500; color: #6b7280; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
-    .nav-link:hover { color: #111827; }
-    .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
-    
-    /* 로고 */
-    .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
-    .logo-we { color: #2563eb; }
-    .logo-story { color: #f59e0b; }
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 성적표 - WeStory</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* [레이아웃 핵심] 화면 꽉 차게 설정 */
+        html, body { height: 100%; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f5f7fa; color: #333; display: flex; flex-direction: column; }
+        
+        /* 로그인/앱 섹션 전환용 */
+        .hidden { display: none !important; }
 
-    /* 로그아웃 버튼 */
-    .btn-logout-text { color: #78716c; font-size: 0.875rem; font-weight: 700; padding: 0.5rem 0.75rem; border-radius: 0.25rem; background: transparent; border: none; cursor: pointer; transition: background 0.2s, color 0.2s; }
-    .btn-logout-text:hover { color: #292524; background-color: #f5f5f4; }
-</style>
+        /* 메인 래퍼: 헤더+컨텐츠+푸터를 감싸며 화면 전체 사용 */
+        #appSection { display: flex; flex-direction: column; flex: 1; min-height: 100vh; width: 100%; }
 
-<header>
-    <div class="header-container">
-        <div class="logo-text" onclick="location.href='https://westory28.github.io/Bang-westory/index-test.html'">
-            <span class="logo-we">We</span><span class="logo-story">story</span>
-        </div>
+        /* ★ 1. 공통 헤더 스타일 (교사 대시보드 스타일 이식) */
+        header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; flex-shrink: 0; }
+        
+        .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
+        
+        .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
+        .logo-we { color: #2563eb; }
+        .logo-story { color: #f59e0b; }
 
-        <nav class="header-nav">
-            <a href="https://westory28.github.io/Bang-westory/student_quiz-2025-2sem.html" class="nav-link">역사 퀴즈</a>
-            <a href="https://westory28.github.io/Bang-westory/student_quiz-history.html" class="nav-link">학습 기록</a>
-            <a href="https://westory28.github.io/Bang-westory/student_yourscore.html" class="nav-link">나의 성적표</a>
-        </nav>
+        .header-nav { display: flex; height: 100%; gap: 1.5rem; }
+        .nav-link { 
+            font-weight: 500; color: #6b7280; text-decoration: none; font-size: 0.95rem; 
+            height: 100%; display: inline-flex; align-items: center; 
+            border-bottom: 3px solid transparent; transition: all 0.2s; 
+        }
+        .nav-link:hover { color: #111827; }
+        .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
 
-        <button onclick="logout()" class="btn-logout-text">
-            로그아웃
+        .btn-logout-text { 
+            color: #78716c; font-size: 0.875rem; font-weight: 700; padding: 0.5rem 0.75rem; 
+            border-radius: 0.25rem; background: transparent; border: none; cursor: pointer; 
+            transition: background 0.2s, color 0.2s; 
+        }
+        .btn-logout-text:hover { color: #292524; background-color: #f5f5f4; }
+
+
+        /* ★ 2. 컨텐츠 영역 */
+        .container { 
+            flex: 1; /* 남은 공간 모두 차지 */
+            width: 100%; max-width: 1200px; margin: 0 auto; padding: 40px 20px; 
+            box-sizing: border-box;
+        }
+
+        .page-header { margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; }
+        .page-title { font-size: 24px; font-weight: 700; color: #111; margin: 0; }
+        
+        .alert-box { 
+            background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+            padding: 15px; border-radius: 6px; margin-bottom: 25px; 
+            font-size: 14px; font-weight: bold; text-align: center; line-height: 1.6;
+        }
+
+        /* 컨트롤 패널 (필터) */
+        .control-panel {
+            background-color: #fff; border-radius: 8px; padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px;
+            display: flex; gap: 15px; flex-wrap: wrap; align-items: center;
+        }
+        .filter-group { display: flex; align-items: center; gap: 8px; }
+        .filter-label { font-size: 14px; font-weight: bold; color: #555; }
+        select { 
+            padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; 
+            border-radius: 4px; background: white; cursor: pointer; min-width: 100px;
+        }
+        select:focus { border-color: #4a90e2; outline: none; }
+
+        /* 대시보드 그리드 */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 340px; gap: 25px; }
+        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+        /* 과목 카드 */
+        .subject-card { 
+            background: #fff; border-radius: 8px; margin-bottom: 15px; 
+            border: 1px solid #e1e4e8; border-left: 5px solid #ccc; /* 기본값 */
+            transition: all 0.2s;
+        }
+        .subject-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+        
+        .card-header { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .subject-name { font-size: 18px; font-weight: 700; color: #222; }
+        
+        .score-info { text-align: right; }
+        .total-score { font-size: 20px; font-weight: bold; color: #adb5bd; /* 기본 회색 */ transition: color 0.3s;}
+        .grade-badge { 
+            display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; 
+            color: #fff; margin-left: 8px; vertical-align: middle; 
+        }
+        .toggle-text { font-size: 12px; color: #999; margin-top: 4px; }
+
+        .card-body { padding: 0 25px 25px 25px; display: none; background-color: #fafbfc; border-top: 1px solid #eee; }
+        .card-body.expanded { display: block; }
+
+        /* 입력 폼 */
+        .input-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
+        .input-item:last-child { border-bottom: none; }
+        .item-label { font-size: 14px; color: #333; }
+        .item-sub { font-size: 12px; color: #888; margin-top: 2px; }
+        .type-tag { font-size: 11px; padding: 2px 5px; border-radius: 3px; background: #eee; color: #555; margin-right: 6px; }
+        .score-input { width: 70px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 15px; }
+
+        /* 차트 패널 */
+        .chart-panel { 
+            background: #fff; padding: 20px; border-radius: 8px; 
+            border: 1px solid #e1e4e8; height: fit-content; position: sticky; top: 84px; /* 헤더 높이 고려 */
+        }
+        .chart-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        .chart-wrapper { position: relative; height: 300px; width: 100%; }
+
+        .grade-scale-bar { 
+            display: flex; height: 30px; border-radius: 6px; overflow: hidden; margin-top: 20px; 
+            font-weight: bold; color: white; text-shadow: 0 1px 1px rgba(0,0,0,0.2); font-size: 11px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .scale-segment { flex: 1; display: flex; justify-content: center; align-items: center; }
+
+        /* 동의 팝업 (모달) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background: white; padding: 30px; border-radius: 12px;
+            width: 90%; max-width: 480px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: popIn 0.3s ease-out;
+            position: relative;
+        }
+        @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal-icon { font-size: 40px; margin-bottom: 10px; }
+        .modal-title { font-size: 20px; font-weight: 800; color: #d97706; margin-bottom: 15px; }
+        .modal-text { font-size: 15px; line-height: 1.6; color: #333; margin-bottom: 20px; word-break: keep-all; }
+        .sub-text { font-size: 13px; color: #6b7280; display: block; margin-top: 8px; background: #f3f4f6; padding: 8px; border-radius: 4px;}
+        
+        .modal-check-area { 
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; 
+            padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s;
+        }
+        .modal-check-area:hover { background: #f9fafb; }
+        .modal-check-area input { width: 18px; height: 18px; cursor: pointer; accent-color: #2563eb; }
+        .modal-check-area label { cursor: pointer; font-size: 15px; font-weight: bold; color: #374151; }
+        
+        .btn-confirm {
+            background-color: #2563eb; color: white; border: none; padding: 14px 0; width: 100%;
+            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-confirm:disabled { background-color: #d1d5db; cursor: not-allowed; color: #9ca3af; }
+        .btn-confirm:not(:disabled):hover { background-color: #1d4ed8; transform: translateY(-1px); }
+
+        /* 푸터 */
+        .main-footer {
+            text-align: center; padding: 30px 0; color: #9ca3af; font-size: 13px;
+            border-top: 1px solid #eee; background-color: #fff; margin-top: auto;
+        }
+
+        /* 로그인 섹션 */
+        #loginSection { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 100%; max-width: 400px; text-align: center; background: #fff; padding: 50px; 
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+        }
+        .btn-google { background-color: #fff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; font-size: 15px; width: 100%; cursor: pointer; border-radius: 4px; margin-top: 20px; transition: background 0.2s; }
+        .btn-google:hover { background-color: #f8f9fa; }
+
+        /* 등급 색상 (미입력 포함) */
+        .bg-A { background-color: #fa5252; } 
+        .bg-B { background-color: #fd7e14; } 
+        .bg-C { background-color: #fab005; } 
+        .bg-D { background-color: #51cf66; } 
+        .bg-E { background-color: #339af0; } 
+        .bg-none { background-color: #adb5bd; } /* 회색 */
+    </style>
+</head>
+<body>
+
+    <div id="loginSection">
+        <h2 style="margin-bottom:10px;">성적 관리 시스템</h2>
+        <p style="color:#666; font-size:14px;">학교 구글 계정으로 로그인해주세요.</p>
+        <button class="btn-google" onclick="loginWithGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" width="18">
+            Google 계정으로 로그인
         </button>
     </div>
-</header>
+
+    <div id="appSection" class="hidden">
+        
+        <div id="warningModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-icon">⚠️</div>
+                <h3 class="modal-title">주의사항 안내</h3>
+                <div class="modal-text">
+                    이 결과는 <strong>참고용 시뮬레이션</strong>이며,<br>
+                    정확한 성적은 <u>나이스(NEIS)</u> 및 <u>성적 통지표</u>를 확인하세요.
+                    <span class="sub-text">입력한 점수는 서버에 저장되지 않고<br>내 컴퓨터(브라우저)에만 임시로 남습니다.</span>
+                </div>
+                
+                <div class="modal-check-area" onclick="document.getElementById('agreeCheck').click()">
+                    <input type="checkbox" id="agreeCheck" onclick="event.stopPropagation()">
+                    <label for="agreeCheck">위 내용을 확인하였으며 동의합니다.</label>
+                </div>
+                
+                <button id="btnStart" class="btn-confirm" disabled>확 인</button>
+            </div>
+        </div>
+
+        <header>
+            <div class="header-container">
+                <div class="logo-text" onclick="location.href='https://westory28.github.io/Bang-westory/index-test.html'">
+                    <span class="logo-we">We</span><span class="logo-story">story</span>
+                </div>
+
+                <nav class="header-nav">
+                    <a href="https://westory28.github.io/Bang-westory/student_quiz-2025-2sem.html" class="nav-link">역사 퀴즈</a>
+                    <a href="https://westory28.github.io/Bang-westory/student_quiz-history.html" class="nav-link">학습 기록</a>
+                    <a href="https://westory28.github.io/Bang-westory/student_yourscore.html" class="nav-link active">나의 성적표</a>
+                </nav>
+
+                <button onclick="logout()" class="btn-logout-text">
+                    로그아웃
+                </button>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">나의 성적표</h1>
+            </div>
+
+            <div class="alert-box">
+                ⚠️ 이 결과는 참고용 시뮬레이션이며, 정확한 성적은 <u>나이스(NEIS)</u> 및 <u>성적 통지표</u>를 확인하세요.<br>
+                <span style="font-size:12px; font-weight:normal; color:#664d03;">(입력한 점수는 서버에 저장되지 않고 내 컴퓨터에만 임시로 남습니다.)</span>
+            </div>
+
+            <div class="control-panel">
+                <div class="filter-group">
+                    <span class="filter-label">연도</span>
+                    <select id="yearFilter" onchange="renderDashboard()">
+                        <option value="2025">2025학년도</option>
+                        <option value="2026">2026학년도</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">학기</span>
+                    <select id="semesterFilter" onchange="renderDashboard()">
+                        <option value="1학기">1학기</option>
+                        <option value="2학기">2학기</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">학년</span>
+                    <select id="gradeFilter" onchange="renderDashboard()">
+                        <option value="1">1학년</option>
+                        <option value="2">2학년</option>
+                        <option value="3">3학년</option>
+                    </select>
+                </div>
+
+                <div class="filter-group" style="margin-left:auto;">
+                    <span class="filter-label">정렬</span>
+                    <select id="sortFilter" onchange="renderDashboard()">
+                        <option value="default">교과표 순서 (국영수...)</option>
+                        <option value="score_high">성적 높은 순</option>
+                        <option value="name">가나다 순</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="left-content">
+                    <div id="subjectsList">
+                        </div>
+                </div>
+
+                <div class="right-sidebar">
+                    <div class="chart-panel">
+                        <div class="chart-title">성취도 그래프</div>
+                        <div class="chart-wrapper">
+                            <canvas id="gradeChart"></canvas>
+                        </div>
+                        <div class="grade-scale-bar">
+                            <div class="scale-segment bg-A">A (90~)</div>
+                            <div class="scale-segment bg-B">B (80~)</div>
+                            <div class="scale-segment bg-C">C (70~)</div>
+                            <div class="scale-segment bg-D">D (60~)</div>
+                            <div class="scale-segment bg-E">E (~59)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="main-footer">
+            Copyright © 역사교사 방재석. All rights reserved.
+        </footer>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
+          authDomain: "history-quiz-yongsin.firebaseapp.com",
+          projectId: "history-quiz-yongsin",
+          storageBucket: "history-quiz-yongsin.firebasestorage.app",
+          messagingSenderId: "177587430482",
+          appId: "1:177587430482:web:1188e0f661368040c3ab8b",
+          measurementId: "G-YG2SLS45D8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let allGradingPlans = [];
+        let myChart = null;
+        const FIXED_SUBJECT_ORDER = ['국어', '영어', '수학', '과학', '역사', '기가', '한문', '일본어', '미술', '체육'];
+
+        // ★ 등급 계산 함수 (미입력 시 회색 처리)
+        function getGradeInfo(score, hasData) {
+            if (!hasData) return { grade: '-', colorCode: '#adb5bd', class: 'bg-none', text: '미입력' }; 
+            
+            if (score >= 90) return { grade: 'A', colorCode: '#fa5252', class: 'bg-A', text: `${score}점` };
+            if (score >= 80) return { grade: 'B', colorCode: '#fd7e14', class: 'bg-B', text: `${score}점` };
+            if (score >= 70) return { grade: 'C', colorCode: '#fab005', class: 'bg-C', text: `${score}점` };
+            if (score >= 60) return { grade: 'D', colorCode: '#51cf66', class: 'bg-D', text: `${score}점` };
+            return { grade: 'E', colorCode: '#339af0', class: 'bg-E', text: `${score}점` };
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('appSection').classList.remove('hidden');
+                
+                // 로그인 시 경고 모달 표시
+                document.getElementById('warningModal').classList.remove('hidden');
+                
+                loadAllData();
+            } else {
+                document.getElementById('loginSection').classList.remove('hidden');
+                document.getElementById('appSection').classList.add('hidden');
+            }
+        });
+
+        // 동의 체크박스 로직
+        const checkbox = document.getElementById('agreeCheck');
+        const btnStart = document.getElementById('btnStart');
+        checkbox.addEventListener('change', (e) => { btnStart.disabled = !e.target.checked; });
+        btnStart.addEventListener('click', () => { document.getElementById('warningModal').classList.add('hidden'); });
+
+        window.loginWithGoogle = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { alert("로그인 실패"); } };
+        window.logout = async () => { if(confirm("로그아웃 하시겠습니까?")) { await signOut(auth); location.reload(); } };
+
+        async function loadAllData() {
+            try {
+                const q = query(collection(db, "grading_plans"), orderBy("createdAt", "desc"));
+                const snapshot = await getDocs(q);
+                allGradingPlans = [];
+                snapshot.forEach(doc => allGradingPlans.push({ id: doc.id, ...doc.data() }));
+                renderDashboard();
+            } catch (e) { console.error(e); }
+        }
+
+        window.toggleCard = (header) => {
+            const body = header.nextElementSibling;
+            const hint = header.querySelector('.toggle-text');
+            if (body.classList.contains('expanded')) {
+                body.classList.remove('expanded');
+                hint.innerText = '▼ 점수 입력하기';
+            } else {
+                body.classList.add('expanded');
+                hint.innerText = '▲ 접기';
+            }
+        };
+
+        function calculateTotal(plan) {
+            let total = 0;
+            let hasData = false; 
+            plan.items.forEach((item, idx) => {
+                const saved = localStorage.getItem(`score_${plan.id}_${idx}`);
+                if(saved !== null && saved !== "") {
+                    hasData = true;
+                    const val = parseFloat(saved);
+                    if(!isNaN(val)) total += (val / item.maxScore) * item.ratio;
+                }
+            });
+            return { score: parseFloat(total.toFixed(1)), hasData: hasData };
+        }
+
+        window.renderDashboard = () => {
+            const gradeFilter = document.getElementById('gradeFilter').value;
+            const yearFilter = document.getElementById('yearFilter').value;
+            const semesterFilter = document.getElementById('semesterFilter').value;
+            const sortMode = document.getElementById('sortFilter').value;
+            const container = document.getElementById('subjectsList');
+            container.innerHTML = '';
+
+            let filteredPlans = allGradingPlans.filter(plan => {
+                const pGrade = plan.targetGrade || "2"; 
+                const pYear = plan.academicYear || "2025";
+                const pSem = plan.semester || "1학기";
+                return String(pGrade) === gradeFilter && pYear === yearFilter && pSem === semesterFilter;
+            });
+
+            filteredPlans = filteredPlans.map(plan => {
+                const result = calculateTotal(plan);
+                return { ...plan, currentScore: result.score, hasData: result.hasData };
+            });
+
+            // 정렬
+            if (sortMode === 'score_high') {
+                filteredPlans.sort((a, b) => b.currentScore - a.currentScore);
+            } else if (sortMode === 'name') {
+                filteredPlans.sort((a, b) => a.subject.localeCompare(b.subject));
+            } else {
+                filteredPlans.sort((a, b) => {
+                    let idxA = FIXED_SUBJECT_ORDER.indexOf(a.subject);
+                    let idxB = FIXED_SUBJECT_ORDER.indexOf(b.subject);
+                    if(idxA === -1) idxA = 999; if(idxB === -1) idxB = 999;
+                    return idxA - idxB;
+                });
+            }
+
+            if (filteredPlans.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:50px; color:#888; background:#fff; border-radius:8px; border:1px solid #eee;">
+                    해당 학기(${gradeFilter}학년 ${yearFilter} ${semesterFilter})의 데이터가 없습니다.</div>`;
+                updateChart([], [], []);
+                return;
+            }
+
+            const chartLabels = []; const chartData = []; const chartColors = [];
+
+            filteredPlans.forEach(plan => {
+                const { currentScore, hasData } = plan;
+                const info = getGradeInfo(currentScore, hasData);
+
+                chartLabels.push(plan.subject);
+                chartData.push(currentScore); 
+                chartColors.push(info.colorCode);
+
+                const card = document.createElement('div');
+                card.className = 'subject-card';
+                card.style.borderLeftColor = info.colorCode;
+
+                let itemsHtml = '';
+                plan.items.forEach((item, idx) => {
+                    const savedVal = localStorage.getItem(`score_${plan.id}_${idx}`) || "";
+                    itemsHtml += `
+                        <div class="input-item">
+                            <div>
+                                <div class="item-label"><span class="type-tag">${item.type}</span>${item.name}</div>
+                                <div class="item-sub">${item.maxScore}점 만점 / ${item.ratio}% 반영</div>
+                            </div>
+                            <input type="number" class="score-input" 
+                                data-planid="${plan.id}" data-idx="${idx}" data-max="${item.maxScore}" 
+                                value="${savedVal}" placeholder="0" onclick="event.stopPropagation()">
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="subject-name">${plan.subject}</div>
+                        <div class="score-info">
+                            <span class="total-score" id="score_text_${plan.id}" style="color:${info.colorCode}">${info.text}</span>
+                            <span class="grade-badge ${info.class}" id="grade_badge_${plan.id}">${info.grade}</span>
+                            <div class="toggle-text">▼ 점수 입력하기</div>
+                        </div>
+                    </div>
+                    <div class="card-body">${itemsHtml}</div>
+                `;
+                container.appendChild(card);
+            });
+
+            document.querySelectorAll('.score-input').forEach(input => input.addEventListener('input', handleInput));
+            updateChart(chartLabels, chartData, chartColors);
+        };
+
+        function handleInput(e) {
+            const planId = e.target.dataset.planid;
+            const idx = e.target.dataset.idx;
+            const max = parseFloat(e.target.dataset.max);
+            let val = parseFloat(e.target.value);
+
+            if (!isNaN(val)) {
+                if(val > max) { val = max; e.target.value = max; }
+                if(val < 0) { val = 0; e.target.value = 0; }
+            }
+            localStorage.setItem(`score_${planId}_${idx}`, e.target.value);
+            updateCardUI(planId);
+        }
+
+        function updateCardUI(planId) {
+            const plan = allGradingPlans.find(p => p.id === planId);
+            if(!plan) return;
+
+            const { score, hasData } = calculateTotal(plan);
+            const info = getGradeInfo(score, hasData);
+
+            const textEl = document.getElementById(`score_text_${planId}`);
+            const badgeEl = document.getElementById(`grade_badge_${planId}`);
+            
+            textEl.innerText = info.text; textEl.style.color = info.colorCode;
+            badgeEl.innerText = info.grade; badgeEl.className = `grade-badge ${info.class}`;
+            badgeEl.closest('.subject-card').style.borderLeftColor = info.colorCode;
+
+            if(myChart) {
+                const idx = myChart.data.labels.indexOf(plan.subject);
+                if(idx !== -1) {
+                    myChart.data.datasets[0].data[idx] = score;
+                    myChart.data.datasets[0].backgroundColor[idx] = info.colorCode;
+                    myChart.update();
+                }
+            }
+        }
+
+        function updateChart(labels, data, colors) {
+            const ctx = document.getElementById('gradeChart').getContext('2d');
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: '환산 점수', data: data, backgroundColor: colors, borderRadius: 4, barPercentage: 0.6 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 }, x: { ticks: { font: { size: 12 } } } }, plugins: { legend: { display: false } } }
+            });
+        }
+    </script>
+</body>
+</html>
