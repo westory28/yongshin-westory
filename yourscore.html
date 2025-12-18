@@ -3,198 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교사 대시보드 - 평가 기준 관리</title>
+    <title>나의 성적 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* 기본 스타일 */
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; color: #333; }
         
         /* 브랜드 헤더 */
         .brand-header {
-            background-color: #1a1a1a; color: #fff; padding: 15px 20px;
-            display: flex; align-items: center; font-size: 18px; font-weight: bold;
+            background-color: #1a1a1a;
+            color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .brand-icon { margin-right: 10px; font-size: 22px; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-        .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
-
-        /* 타이틀 영역 */
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .page-title { font-size: 24px; font-weight: 800; color: #2c3e50; margin: 0; border-bottom: 3px solid #3498db; padding-bottom: 5px; display: inline-block; }
-        .btn-logout { background-color: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        /* 페이지 타이틀 */
+        .page-title-area { text-align: center; margin: 20px 0 30px 0; position: relative; }
+        .page-title { font-size: 28px; font-weight: 800; color: #2c3e50; margin: 0; display: inline-block; border-bottom: 3px solid #3498db; padding-bottom: 5px; }
+        .btn-logout { position: absolute; right: 0; top: 0; background-color: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
 
         /* 로그인 섹션 */
         #loginSection { max-width: 400px; margin: 80px auto; text-align: center; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .btn-google { background-color: #fff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 15px; font-size: 16px; width: 100%; cursor: pointer; border-radius: 6px; margin-top: 20px; transition: background 0.2s; }
         .btn-google:hover { background-color: #f8f9fa; }
 
-        /* 레이아웃 (50:50 분할) */
-        .dashboard-layout { display: flex; flex-direction: column; gap: 30px; }
-        .left-panel { display: flex; flex-direction: column; gap: 20px; }
-        .right-panel { display: flex; flex-direction: column; gap: 20px; }
-
-        @media (min-width: 1000px) {
-            .dashboard-layout { flex-direction: row; align-items: flex-start; }
-            .left-panel { flex: 1; } 
-            .right-panel { 
-                flex: 1;
-                height: calc(100vh - 100px); 
-                overflow-y: auto; 
-                position: sticky; top: 20px;
-                padding-right: 10px; 
-            }
+        /* 레이아웃 */
+        .dashboard-layout { display: flex; flex-direction: column; gap: 20px; }
+        .left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; order: 2; }
+        .right-panel { 
+            order: 1; 
+            background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 15px; 
+            position: sticky; top: 0; z-index: 999; 
+            background-color: #f8f9fa; border-bottom: 1px solid #ddd;
         }
 
-        /* 1. 필터 박스 */
+        @media (min-width: 900px) {
+            .dashboard-layout { flex-direction: row; align-items: flex-start; }
+            .left-panel { flex: 1; order: 1; } 
+            .right-panel { 
+                flex: 0 0 420px; order: 2; 
+                position: sticky; top: 20px; 
+                background: transparent; border: none; padding: 0; box-shadow: none;
+            }
+            .page-title-area { text-align: center; }
+            .btn-logout { top: 5px; }
+        }
+
+        /* 필터 박스 */
         .big-filter-card {
-            background-color: #e3f2fd; border: 2px solid #2196f3; border-radius: 12px; padding: 20px;
+            background-color: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 12px;
+            padding: 20px;
             box-shadow: 0 4px 10px rgba(33, 150, 243, 0.2);
         }
-        .filter-header { font-size: 16px; font-weight: bold; color: #1565c0; margin-bottom: 10px; }
+        .filter-header { font-size: 16px; font-weight: bold; color: #1565c0; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
         .filter-row { display: flex; gap: 10px; }
         .filter-row select { 
             flex: 1; padding: 12px; font-size: 16px; border: 1px solid #90caf9; 
             border-radius: 8px; background: white; font-weight: bold; cursor: pointer;
         }
+        .filter-row select:focus { border-color: #2196f3; outline: none; box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2); }
 
-        /* 2. 입력 폼 카드 */
-        .input-card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 5px solid #2ecc71; }
-        .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-        input[type="text"], input[type="number"] {
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 15px;
-        }
-        input:focus { border-color: #3498db; outline: none; }
+        /* 차트 디자인 */
+        .chart-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .chart-container { position: relative; height: 250px; width: 100%; overflow-x: auto; overflow-y: hidden; }
+        .chart-scroll-wrapper { min-width: 100%; height: 100%; }
 
-        /* ★ 평가 항목 리스트 (입력칸 너비 수정됨) */
-        #criteriaList { background-color: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; }
+        /* ★ 등급 기준표 막대 (색상 및 순서 변경: A -> E) */
+        .grade-scale-bar { display: flex; height: 35px; border-radius: 8px; overflow: hidden; margin-top: 15px; font-weight: bold; color: white; text-shadow: 0 1px 1px rgba(0,0,0,0.3); font-size: 12px; }
+        .scale-segment { flex: 1; display: flex; justify-content: center; align-items: center; }
         
-        .criteria-row { 
-            display: flex; 
-            gap: 10px; /* 칸 사이 간격 */
-            margin-bottom: 10px; 
-            align-items: center; 
-        }
-        
-        /* 1) 유형 선택 (고정 너비) */
-        .c-type { 
-            flex: 0 0 100px; 
-            padding: 10px; border: 1px solid #ddd; border-radius: 4px; 
-        }
-        
-        /* 2) 항목명 (가장 넓게 - 비율 3) */
-        .c-name { 
-            flex: 3; 
-            min-width: 120px;
-            padding: 10px; border: 1px solid #ddd; border-radius: 4px; 
-        }
-        
-        /* 3) 만점 & 비율 (적당히 넓게 - 비율 1씩) */
-        .c-max, .c-ratio { 
-            flex: 1; 
-            min-width: 80px; /* 최소 너비 확보 */
-            padding: 10px; border: 1px solid #ddd; border-radius: 4px; text-align: center; 
-        }
-        
-        /* 4) 삭제 버튼 (고정) */
-        .remove-btn { 
-            flex: 0 0 40px; 
-            background: #e74c3c; color: white; border: none; height: 38px; border-radius: 4px; cursor: pointer; 
-        }
+        /* ★ 새로운 색상 팔레트 적용 */
+        .bg-A { background-color: #fa5252; } /* 빨강 (A) */
+        .bg-B { background-color: #fd7e14; } /* 주황 (B) */
+        .bg-C { background-color: #fab005; } /* 노랑 (C) */
+        .bg-D { background-color: #51cf66; } /* 연두 (D) */
+        .bg-E { background-color: #339af0; } /* 파랑 (E) */
 
-        .btn-add { background-color: #3498db; color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-        .btn-save { background-color: #2ecc71; color: white; padding: 15px; width: 100%; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .btn-cancel { background-color: #95a5a6; color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; display: none; }
-
-        /* 3. 목록 카드 */
-        .plan-card { 
-            background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-            border-left: 5px solid #3498db; display: flex; justify-content: space-between; align-items: center;
-            transition: transform 0.2s;
-            margin-bottom: 20px; 
+        /* 과목 카드 */
+        .subject-card { 
+            background: #fff; border-radius: 12px; margin-bottom: 15px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            border-left: 6px solid #ddd; 
+            cursor: pointer; overflow: hidden; transition: transform 0.2s;
         }
-        .plan-card:last-child { margin-bottom: 0; }
-        .plan-card:hover { transform: translateX(5px); }
+        .subject-card:hover { transform: translateY(-2px); }
+        .card-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .subject-name { font-size: 17px; font-weight: bold; color: #333; }
+        .total-score { font-size: 22px; font-weight: bold; margin-right: 8px; transition: color 0.3s; }
+        .grade-pill { display: inline-block; width: 30px; height: 30px; line-height: 30px; border-radius: 50%; text-align: center; color: white; font-weight: bold; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .toggle-hint { font-size: 12px; color: #999; margin-left: 10px; }
+
+        .card-body { padding: 0 20px 20px 20px; display: none; background-color: #fafafa; border-top: 1px solid #eee; }
+        .card-body.expanded { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 입력 폼 */
+        .input-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .input-row:last-child { border-bottom: none; }
+        .item-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .item-meta { font-size: 12px; color: #888; }
+        .score-input { width: 60px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; text-align: center; font-size: 16px; background: #fff; }
         
-        .plan-info h3 { margin: 0 0 5px 0; font-size: 18px; color: #333; }
-        .plan-meta { font-size: 13px; color: #666; }
-        .plan-items { font-size: 13px; color: #555; margin-top: 10px; line-height: 1.6; background: #f9f9f9; padding: 10px; border-radius: 6px; }
-        .plan-actions { display: flex; gap: 8px; flex-direction: column; }
-        
-        .btn-sm { padding: 8px 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 13px; font-weight: bold; }
-        .btn-edit { background-color: #f39c12; }
-        .btn-delete { background-color: #e74c3c; }
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 11px; color: white; margin-right: 6px; vertical-align: middle; }
+        .b-ji { background: #e74c3c; } .b-su { background: #3498db; }
 
         .hidden { display: none !important; }
-        .empty-msg { text-align: center; color: #999; padding: 40px; background: #fff; border-radius: 12px; }
+        .alert-box { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 13px; font-weight: bold;}
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div id="loginSection">
-        <h2>🔐 선생님 로그인</h2>
-        <p>평가 기준 관리 페이지입니다.<br>선생님 계정으로 로그인해주세요.</p>
+        <h2>🔐 학생 성적 대시보드</h2>
+        <p>구글 계정으로 로그인하여<br>나의 성적을 관리하세요.</p>
         <button class="btn-google" onclick="loginWithGoogle()">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" width="20">
             Google 계정으로 로그인
         </button>
     </div>
 
-    <div id="dashboardSection" class="hidden">
+    <div id="appSection" class="hidden">
         <header class="brand-header">
             <span class="brand-icon">🧑‍🏫</span>
             용신중학교 역사교사 방재석
         </header>
 
         <div class="container">
-            <div class="page-header">
-                <h1 class="page-title">📝 평가 기준 관리</h1>
+            <div class="page-title-area">
+                <h1 class="page-title">📊 성적 대시보드</h1>
                 <button class="btn-logout" onclick="logout()">로그아웃</button>
             </div>
 
             <div class="dashboard-layout">
                 
                 <div class="left-panel">
+                    
                     <div class="big-filter-card">
-                        <div class="filter-header">📌 Step 1. 학년도와 학기를 선택하세요</div>
+                        <div class="filter-header">📌 Step 1. 학년도와 학기를 먼저 선택하세요</div>
                         <div class="filter-row">
-                            <select id="yearFilter" onchange="handleFilterChange()">
+                            <select id="yearFilter" onchange="renderDashboard()">
                                 <option value="2025">2025학년도</option>
                                 <option value="2026">2026학년도</option>
                                 <option value="2027">2027학년도</option>
                             </select>
-                            <select id="semesterFilter" onchange="handleFilterChange()">
+                            <select id="semesterFilter" onchange="renderDashboard()">
                                 <option value="1학기">1학기</option>
                                 <option value="2학기">2학기</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="input-card">
-                        <div class="section-title">
-                            <span id="formTitle">✏️ 평가 기준 등록</span>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>과목명</label>
-                            <input type="text" id="subjectName" placeholder="예: 한국사, 사회">
-                        </div>
-
-                        <label>평가 항목 (만점 / 반영비율)</label>
-                        <div id="criteriaList"></div>
-                        
-                        <button class="btn-add" onclick="addRow()">+ 항목 추가</button>
-                        <button id="saveBtn" class="btn-save" onclick="saveToFirebase()">💾 기준 저장하기</button>
-                        <button id="cancelBtn" class="btn-cancel" onclick="resetForm()">취소 (입력 초기화)</button>
+                    <div class="alert-box">
+                        ⚠️ 결과는 시뮬레이션이며, 실제 성적은 나이스(NEIS)와 다를 수 있습니다.
                     </div>
+
+                    <div id="subjectsList">
+                        </div>
                 </div>
 
                 <div class="right-panel">
-                    <h3 style="margin:0; color:#555;">📂 등록된 평가 기준 목록</h3>
-                    <div id="savedPlansList"></div>
+                    <div class="chart-card">
+                        <div class="chart-container">
+                            <div class="chart-scroll-wrapper">
+                                <canvas id="gradeChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="grade-scale-bar">
+                            <div class="scale-segment bg-A">A (90~)</div>
+                            <div class="scale-segment bg-B">B (80~)</div>
+                            <div class="scale-segment bg-C">C (70~)</div>
+                            <div class="scale-segment bg-D">D (60~)</div>
+                            <div class="scale-segment bg-E">E (~59)</div>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -203,7 +194,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, orderBy, query, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -220,190 +211,191 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        let editingDocId = null;
-        let allPlansData = [];
+        let allGradingPlans = [];
+        let myChart = null;
+        
+        // ★ 새로운 색상 코드 정의 (A=빨강 ~ E=파랑)
+        const gradeColors = { 
+            A: '#fa5252', // 빨강
+            B: '#fd7e14', // 주황
+            C: '#fab005', // 노랑
+            D: '#51cf66', // 연두
+            E: '#339af0'  // 파랑
+        };
 
-        onAuthStateChanged(auth, (user) => {
-            if (user && user.email === "westoria28@gmail.com") {
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('dashboardSection').classList.remove('hidden');
-                loadSavedPlans();
-                addRow();
-            } else if (user) {
-                alert("🚫 접근 거부\n'westoria28@gmail.com' 계정만 가능합니다.");
-                signOut(auth);
+        function getGradeInfo(score) {
+            if (score >= 90) return { grade: 'A', color: gradeColors.A };
+            if (score >= 80) return { grade: 'B', color: gradeColors.B };
+            if (score >= 70) return { grade: 'C', color: gradeColors.C };
+            if (score >= 60) return { grade: 'D', color: gradeColors.D };
+            return { grade: 'E', color: gradeColors.E };
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const q = query(collection(db, "users"), where("email", "==", user.email));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('appSection').classList.remove('hidden');
+                    loadAllData();
+                } else {
+                    alert("등록된 학생 정보가 없습니다."); signOut(auth);
+                }
             } else {
                 document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('dashboardSection').classList.add('hidden');
+                document.getElementById('appSection').classList.add('hidden');
             }
         });
 
-        window.loginWithGoogle = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { console.error(e); alert("로그인 오류"); } };
+        window.loginWithGoogle = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { console.error(e); alert("로그인 실패"); } };
         window.logout = async () => { if(confirm("로그아웃 하시겠습니까?")) { await signOut(auth); location.reload(); } };
 
-        window.handleFilterChange = () => { renderPlansList(); };
-
-        async function loadSavedPlans() {
-            const listDiv = document.getElementById('savedPlansList');
-            listDiv.innerHTML = '<div class="empty-msg">로딩 중...</div>';
-
+        async function loadAllData() {
             try {
                 const q = query(collection(db, "grading_plans"), orderBy("createdAt", "desc"));
-                const querySnapshot = await getDocs(q);
-                
-                allPlansData = [];
-                querySnapshot.forEach(doc => { allPlansData.push({ id: doc.id, ...doc.data() }); });
-                renderPlansList();
-
-            } catch (e) { console.error("Error:", e); listDiv.innerHTML = '<div class="empty-msg">데이터 로드 실패</div>'; }
+                const snapshot = await getDocs(q);
+                allGradingPlans = [];
+                snapshot.forEach(doc => allGradingPlans.push({ id: doc.id, ...doc.data() }));
+                renderDashboard();
+            } catch (e) { console.error(e); }
         }
 
-        function renderPlansList() {
+        window.toggleCard = (cardHeader) => {
+            const body = cardHeader.nextElementSibling;
+            const hint = cardHeader.querySelector('.toggle-hint');
+            if (body.classList.contains('expanded')) {
+                body.classList.remove('expanded'); hint.innerText = '▼ 입력하기';
+            } else {
+                body.classList.add('expanded'); hint.innerText = '▲ 접기';
+            }
+        };
+
+        window.renderDashboard = () => {
             const year = document.getElementById('yearFilter').value;
             const semester = document.getElementById('semesterFilter').value;
-            const listDiv = document.getElementById('savedPlansList');
-            listDiv.innerHTML = '';
+            const container = document.getElementById('subjectsList');
+            container.innerHTML = '';
 
-            const filtered = allPlansData.filter(plan => {
-                const pYear = plan.academicYear || "2025";
-                const pSem = plan.semester || "1학기";
-                return pYear === year && pSem === semester;
+            const filteredPlans = allGradingPlans.filter(plan => {
+                const planYear = plan.academicYear || "2025";
+                const planSem = plan.semester || "1학기";
+                return planYear === year && planSem === semester;
             });
 
-            if (filtered.length === 0) {
-                listDiv.innerHTML = '<div class="empty-msg">등록된 기준이 없습니다.<br>새로 등록해보세요!</div>';
-                return;
+            if (filteredPlans.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#888;">해당 학기의 데이터가 없습니다.</div>';
+                updateChart([], [], []); return;
             }
 
-            filtered.forEach(data => {
-                const card = document.createElement('div');
-                card.className = 'plan-card';
-                const summary = data.items.map(i => `<span style="display:inline-block; margin-right:5px; color:#555;">• ${i.name}(${i.ratio}%)</span>`).join('');
+            const chartLabels = []; const chartData = []; const chartColors = [];
 
+            filteredPlans.forEach(plan => {
+                const card = document.createElement('div');
+                card.className = 'subject-card';
+                let inputHtml = ''; let totalScore = 0;
+
+                plan.items.forEach((item, idx) => {
+                    const savedScore = localStorage.getItem(`score_${plan.id}_${idx}`) || "";
+                    const badgeClass = item.type === '지필' ? 'b-ji' : 'b-su';
+                    const scoreVal = parseFloat(savedScore);
+                    if(!isNaN(scoreVal)) totalScore += (scoreVal / item.maxScore) * item.ratio;
+
+                    inputHtml += `
+                        <div class="input-row">
+                            <div class="item-info">
+                                <div class="item-name"><span class="badge ${badgeClass}">${item.type}</span>${item.name}</div>
+                                <div class="item-meta">${item.maxScore}점 만점 / ${item.ratio}% 반영</div>
+                            </div>
+                            <input type="number" class="score-input" data-docid="${plan.id}" data-idx="${idx}" data-max="${item.maxScore}" value="${savedScore}" placeholder="점수" onclick="event.stopPropagation()">
+                        </div>`;
+                });
+
+                const finalScore = totalScore.toFixed(1);
+                const { grade, color } = getGradeInfo(finalScore);
+
+                chartLabels.push(plan.subject);
+                chartData.push(finalScore);
+                chartColors.push(color);
+
+                card.style.borderLeftColor = color;
                 card.innerHTML = `
-                    <div class="plan-info">
-                        <h3>${data.subject}</h3>
-                        <div class="plan-meta">${data.academicYear || '2025'}학년도 ${data.semester}</div>
-                        <div class="plan-items">${summary}</div>
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="subject-name">${plan.subject}</div>
+                        <div style="display:flex; align-items:center;">
+                            <span class="total-score" id="total_${plan.id}" style="color:${color}">${finalScore}</span>
+                            <span class="grade-pill" id="grade_${plan.id}" style="background-color:${color}">${grade}</span>
+                            <span class="toggle-hint">▼ 입력하기</span>
+                        </div>
                     </div>
-                    <div class="plan-actions">
-                        <button class="btn-sm btn-edit" onclick="startEdit('${data.id}')">수정</button>
-                        <button class="btn-sm btn-delete" onclick="deletePlan('${data.id}')">삭제</button>
-                    </div>
+                    <div class="card-body">${inputHtml}</div>
                 `;
-                listDiv.appendChild(card);
+                container.appendChild(card);
             });
+
+            document.querySelectorAll('.score-input').forEach(input => input.addEventListener('input', handleInput));
+            
+            const wrapper = document.querySelector('.chart-scroll-wrapper');
+            if (filteredPlans.length > 5) wrapper.style.width = `${filteredPlans.length * 60}px`;
+            else wrapper.style.width = '100%';
+
+            updateChart(chartLabels, chartData, chartColors);
+        };
+
+        function handleInput(e) {
+            const docId = e.target.dataset.docid;
+            const idx = e.target.dataset.idx;
+            const max = parseFloat(e.target.dataset.max);
+            let val = e.target.value;
+            if(val > max) { val = max; e.target.value = max; }
+            localStorage.setItem(`score_${docId}_${idx}`, val);
+            updateCardScore(docId);
         }
 
-        window.startEdit = (id) => {
-            const data = allPlansData.find(p => p.id === id);
-            if(!data) return;
-            editingDocId = id;
-
-            if(data.academicYear) document.getElementById('yearFilter').value = data.academicYear;
-            document.getElementById('semesterFilter').value = data.semester || "1학기";
-            renderPlansList();
-
-            document.getElementById('subjectName').value = data.subject;
-            const listDiv = document.getElementById('criteriaList');
-            listDiv.innerHTML = '';
-            data.items.forEach(item => addRow(item));
-
-            document.getElementById('saveBtn').innerText = "🔄 수정사항 저장";
-            document.getElementById('saveBtn').style.backgroundColor = "#f39c12";
-            document.getElementById('cancelBtn').style.display = "block";
-            document.getElementById('formTitle').innerText = "📝 평가 기준 수정 모드";
+        function updateCardScore(docId) {
+            const plan = allGradingPlans.find(p => p.id === docId);
+            if(!plan) return;
+            let total = 0;
+            plan.items.forEach((item, i) => {
+                const val = parseFloat(localStorage.getItem(`score_${docId}_${i}`));
+                if(!isNaN(val)) total += (val / item.maxScore) * item.ratio;
+            });
+            const final = total.toFixed(1);
+            const { grade, color } = getGradeInfo(final);
             
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
+            document.getElementById(`total_${docId}`).innerText = final;
+            document.getElementById(`total_${docId}`).style.color = color;
+            const badge = document.getElementById(`grade_${docId}`);
+            badge.innerText = grade;
+            badge.style.backgroundColor = color;
+            badge.closest('.subject-card').style.borderLeftColor = color;
 
-        window.deletePlan = async (id) => {
-            if(confirm("정말 삭제하시겠습니까?\n복구할 수 없습니다.")) {
-                try {
-                    await deleteDoc(doc(db, "grading_plans", id));
-                    allPlansData = allPlansData.filter(p => p.id !== id);
-                    renderPlansList();
-                    if(editingDocId === id) resetForm();
-                } catch(e) { alert("삭제 실패: " + e.message); }
-            }
-        };
-
-        window.resetForm = () => {
-            editingDocId = null;
-            document.getElementById('subjectName').value = '';
-            document.getElementById('criteriaList').innerHTML = '';
-            addRow(); 
-            document.getElementById('saveBtn').innerText = "💾 기준 저장하기";
-            document.getElementById('saveBtn').style.backgroundColor = "#2ecc71";
-            document.getElementById('cancelBtn').style.display = "none";
-            document.getElementById('formTitle').innerText = "✏️ 평가 기준 등록";
-        };
-
-        window.addRow = (data = null) => {
-            const div = document.createElement('div');
-            div.className = 'criteria-row';
-            
-            const type = data ? data.type : "지필";
-            const name = data ? data.name : "";
-            const max = data ? data.maxScore : "";
-            const ratio = data ? data.ratio : "";
-
-            div.innerHTML = `
-                <select class="c-type">
-                    <option value="지필" ${type==='지필'?'selected':''}>지필</option>
-                    <option value="수행" ${type==='수행'?'selected':''}>수행</option>
-                </select>
-                <input type="text" placeholder="항목명" class="c-name" value="${name}">
-                <input type="number" placeholder="만점" class="c-max" value="${max}">
-                <input type="number" placeholder="%" class="c-ratio" value="${ratio}">
-                <button class="remove-btn" onclick="this.parentElement.remove()">x</button>
-            `;
-            document.getElementById('criteriaList').appendChild(div);
-        };
-
-        window.saveToFirebase = async () => {
-            const user = auth.currentUser;
-            if (!user || user.email !== "westoria28@gmail.com") { alert("권한 없음"); return; }
-
-            const academicYear = document.getElementById('yearFilter').value;
-            const semester = document.getElementById('semesterFilter').value;
-            const subject = document.getElementById('subjectName').value.trim();
-            if (!subject) { alert("과목명을 입력해주세요."); return; }
-
-            const rows = document.querySelectorAll('.criteria-row');
-            const items = [];
-            let totalRatio = 0;
-
-            for (const row of rows) {
-                const type = row.querySelector('.c-type').value;
-                const name = row.querySelector('.c-name').value.trim();
-                const maxScore = row.querySelector('.c-max').value;
-                const ratio = row.querySelector('.c-ratio').value;
-                if (!name || !maxScore || !ratio) { alert("빈칸을 채워주세요."); return; }
-                totalRatio += Number(ratio);
-                items.push({ type, name, maxScore: Number(maxScore), ratio: Number(ratio) });
-            }
-
-            if (items.length === 0) { alert("항목을 추가해주세요."); return; }
-            if (totalRatio !== 100) { alert(`비율 합계가 ${totalRatio}% 입니다. 100%를 맞춰주세요.`); return; }
-
-            try {
-                const saveData = { academicYear, semester, subject, items, updatedAt: new Date() };
-                if (editingDocId) {
-                    await updateDoc(doc(db, "grading_plans", editingDocId), saveData);
-                    const idx = allPlansData.findIndex(p => p.id === editingDocId);
-                    if(idx !== -1) allPlansData[idx] = { id: editingDocId, ...saveData };
-                    alert("수정되었습니다!");
-                } else {
-                    saveData.createdAt = new Date();
-                    saveData.teacherEmail = user.email;
-                    const docRef = await addDoc(collection(db, "grading_plans"), saveData);
-                    allPlansData.unshift({ id: docRef.id, ...saveData });
-                    alert("저장되었습니다!");
+            if(myChart) {
+                const dataIndex = myChart.data.labels.indexOf(plan.subject);
+                if(dataIndex !== -1) {
+                    myChart.data.datasets[0].data[dataIndex] = final;
+                    myChart.data.datasets[0].backgroundColor[dataIndex] = color;
+                    myChart.update();
                 }
-                resetForm(); renderPlansList();
-            } catch (e) { console.error("Error:", e); alert("저장 실패: " + e.message); }
-        };
+            }
+        }
+
+        function updateChart(labels, data, colors) {
+            const ctx = document.getElementById('gradeChart').getContext('2d');
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: '환산 점수', data: data, backgroundColor: colors, borderWidth: 1, borderRadius: 5 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 100, ticks:{font:{size:10}} }, x: { ticks:{font:{size:11}} } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
     </script>
 </body>
 </html>
