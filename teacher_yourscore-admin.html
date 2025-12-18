@@ -7,24 +7,68 @@
     <style>
         /* 기본 스타일 */
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; color: #333; }
-        
-        /* 브랜드 헤더 */
-        .brand-header {
-            background-color: #1a1a1a; color: #fff; padding: 15px 20px;
-            display: flex; align-items: center; font-size: 18px; font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        a { text-decoration: none; color: inherit; }
+
+        /* ★ NEW: 메인 헤더 스타일 (이미지 기반 구현) */
+        .main-header {
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            position: sticky; top: 0; z-index: 1000;
         }
-        .brand-icon { margin-right: 10px; font-size: 22px; }
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            height: 64px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* 로고 스타일 */
+        .logo { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; display: flex; align-items: center; }
+        .logo-we { color: #2979ff; }   /* We - 파랑 */
+        .logo-story { color: #ffc107; } /* story - 노랑/주황 */
 
-        .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+        /* 네비게이션 메뉴 */
+        .main-nav { display: flex; gap: 40px; height: 100%; align-items: center; }
+        .nav-item {
+            font-size: 16px; font-weight: 600; color: #5f6368;
+            height: 100%; display: flex; align-items: center;
+            border-bottom: 3px solid transparent;
+            cursor: pointer; transition: color 0.2s;
+        }
+        .nav-item:hover { color: #2979ff; }
+        /* 활성화된 탭 스타일 */
+        .nav-item.active {
+            color: #2979ff;
+            border-bottom-color: #2979ff;
+        }
 
-        /* 타이틀 영역 */
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        /* 헤더 로그아웃 버튼 (타원형) */
+        .btn-logout-header {
+            background-color: #f5f5f5;
+            color: #333;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-logout-header:hover { background-color: #e0e0e0; }
+
+
+        .container { max-width: 1600px; margin: 0 auto; padding: 30px 20px; min-height: calc(100vh - 200px); }
+
+        /* 타이틀 영역 (기존 로그아웃 버튼 제거됨) */
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .page-title { font-size: 24px; font-weight: 800; color: #2c3e50; margin: 0; border-bottom: 3px solid #3498db; padding-bottom: 5px; display: inline-block; }
-        .btn-logout { background-color: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
 
         /* 로그인 섹션 */
-        #loginSection { max-width: 400px; margin: 80px auto; text-align: center; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #loginSection { max-width: 400px; margin: 100px auto; text-align: center; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .btn-google { background-color: #fff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 15px; font-size: 16px; width: 100%; cursor: pointer; border-radius: 6px; margin-top: 20px; transition: background 0.2s; }
         .btn-google:hover { background-color: #f8f9fa; }
 
@@ -38,9 +82,10 @@
             .left-panel { flex: 1; } 
             .right-panel { 
                 flex: 1;
-                height: calc(100vh - 100px); 
+                /* 헤더 높이(64px) + 여백 고려하여 높이 계산 */
+                height: calc(100vh - 120px); 
                 overflow-y: auto; 
-                position: sticky; top: 20px;
+                position: sticky; top: 84px; /* 헤더 아래에 붙도록 */
                 padding-right: 10px; 
             }
         }
@@ -87,36 +132,25 @@
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; 
         }
         
-        /* 옮겨진 정렬 필터 스타일 */
         .sort-select {
-            padding: 8px 12px;
-            font-size: 14px;
-            border: 1px solid #ffcc80;
-            background-color: #fff3e0;
-            border-radius: 6px;
-            color: #e65100;
-            font-weight: bold;
-            cursor: pointer;
+            padding: 8px 12px; font-size: 14px; border: 1px solid #ffcc80;
+            background-color: #fff3e0; border-radius: 6px; color: #e65100;
+            font-weight: bold; cursor: pointer;
         }
 
-        /* ★ 버튼 가로 배치를 위한 CSS 수정 ★ */
         .plan-card { 
             background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-            border-left: 5px solid #3498db; display: flex; justify-content: space-between; align-items: flex-start; /* 상단 정렬로 변경 */
-            transition: transform 0.2s;
-            margin-bottom: 20px; 
+            border-left: 5px solid #3498db; display: flex; justify-content: space-between; align-items: flex-start;
+            transition: transform 0.2s; margin-bottom: 20px; 
         }
         .plan-card:last-child { margin-bottom: 0; }
         .plan-card:hover { transform: translateX(5px); }
         
-        .plan-info {
-            flex: 1; /* 너비를 가능한 많이 차지하도록 */
-            margin-right: 20px; /* 버튼과의 간격 */
-        }
+        .plan-info { flex: 1; margin-right: 20px; }
         .plan-info h3 { margin: 0 0 5px 0; font-size: 18px; color: #333; }
         .plan-meta { font-size: 13px; color: #666; }
-        .plan-items { font-size: 13px; color: #555; margin-top: 10px; line-height: 1.6; background: #f9f9f9; padding: 10px; border-radius: 6px; white-space: normal; word-break: keep-all; } /* 줄바꿈 설정 */
-        .plan-actions { display: flex; gap: 8px; flex-direction: row; flex-shrink: 0; } /* 가로 배치, 줄어들지 않게 */
+        .plan-items { font-size: 13px; color: #555; margin-top: 10px; line-height: 1.6; background: #f9f9f9; padding: 10px; border-radius: 6px; white-space: normal; word-break: keep-all; }
+        .plan-actions { display: flex; gap: 8px; flex-direction: row; flex-shrink: 0; }
         
         .btn-sm { padding: 8px 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 13px; font-weight: bold; }
         .btn-edit { background-color: #f39c12; }
@@ -124,8 +158,18 @@
 
         .hidden { display: none !important; }
         .empty-msg { text-align: center; color: #999; padding: 40px; background: #fff; border-radius: 12px; }
+
+        /* ★ NEW: 푸터 스타일 */
+        .main-footer {
+            text-align: center;
+            padding: 40px 0;
+            color: #999;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+            margin-top: 40px;
+        }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -139,16 +183,24 @@
     </div>
 
     <div id="dashboardSection" class="hidden">
-        <header class="brand-header">
-            <span class="brand-icon">🧑‍🏫</span>
-            용신중학교 역사교사 방재석
+        <header class="main-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-we">We</span><span class="logo-story">story</span>
+                </div>
+                <nav class="main-nav">
+                    <div class="nav-item">역사 퀴즈 대시보드</div>
+                    <div class="nav-item">학생 관리</div>
+                    <div class="nav-item active">성적 산출 관리</div>
+                </nav>
+                <button class="btn-logout-header" onclick="logout()">로그아웃</button>
+            </div>
         </header>
 
         <div class="container">
             <div class="page-header">
                 <h1 class="page-title">📝 평가 기준 관리</h1>
-                <button class="btn-logout" onclick="logout()">로그아웃</button>
-            </div>
+                </div>
 
             <div class="dashboard-layout">
                 
@@ -207,6 +259,10 @@
 
             </div>
         </div>
+
+        <footer class="main-footer">
+            Copyright © 역사교사 방재석. All rights reserved.
+        </footer>
     </div>
 
     <script type="module">
@@ -231,7 +287,7 @@
         let editingDocId = null;
         let allPlansData = [];
 
-        // 교과목 우선순위 정의 (국영수사과역...)
+        // 교과목 우선순위 정의
         const subjectPriority = {
             "국어": 1, "영어": 2, "수학": 3, 
             "사회": 4, "역사": 5, "한국사": 5, 
@@ -279,12 +335,11 @@
             const year = document.getElementById('yearFilter').value;
             const semester = document.getElementById('semesterFilter').value;
             const grade = document.getElementById('gradeFilter').value;
-            const sortType = document.getElementById('sortFilter').value; // 정렬 값
+            const sortType = document.getElementById('sortFilter').value;
             
             const listDiv = document.getElementById('savedPlansList');
             listDiv.innerHTML = '';
 
-            // 1. 기본 필터링
             let filtered = allPlansData.filter(plan => {
                 const pYear = plan.academicYear || "2025";
                 const pSem = plan.semester || "1학기";
@@ -292,23 +347,15 @@
                 return pYear === year && pSem === semester && pGrade === grade;
             });
 
-            // 2. 정렬 로직 적용
             filtered.sort((a, b) => {
                 if (sortType === 'name') {
-                    // 가나다순
                     return a.subject.localeCompare(b.subject);
                 } else if (sortType === 'custom') {
-                    // 교과 기본순
                     const scoreA = subjectPriority[a.subject] || 999;
                     const scoreB = subjectPriority[b.subject] || 999;
-                    
-                    if (scoreA !== scoreB) {
-                        return scoreA - scoreB;
-                    } else {
-                        return a.subject.localeCompare(b.subject);
-                    }
+                    if (scoreA !== scoreB) return scoreA - scoreB;
+                    return a.subject.localeCompare(b.subject);
                 } else {
-                    // 최신 등록순
                     const timeA = a.createdAt ? a.createdAt.seconds : 0;
                     const timeB = b.createdAt ? b.createdAt.seconds : 0;
                     return timeB - timeA;
