@@ -3,107 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Westory Teacher: 우리들의 이야기꾼</title>
+    <title>Westory Teacher: 교사 대시보드</title>
     <style>
-        /* 학생용과 기본 스타일 공유하되, 포인트 컬러 변경 (교사용: 짙은 네이비/골드) */
-        body { font-family: 'Pretendard', sans-serif; background-color: #f0f2f5; margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+        /* 1. 기본 설정 (학생용과 동일) */
+        body { 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; 
+            background-color: #f8f9fa; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh;
+        }
+        
+        a { text-decoration: none; color: inherit; }
         .hidden { display: none !important; }
 
-        /* 로그인 뷰 */
-        #login-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .brand-title { font-size: 3rem; font-weight: 800; color: #2c3e50; margin-bottom: 0.5rem; }
-        .brand-subtitle { font-size: 1.5rem; color: #b78a36; margin-bottom: 3rem; font-weight: 600; } /* 금색 포인트 */
-        .google-btn { background: #fff; border: 1px solid #ccc; padding: 12px 24px; border-radius: 40px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-        
-        /* 대시보드 뷰 */
-        #dashboard-view { width: 100%; display: flex; flex-direction: column; height: 100vh; }
-        
-        /* 상단 네비게이션 바 */
-        nav { background: #fff; padding: 0 40px; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; }
-        .nav-logo { font-weight: 800; font-size: 20px; color: #2c3e50; }
-        
-        .tabs { display: flex; gap: 30px; height: 100%; }
-        .tab-btn { 
-            background: none; border: none; height: 100%; font-size: 16px; font-weight: 600; color: #606770; cursor: pointer; position: relative; 
+        /* 2. 상단바 */
+        header {
+            background-color: #fff;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .tab-btn.active { color: #1877f2; }
-        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: #1877f2; }
 
-        /* 메인 컨텐츠 영역 */
-        .content-area { flex: 1; padding: 30px 40px; overflow-y: auto; }
-        .page-section { display: none; }
-        .page-section.active { display: block; animation: fadeIn 0.3s; }
+        /* 상단바 로고 그룹 */
+        .logo-group { display: flex; align-items: center; gap: 12px; }
+        .header-logo { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
+        .we { color: #1a73e8; }   
+        .story { color: #f9ab00; } 
         
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* 교사 대시보드 배지 스타일 */
+        .teacher-badge {
+            font-size: 16px;
+            color: #606770;
+            font-weight: 500;
+            padding-left: 12px;
+            border-left: 2px solid #e4e6eb;
+            height: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 상단바 버튼 */
+        .header-btn {
+            background-color: #e4e6eb; 
+            color: #050505;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .header-btn:hover { background-color: #d8dadf; }
+
+        /* 3. 메인 컨텐츠 영역 */
+        main { flex: 1; display: flex; flex-direction: column; width: 100%; }
+
+        /* --- [화면 A] 로그인 뷰 --- */
+        #login-view { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            text-align: center; 
+            padding: 20px; 
+        }
         
-        h2 { border-left: 5px solid #2c3e50; padding-left: 15px; margin-bottom: 20px; color: #333; }
+        .main-logo { font-size: 4rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
+        .main-subtitle { font-size: 1.6rem; color: #606770; margin-bottom: 50px; font-weight: 500; }
         
-        /* iframe 스타일 (기존 페이지 임베드용) */
-        .frame-container { width: 100%; height: 80vh; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .google-login-btn { 
+            background: #fff; border: 1px solid #dadce0; padding: 14px 36px; border-radius: 40px; 
+            font-size: 18px; font-weight: 600; color: #3c4043; cursor: pointer; display: flex; align-items: center; gap: 12px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: all 0.2s;
+        }
+        .google-login-btn:hover { background: #f7f8f8; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transform: translateY(-1px); }
+
+        /* --- [화면 B] 교사 대시보드 --- */
+        #dashboard-view { max-width: 1000px; margin: 40px auto; padding: 0 20px; width: 100%; box-sizing: border-box; }
+        
+        .welcome-msg { font-size: 28px; font-weight: 700; margin-bottom: 40px; color: #1c1e21; }
+        
+        .card-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+        .menu-card {
+            background: white; border-radius: 12px; padding: 40px 30px; text-align: center; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #ddd;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
+        }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); border-color: #1a73e8; }
+        
+        .card-icon { width: 60px; height: 60px; background: #e8f0fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 20px; }
+        .card-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; color: #202124; }
+        .card-desc { color: #5f6368; font-size: 15px; line-height: 1.5; word-break: keep-all; }
+
+        /* 4. 푸터 */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #65676b;
+            font-size: 13px;
+            border-top: 1px solid #e4e6eb;
+            background: #f8f9fa;
+            margin-top: auto;
+        }
     </style>
 </head>
 <body>
 
-    <div id="login-view">
-        <div class="brand-title">Westory</div>
-        <div class="brand-subtitle">: 우리들의 이야기꾼</div>
-        <button class="google-btn" onclick="teacherLogin()">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" alt="G">
-            교사 계정으로 로그인
-        </button>
-    </div>
-
-    <div id="dashboard-view" class="hidden">
-        <nav>
-            <div class="nav-logo">Westory Teacher</div>
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('tab1')">퀴즈 대시보드</button>
-                <button class="tab-btn" onclick="switchTab('tab2')">평가 기준 관리</button>
-                <button class="tab-btn" onclick="switchTab('tab3')">학생 관리</button>
+    <header id="main-header" class="hidden">
+        <div class="logo-group" onclick="location.reload()">
+            <div class="header-logo">
+                <span class="we">We</span><span class="story">story</span>
             </div>
-            <button class="google-btn" onclick="teacherLogout()" style="padding: 6px 16px; font-size: 14px;">로그아웃</button>
-        </nav>
+            <div class="teacher-badge">교사 대시보드</div>
+        </div>
+        <button class="header-btn" onclick="handleLogout()">로그아웃</button>
+    </header>
 
-        <div class="content-area">
-            <div id="tab1" class="page-section active">
-                <h2>실시간 퀴즈 제출 현황</h2>
-                <iframe src="dashboard-content.html" class="frame-container" title="대시보드"></iframe>
+    <main>
+        <div id="login-view">
+            <div class="main-logo">
+                <span class="we">We</span><span class="story">story</span>
             </div>
+            <div class="main-subtitle">: 우리들의 이야기꾼</div>
+            
+            <button class="google-login-btn" onclick="handleLogin()">
+                <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" width="24" alt="G">
+                Google 계정으로 시작하기
+            </button>
+        </div>
 
-            <div id="tab2" class="page-section">
-                <h2>수행평가 기준 설정</h2>
-                <iframe src="yourscore-teacher.html" class="frame-container" title="평가관리"></iframe>
-            </div>
+        <div id="dashboard-view" class="hidden">
+            <div class="welcome-msg" id="greeting-text">반갑습니다, 선생님 👋</div>
 
-            <div id="tab3" class="page-section">
-                <h2>학생 명단 및 계정 관리</h2>
-                <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; color: #888;">
-                    <p>학생들의 명단을 업로드하거나 관리하는 기능이 추가될 예정입니다.</p>
-                    <button style="padding: 10px 20px; background: #2c3e50; color: white; border: none; border-radius: 6px; cursor: pointer;">학생 명단 엑셀 업로드</button>
-                </div>
+            <div class="card-container">
+                <a href="https://github.com/westory28/Bang-westory/index.html" class="menu-card">
+                    <div class="card-icon">🧩</div>
+                    <div class="card-title">역사 퀴즈 대시보드</div>
+                    <div class="card-desc">학생들이 참여할<br>퀴즈 화면으로 이동합니다.</div>
+                </a>
+                
+                <a href="https://github.com/westory28/Bang-westory/teacher.html" class="menu-card">
+                    <div class="card-icon">👨‍🏫</div>
+                    <div class="card-title">학생 관리</div>
+                    <div class="card-desc">학생 명단을 확인하고<br>학습 현황을 관리합니다.</div>
+                </a>
+
+                <a href="https://github.com/westory28/Bang-westory/yourscore-teacher.html" class="menu-card">
+                    <div class="card-icon">📈</div>
+                    <div class="card-title">성적 산출 관리</div>
+                    <div class="card-desc">수행평가 점수를 입력하고<br>등급을 산출합니다.</div>
+                </a>
             </div>
         </div>
-    </div>
+    </main>
+
+    <footer>
+        Copyright © 역사교사 방재석. All rights reserved.
+    </footer>
 
     <script>
-        function teacherLogin() {
+        function handleLogin() {
+            // 1. 화면 전환
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');
+
+            // 2. 헤더 표시
+            document.getElementById('main-header').classList.remove('hidden');
+
+            // 3. 교사 이름 설정
+            const teacherName = "방재석"; 
+            document.getElementById('greeting-text').innerHTML = `반갑습니다, ${teacherName} 선생님 👋`;
         }
-        function teacherLogout() {
+
+        function handleLogout() {
+            // 1. 화면 전환
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
-        }
-        
-        function switchTab(tabId) {
-            // 모든 탭 컨텐츠 숨기기
-            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
-            // 모든 탭 버튼 비활성화
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            
-            // 선택된 탭 활성화
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
+
+            // 2. 헤더 숨김
+            document.getElementById('main-header').classList.add('hidden');
         }
     </script>
 </body>
