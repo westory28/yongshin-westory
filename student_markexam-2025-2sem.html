@@ -15,13 +15,42 @@
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* 헤더 스타일 */
+        /* --- [헤더 스타일: 요청하신 가이드라인 적용] --- */
         header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
+        
+        /* 네비게이션 컨테이너 */
         .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
+        
+        /* 네비게이션 링크 (데스크탑) */
+        .header-nav { display: flex; height: 100%; gap: 1.5rem; }
+        .nav-link { font-weight: 500; color: #6b7280; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .nav-link:hover { color: #111827; }
+        .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
+        
+        /* 로고 */
         .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
         .logo-we { color: #2563eb; }
         .logo-story { color: #f59e0b; }
 
+        /* 로그아웃 버튼 */
+        .btn-logout-text { color: #78716c; font-size: 0.875rem; font-weight: 700; padding: 0.5rem 0.75rem; border-radius: 0.25rem; background: transparent; border: none; cursor: pointer; transition: background 0.2s, color 0.2s; }
+        .btn-logout-text:hover { color: #292524; background-color: #f5f5f4; }
+
+        /* --- [모바일 반응형 스타일 추가] --- */
+        .mobile-menu-btn { display: none; margin-left: 0.5rem; font-size: 1.5rem; color: #374151; cursor: pointer; background: none; border: none; }
+        
+        #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; }
+        .mobile-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: #374151; font-weight: 500; border-bottom: 1px solid #f3f4f6; text-decoration: none; transition: background 0.2s; }
+        .mobile-link:hover { background-color: #f9fafb; }
+        .mobile-link.active { color: #2563eb; background-color: #eff6ff; font-weight: 700; }
+        .mobile-icon { width: 20px; height: 20px; margin-right: 12px; fill: currentColor; }
+
+        @media (max-width: 768px) {
+            .header-nav { display: none; } /* 데스크탑 메뉴 숨김 */
+            .mobile-menu-btn { display: block; } /* 햄버거 버튼 표시 */
+        }
+
+        /* --- [자가 채점 컨텐츠 스타일] --- */
         /* 점수판 플로팅 스타일 */
         .score-card {
             background: rgba(255, 255, 255, 0.95);
@@ -30,7 +59,7 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        /* OMR 버튼 스타일 */
+        /* OMR 버튼 */
         .omr-btn {
             width: 32px; height: 32px; border-radius: 50%; border: 1px solid #d1d5db;
             display: flex; justify-content: center; align-items: center; cursor: pointer;
@@ -59,21 +88,48 @@
 
     <header>
         <div class="header-container">
-            <div class="logo-text" onclick="location.reload()">
+            <div class="logo-text" onclick="location.href='index-test.html'">
                 <span class="logo-we">We</span><span class="logo-story">story</span>
             </div>
-            <div class="font-bold text-stone-600 text-sm md:text-base">
-                2025학년도 2학기 기말고사 자가 채점
+
+            <nav class="header-nav">
+                <a href="student_quiz-2025-2sem.html" class="nav-link">역사 퀴즈</a>
+                <a href="student_quiz-history.html" class="nav-link">학습 기록</a>
+                <a href="student_yourscore.html" class="nav-link">나의 성적표</a>
+            </nav>
+
+            <div class="flex items-center">
+                <button onclick="app.logout()" class="btn-logout-text">
+                    로그아웃
+                </button>
+                <button class="mobile-menu-btn" onclick="app.toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
+        </div>
+
+        <div id="mobile-menu">
+            <a href="student_quiz-2025-2sem.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
+                역사 퀴즈
+            </a>
+            <a href="student_quiz-history.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"></path></svg>
+                학습 기록
+            </a>
+            <a href="student_yourscore.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM7.5 15.5H9v2H7.5v-2zm0-4H9v2H7.5v-2zm4.5 4H16v2h-4v-2zm0-4H16v2h-4v-2zm4.5 4H18v2h-1.5v-2zm0-4H18v2h-1.5v-2z"></path></svg>
+                나의 성적표
+            </a>
         </div>
     </header>
 
-    <div class="sticky top-[65px] z-40 px-4 py-2">
-        <div class="max-w-3xl mx-auto score-card rounded-full px-6 py-3 flex justify-between items-center">
+    <div class="sticky top-[70px] z-40 px-4 py-2 pointer-events-none">
+        <div class="max-w-3xl mx-auto score-card rounded-full px-6 py-3 flex justify-between items-center pointer-events-auto">
             <span class="font-bold text-stone-600">내 점수</span>
             <div class="flex items-baseline">
                 <span id="current-score" class="text-3xl font-bold text-blue-600 mr-1">0</span>
-                <span class="text-sm text-stone-500 font-medium">/ 100점</span>
+                <span class="text-sm text-stone-500 font-medium">/ <span id="max-score">0</span>점</span>
             </div>
         </div>
     </div>
@@ -82,7 +138,7 @@
         
         <div id="loading-area" class="text-center py-20">
             <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-solid mx-auto mb-4"></div>
-            <p class="text-stone-500">시험지를 불러오는 중입니다...</p>
+            <p class="text-stone-500">시험지 정보를 불러오는 중입니다...</p>
         </div>
 
         <div id="exam-content" class="hidden space-y-8">
@@ -92,8 +148,7 @@
                     <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2">선택형</span> 
                     객관식 답안
                 </h2>
-                <div id="objective-container" class="space-y-4">
-                    </div>
+                <div id="objective-container" class="space-y-4"></div>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
@@ -102,10 +157,9 @@
                     서술형 답안
                 </h2>
                 <div class="bg-yellow-50 text-yellow-800 text-sm p-3 rounded mb-4">
-                    <i class="fas fa-exclamation-circle mr-1"></i> 서술형은 <strong>[정답 보기]</strong>를 누른 후, 본인이 판단하여 <strong>[정답 인정]</strong> 버튼을 눌러야 점수에 반영됩니다.
+                    <i class="fas fa-exclamation-circle mr-1"></i> 서술형은 <strong>[정답 보기]</strong>를 누른 후, 정답과 비교하여 <strong>[정답 인정]</strong> 여부를 본인이 선택하세요.
                 </div>
-                <div id="subjective-container">
-                    </div>
+                <div id="subjective-container"></div>
             </div>
 
             <div class="text-center text-sm text-stone-400 py-4">
@@ -115,6 +169,10 @@
         </div>
     </main>
 
+    <footer class="text-center py-8 text-stone-400 text-sm border-t bg-white mt-auto">
+        Copyright © 역사교사 방재석
+    </footer>
+
     <script>
         const firebaseConfig = { apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU", authDomain: "history-quiz-yongsin.firebaseapp.com", projectId: "history-quiz-yongsin", storageBucket: "history-quiz-yongsin.firebasestorage.app", messagingSenderId: "177587430482", appId: "1:177587430482:web:d79cc145c11e335cc3ab8b", measurementId: "G-LHN97D7R2R" };
         let db; try { if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } db = firebase.firestore(); } catch(e) { console.error("Firebase Init Error", e); }
@@ -122,30 +180,36 @@
         const app = {
             state: {
                 totalScore: 0,
-                examData: null, // DB에서 가져온 정답지
-                userMarks: {}   // 사용자가 마킹한 기록
+                maxScore: 0,
+                examData: null,
+                userMarks: {}
             },
 
             init: function() {
-                this.loadExamData();
+                // 로그인 체크 후 로드
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        this.loadExamData();
+                    } else {
+                        // 학생용이므로 비로그인 시 로그인 페이지로 유도하거나, 그냥 작동하게 둘 수 있음.
+                        // 여기서는 데이터 로드 진행
+                        this.loadExamData();
+                    }
+                });
             },
 
-            // [핵심] DB에서 정답지 불러오기 (없으면 예시 데이터 사용)
-            loadExamData: function() {
-                // 실제로는 db.collection('exam_config').doc('current_exam').get() 등을 사용합니다.
-                // 여기서는 선생님이 '적용하여 채점표 만들기'를 했을 때 저장되었다고 가정하는 구조입니다.
-                // 테스트를 위해 즉시 실행 가능한 더미 데이터를 넣고, 주석으로 DB 코드를 남깁니다.
-                
-                /* [DB 연동 코드 예시]
-                db.collection('exam_config').doc('2025_2_final').get().then(doc => {
-                    if(doc.exists) {
-                        this.state.examData = doc.data();
-                        this.render();
-                    } else { alert("시험 정보가 없습니다."); }
-                });
-                */
+            toggleMobileMenu: function() {
+                const menu = document.getElementById('mobile-menu');
+                menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+            },
 
-                // [테스트용 더미 데이터 - 선생님이 설정한 값이라고 가정]
+            logout: function() {
+                firebase.auth().signOut().then(() => location.href='index.html');
+            },
+
+            loadExamData: function() {
+                // [DB 연결 시] db.collection('exam_config').doc('target_exam_id').get()...
+                // 테스트용 예시 데이터 사용
                 setTimeout(() => {
                     this.state.examData = {
                         objective: [
@@ -171,25 +235,28 @@
                             }
                         ]
                     };
+                    
+                    // 총점 계산
+                    let max = 0;
+                    this.state.examData.objective.forEach(q => max += q.score);
+                    this.state.examData.subjective.forEach(p => p.subItems.forEach(s => max += s.score));
+                    this.state.maxScore = max;
+                    document.getElementById('max-score').innerText = max;
+
                     this.render();
-                }, 800); // 로딩 효과
+                }, 600);
             },
 
             render: function() {
                 document.getElementById('loading-area').style.display = 'none';
                 document.getElementById('exam-content').classList.remove('hidden');
-                
                 this.renderObjective();
                 this.renderSubjective();
             },
 
-            // 객관식 렌더링
             renderObjective: function() {
                 const container = document.getElementById('objective-container');
-                let html = '';
-                
-                this.state.examData.objective.forEach(q => {
-                    html += `
+                container.innerHTML = this.state.examData.objective.map(q => `
                     <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" id="obj-row-${q.no}">
                         <div class="flex items-center gap-4">
                             <span class="font-bold text-lg text-blue-600 w-8 text-center">${q.no}</span>
@@ -204,114 +271,88 @@
                             <div class="result-badge" id="res-badge-${q.no}"></div>
                         </div>
                     </div>
-                    `;
-                });
-                container.innerHTML = html;
+                `).join('');
             },
 
-            // 서술형 렌더링
             renderSubjective: function() {
                 const container = document.getElementById('subjective-container');
-                let html = '';
-
-                this.state.examData.subjective.forEach((p, pIdx) => {
-                    html += `<div class="subj-box">
+                container.innerHTML = this.state.examData.subjective.map((p, pIdx) => `
+                    <div class="subj-box">
                         <div class="subj-header">
                             <span class="font-bold">서술형 ${pIdx + 1}번</span>
                         </div>
-                        <div class="subj-content space-y-4">`;
-                    
-                    p.subItems.forEach((s, sIdx) => {
-                        const uniqueId = `subj-${pIdx}-${sIdx}`;
-                        html += `
-                        <div class="border-b border-gray-100 pb-4 last:border-0 last:pb-0" id="${uniqueId}-wrapper">
-                            <div class="flex justify-between mb-2">
-                                <span class="font-bold text-stone-700 text-sm">(${sIdx + 1}) 소문항 <span class="text-gray-400 font-normal ml-1">(${s.score}점)</span></span>
-                                <div class="result-badge" id="${uniqueId}-badge"></div>
-                            </div>
-                            
-                            <div id="${uniqueId}-actions" class="mt-2">
-                                <button onclick="app.revealSubjective('${uniqueId}', '${s.answer}')" class="w-full py-3 border-2 border-dashed border-indigo-200 text-indigo-500 rounded font-bold hover:bg-indigo-50 transition">
-                                    <i class="fas fa-eye mr-2"></i> 정답 보기
-                                </button>
-                            </div>
-
-                            <div id="${uniqueId}-check" class="hidden mt-3 bg-stone-50 p-3 rounded">
-                                <div class="mb-2 text-sm font-bold text-stone-600">모범 답안:</div>
-                                <div class="text-lg font-bold text-red-600 mb-3">${s.answer}</div>
-                                <div class="flex gap-2">
-                                    <button onclick="app.gradeSubjective('${uniqueId}', ${s.score}, true)" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded font-bold shadow-sm transition">
-                                        <i class="fas fa-check mr-1"></i> 정답 인정
-                                    </button>
-                                    <button onclick="app.gradeSubjective('${uniqueId}', ${s.score}, false)" class="flex-1 bg-white border border-stone-300 text-stone-600 hover:bg-stone-50 py-2 rounded font-bold shadow-sm transition">
-                                        오답
-                                    </button>
-                                </div>
-                            </div>
-                        </div>`;
-                    });
-
-                    html += `</div></div>`;
-                });
-                container.innerHTML = html;
+                        <div class="subj-content space-y-4">
+                            ${p.subItems.map((s, sIdx) => {
+                                const uid = `subj-${pIdx}-${sIdx}`;
+                                return `
+                                <div class="border-b border-gray-100 pb-4 last:border-0 last:pb-0" id="${uid}-wrapper">
+                                    <div class="flex justify-between mb-2">
+                                        <span class="font-bold text-stone-700 text-sm">(${sIdx + 1}) 소문항 <span class="text-gray-400 font-normal ml-1">(${s.score}점)</span></span>
+                                        <div class="result-badge" id="${uid}-badge"></div>
+                                    </div>
+                                    <div id="${uid}-actions" class="mt-2">
+                                        <button onclick="app.revealSubjective('${uid}', '${s.answer}')" class="w-full py-3 border-2 border-dashed border-indigo-200 text-indigo-500 rounded font-bold hover:bg-indigo-50 transition">
+                                            <i class="fas fa-eye mr-2"></i> 정답 보기
+                                        </button>
+                                    </div>
+                                    <div id="${uid}-check" class="hidden mt-3 bg-stone-50 p-3 rounded">
+                                        <div class="mb-2 text-sm font-bold text-stone-600">모범 답안:</div>
+                                        <div class="text-lg font-bold text-red-600 mb-3">${s.answer}</div>
+                                        <div class="flex gap-2">
+                                            <button onclick="app.gradeSubjective('${uid}', ${s.score}, true)" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded font-bold shadow-sm transition">
+                                                <i class="fas fa-check mr-1"></i> 정답 인정
+                                            </button>
+                                            <button onclick="app.gradeSubjective('${uid}', ${s.score}, false)" class="flex-1 bg-white border border-stone-300 text-stone-600 hover:bg-stone-50 py-2 rounded font-bold shadow-sm transition">
+                                                오답
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `).join('');
             },
 
-            // --- 로직: 객관식 채점 ---
             checkObjective: function(qNo, selected, answer, score) {
-                // 이미 풀었으면 수정 불가 (원하면 수정 가능하게 로직 변경 가능)
-                if(this.state.userMarks[`obj-${qNo}`]) return;
+                if(this.state.userMarks[`obj-${qNo}`]) return; // 이미 채점됨
 
                 const row = document.getElementById(`obj-row-${qNo}`);
                 const buttons = row.querySelectorAll('.omr-btn');
                 const badge = document.getElementById(`res-badge-${qNo}`);
-
-                // 정오답 판별
                 const isCorrect = (selected === answer);
-                
-                // 버튼 스타일 변경
+
                 buttons.forEach((btn, idx) => {
-                    const btnNum = idx + 1;
-                    btn.classList.remove('selected', 'correct', 'wrong'); // 초기화
-                    
-                    if(btnNum === selected) {
-                        if(isCorrect) btn.classList.add('correct'); // 맞으면 초록
-                        else btn.classList.add('wrong'); // 틀리면 빨강
+                    if((idx + 1) === selected) {
+                        btn.classList.add(isCorrect ? 'correct' : 'wrong');
                     }
-                    // 틀렸을 때 정답 표시 (선택사항)
-                    if(!isCorrect && btnNum === answer) {
+                    if(!isCorrect && (idx + 1) === answer) {
                         btn.style.borderColor = "#22c55e";
                         btn.style.color = "#22c55e";
                         btn.style.borderWidth = "2px";
                     }
                 });
 
-                // 결과 뱃지 & 점수 반영
                 if(isCorrect) {
                     badge.innerHTML = '<i class="fas fa-circle res-o text-xs"></i>';
                     this.addScore(score);
                 } else {
                     badge.innerHTML = '<i class="fas fa-times res-x"></i>';
                 }
-
-                // 기록
                 this.state.userMarks[`obj-${qNo}`] = true;
             },
 
-            // --- 로직: 서술형 정답 공개 ---
-            revealSubjective: function(id, answer) {
+            revealSubjective: function(id) {
                 document.getElementById(`${id}-actions`).style.display = 'none';
                 document.getElementById(`${id}-check`).classList.remove('hidden');
             },
 
-            // --- 로직: 서술형 자가 점수 부여 ---
             gradeSubjective: function(id, score, isCorrect) {
-                if(this.state.userMarks[id]) return; // 중복 채점 방지
+                if(this.state.userMarks[id]) return;
 
                 const badge = document.getElementById(`${id}-badge`);
-                const wrapper = document.getElementById(`${id}-wrapper`);
                 const checkArea = document.getElementById(`${id}-check`);
 
-                // UI 업데이트 (버튼 숨기고 결과 고정)
                 checkArea.innerHTML = isCorrect 
                     ? `<div class="text-center font-bold text-green-600 py-2 bg-green-50 rounded">본인 채점: 정답 (+${score}점)</div>`
                     : `<div class="text-center font-bold text-stone-500 py-2 bg-stone-100 rounded">본인 채점: 오답</div>`;
@@ -322,43 +363,38 @@
                 } else {
                     badge.innerHTML = '<i class="fas fa-times res-x"></i>';
                 }
-
                 this.state.userMarks[id] = true;
             },
 
-            // 점수 애니메이션
             addScore: function(points) {
                 const el = document.getElementById('current-score');
-                const oldVal = this.state.totalScore;
+                const start = this.state.totalScore;
                 this.state.totalScore += points;
-                
-                // 간단한 카운팅 효과
-                let start = oldVal;
                 const end = this.state.totalScore;
-                const duration = 500;
-                const startTime = performance.now();
-
-                function animate(currentTime) {
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    
-                    // Ease-out 효과
-                    const ease = 1 - Math.pow(1 - progress, 3);
-                    
-                    const current = Math.floor(start + (end - start) * ease);
-                    el.innerText = current;
-
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
+                
+                // 간단한 카운팅 애니메이션
+                let current = start;
+                const step = () => {
+                    if(current < end) {
+                        current++;
+                        el.innerText = current;
+                        requestAnimationFrame(step);
                     } else {
                         el.innerText = end;
                     }
-                }
-                requestAnimationFrame(animate);
+                };
+                requestAnimationFrame(step);
             }
         };
 
         window.onload = function() { app.init(); };
+        
+        // 메뉴 외부 클릭 시 닫기
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('mobile-menu');
+            const btn = document.querySelector('.mobile-menu-btn');
+            if (!menu.contains(e.target) && !btn.contains(e.target)) { menu.style.display = 'none'; }
+        });
     </script>
 </body>
 </html>
