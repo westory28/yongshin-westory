@@ -3,451 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교사 대시보드 - 시험 정답 관리</title>
+    <title>역사과 시험 문제 출제 도구</title>
     <style>
-        /* [기존 스타일 계승] */
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; color: #333; }
-        a { text-decoration: none; color: inherit; }
-        * { box-sizing: border-box; }
-
-        /* 헤더 스타일 */
-        header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; }
-        .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 64px; display: flex; align-items: center; justify-content: space-between; }
-        .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
-        .logo-we { color: #2563eb; }
-        .logo-story { color: #f59e0b; }
-
-        .nav-container { display: flex; height: 100%; }
-        .nav-link { font-weight: 500; color: #6b7280; margin: 0 1rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
-        .nav-link:hover { color: #111827; }
-        .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
-
-        .right-actions { display: flex; align-items: center; gap: 10px; }
-        .btn-logout-custom { color: #78716c; font-size: 0.875rem; font-weight: 700; padding: 0.5rem 0.75rem; border-radius: 0.25rem; background-color: transparent; border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-        .btn-logout-custom:hover { color: #292524; background-color: #f5f5f4; }
-        .hamburger-btn { display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: #333; padding: 5px; }
-
-        .mobile-menu { display: none; background-color: #f8f9fa; border-top: 1px solid #e5e7eb; padding: 10px 0; }
-        .mobile-menu.open { display: block; }
-        .mobile-link { display: flex; align-items: center; padding: 15px 20px; font-size: 16px; font-weight: 500; color: #4b5563; border-bottom: 1px solid #eee; transition: background 0.2s; }
-        .mobile-link:hover { background-color: #e5e7eb; }
-        .mobile-link.active { color: #2563eb; background-color: #eff6ff; font-weight: 700; }
-        .mobile-icon { margin-right: 12px; width: 20px; height: 20px; fill: currentColor; }
-
-        @media (max-width: 1000px) {
-            .nav-container { display: none; }
-            .hamburger-btn { display: block; }
-            .header-container { padding: 0 1rem; }
-            .dashboard-layout { flex-direction: column !important; }
-            .right-panel { height: auto !important; position: static !important; }
-        }
-
-        /* 메인 컨테이너 */
-        .container { max-width: 1600px; margin: 0 auto; padding: 30px 20px; min-height: calc(100vh - 200px); }
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .page-title { font-size: 24px; font-weight: 800; color: #2c3e50; margin: 0; border-bottom: 3px solid #3498db; padding-bottom: 5px; display: inline-block; }
-
-        #loginSection { max-width: 400px; margin: 100px auto; text-align: center; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .btn-google { background-color: #fff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 15px; font-size: 16px; width: 100%; cursor: pointer; border-radius: 6px; margin-top: 20px; transition: background 0.2s; }
-        .btn-google:hover { background-color: #f8f9fa; }
-
-        /* 대시보드 레이아웃 */
-        .dashboard-layout { display: flex; gap: 30px; align-items: flex-start; }
-        .left-panel { flex: 1.4; display: flex; flex-direction: column; gap: 20px; }
-        .right-panel { flex: 0.6; display: flex; flex-direction: column; gap: 20px; height: calc(100vh - 120px); overflow-y: auto; position: sticky; top: 84px; padding-right: 10px; }
-
-        /* 필터 카드 */
-        .big-filter-card { background-color: #e3f2fd; border: 2px solid #2196f3; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.2); }
-        .filter-header { font-size: 16px; font-weight: bold; color: #1565c0; margin-bottom: 10px; }
-        .filter-row { display: flex; gap: 10px; flex-wrap: wrap; }
-        .filter-row select, .filter-row input { flex: 1; min-width: 100px; padding: 12px; font-size: 16px; border: 1px solid #90caf9; border-radius: 8px; background: white; font-weight: bold; cursor: pointer; }
-
-        /* 입력 카드 */
-        .input-card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 5px solid #8e44ad; }
-        .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; color: #333; }
-
-        /* 탭 버튼 스타일 */
-        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .tab-btn { padding: 10px 20px; border: none; background: #f1f3f5; border-radius: 6px; font-weight: bold; color: #868e96; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .tab-btn.active { background: #8e44ad; color: white; }
-        .tab-btn:hover:not(.active) { background: #e9ecef; }
-
-        /* OMR 스타일 객관식 입력 */
-        .mc-row { display: flex; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #f0f0f0; gap: 15px; }
-        .q-num { width: 40px; font-weight: bold; color: #555; padding-top: 8px; text-align: center; }
-        .omr-group { display: flex; gap: 8px; align-items: center; padding-top: 5px; }
-        .omr-radio { display: none; }
-        .omr-label { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #999; cursor: pointer; transition: 0.2s; font-size: 14px; }
-        .omr-radio:checked + .omr-label { background-color: #2563eb; border-color: #2563eb; color: white; }
+        body { font-family: 'Malgun Gothic', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f6f8; }
+        h2 { border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 30px; }
         
-        /* 해설 입력 */
-        .exp-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-height: 40px; resize: vertical; }
+        /* 공통 스타일 */
+        .btn { padding: 5px 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-add { background-color: #4CAF50; color: white; }
+        .btn-sub { background-color: #2196F3; color: white; font-size: 0.9em; margin-top: 5px; }
+        .btn-del { background-color: #ff5252; color: white; margin-left: 5px; }
+        
+        .input-text { padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .input-score { width: 50px; text-align: center; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
 
-        /* 서술형 입력 */
-        .essay-row { display: flex; gap: 10px; margin-bottom: 15px; align-items: flex-start; background: #f9f9f9; padding: 15px; border-radius: 8px; }
-        .essay-num { width: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; text-align: center; font-weight: bold; }
-        .essay-ans { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; min-height: 60px; }
+        /* 문제 박스 스타일 */
+        .question-box { background: white; border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .question-body { margin-top: 10px; }
 
-        /* 버튼 */
-        .btn-save { background-color: #2ecc71; color: white; padding: 15px; width: 100%; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        .btn-cancel { background-color: #95a5a6; color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; display: none; }
+        /* 객관식 보기 스타일 */
+        .choice-row { display: flex; align-items: center; margin: 5px 0; font-size: 0.9em; }
+        .choice-num { width: 20px; text-align: center; margin-right: 5px; font-weight: bold; }
 
-        /* 리스트 스타일 */
-        .exam-item { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #e67e22; margin-bottom: 15px; cursor: pointer; transition: 0.2s; }
-        .exam-item:hover { transform: translateX(5px); }
-        .exam-info h4 { margin: 0 0 5px 0; color: #333; }
-        .exam-meta { font-size: 13px; color: #777; }
-
-        .hidden { display: none !important; }
-        .main-footer { text-align: center; padding: 40px 0; color: #999; font-size: 14px; border-top: 1px solid #eee; margin-top: 40px; }
+        /* 서술형 계열화(새끼 문제) 스타일 */
+        .sub-question-container { margin-left: 20px; padding-left: 15px; border-left: 3px solid #e0e0e0; margin-top: 10px; }
+        .sub-question-box { background-color: #fafafa; border: 1px solid #eee; padding: 10px; margin-bottom: 5px; border-radius: 4px; }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="loginSection">
-        <h2>🔐 선생님 로그인</h2>
-        <p>시험 정답 관리 페이지입니다.<br>선생님 계정으로 로그인해주세요.</p>
-        <button class="btn-google" onclick="loginWithGoogle()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" width="20">
-            Google 계정으로 로그인
-        </button>
-    </div>
+    <h1 style="text-align: center;">역사과 시험 문제 출제</h1>
 
-    <div id="dashboardSection" class="hidden">
-        
-        <header>
-            <div class="header-container">
-                <div class="logo-text" onclick="location.href='https://westory28.github.io/Bang-westory/teacher-test.html'">
-                    <span class="logo-we">We</span><span class="logo-story">story</span>
-                </div>
-        
-                <nav class="nav-container">
-                    <a href="https://westory28.github.io/Bang-westory/teacher_quiz-admin.html" class="nav-link">역사 퀴즈 대시보드</a>
-                    <a href="https://westory28.github.io/Bang-westory/teacher_student-list-admin.html" class="nav-link">학생 관리</a>
-                    <a href="https://westory28.github.io/Bang-westory/teacher_yourscore-admin.html" class="nav-link">성적 산출 관리</a>
-                    <a href="#" class="nav-link active">시험 정답 관리</a>
-                </nav>
-        
-                <div class="right-actions">
-                    <button onclick="logout()" class="btn-logout-custom">로그아웃</button>
-                    <button class="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
-                </div>
-            </div>
-            
-            <div id="mobileMenu" class="mobile-menu">
-                <a href="#" class="mobile-link active">시험 정답 관리</a>
-                </div>
-        </header>
-
-        <div class="container">
-            <div class="page-header">
-                <h1 class="page-title">💯 시험 정답 및 해설 관리</h1>
-            </div>
-
-            <div class="dashboard-layout">
-                
-                <div class="left-panel">
-                    <div class="big-filter-card">
-                        <div class="filter-header">📌 시험 정보 설정</div>
-                        <div class="filter-row">
-                            <select id="yearInput">
-                                <option value="2025">2025학년도</option>
-                                <option value="2026">2026학년도</option>
-                            </select>
-                            <select id="semesterInput">
-                                <option value="1학기_중간">1학기 중간</option>
-                                <option value="1학기_기말">1학기 기말</option>
-                                <option value="2학기_중간">2학기 중간</option>
-                                <option value="2학기_기말">2학기 기말</option>
-                            </select>
-                            <select id="gradeInput">
-                                <option value="2학년">2학년</option>
-                                <option value="3학년">3학년</option>
-                                <option value="1학년">1학년</option>
-                            </select>
-                            <input type="text" id="subjectInput" placeholder="과목명 (예: 역사)" value="역사">
-                        </div>
-                    </div>
-
-                    <div class="input-card">
-                        <div class="section-title">
-                            <span id="formTitle">✏️ 정답 입력</span>
-                        </div>
-
-                        <div class="tab-container">
-                            <button class="tab-btn active" onclick="switchTab('mc')">객관식 (선택형)</button>
-                            <button class="tab-btn" onclick="switchTab('essay')">서술형 (논술형)</button>
-                        </div>
-
-                        <div id="mcSection">
-                            <div style="background:#fff3cd; padding:10px; border-radius:6px; font-size:14px; margin-bottom:15px; color:#856404;">
-                                ※ 5지선다형 정답을 클릭하고, 필요한 경우 해설을 입력하세요.
-                            </div>
-                            <div id="mcList"></div> </div>
-
-                        <div id="essaySection" class="hidden">
-                            <div style="background:#d1ecf1; padding:10px; border-radius:6px; font-size:14px; margin-bottom:15px; color:#0c5460;">
-                                ※ 세트 문항(예: 1-1, 1-2)은 문항 번호를 직접 입력하세요.<br>
-                                ※ 서술형은 자동 채점되지 않고 학생에게 정답 예시만 보여집니다.
-                            </div>
-                            <div id="essayList"></div>
-                            <button class="btn-add" style="background:#8e44ad; color:white; width:100%; padding:10px; border:none; border-radius:6px; cursor:pointer;" onclick="addEssayRow()">+ 서술형 문항 추가</button>
-                        </div>
-
-                        <button id="saveBtn" class="btn-save" onclick="saveExamData()">💾 정답 및 해설 저장</button>
-                        <button id="cancelBtn" class="btn-cancel" onclick="resetForm()">취소 (초기화)</button>
-                    </div>
-                </div>
-
-                <div class="right-panel">
-                    <div class="input-card" style="border-top-color: #e67e22; height:100%;">
-                        <div class="section-title">📂 등록된 시험 목록</div>
-                        <div id="savedExamList">
-                            </div>
-                    </div>
-                </div>
-
-            </div>
+    <h2>1. 객관식 (선택형) <button class="btn btn-add" onclick="addMultipleChoice()">+ 문항 추가</button></h2>
+    <div id="container-multiple">
         </div>
 
-        <footer class="main-footer">
-            Copyright © 역사교사 방재석. All rights reserved.
-        </footer>
-    </div>
+    <h2>2. 서술형 (논술형) <button class="btn btn-add" onclick="addSubjective()">+ 문항 추가</button></h2>
+    <div id="container-subjective">
+        </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, orderBy, query, doc, updateDoc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-
-        const firebaseConfig = {
-          apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
-          authDomain: "history-quiz-yongsin.firebaseapp.com",
-          projectId: "history-quiz-yongsin",
-          storageBucket: "history-quiz-yongsin.firebasestorage.app",
-          messagingSenderId: "177587430482",
-          appId: "1:177587430482:web:1188e0f661368040c3ab8b",
-          measurementId: "G-YG2SLS45D8"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        let editingDocId = null;
-        let allExams = [];
-
-        // 전역 함수 연결
-        window.loginWithGoogle = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { console.error(e); alert("로그인 오류"); } };
-        window.logout = async () => { if(confirm("로그아웃?")) { await signOut(auth); location.reload(); } };
-        window.toggleMobileMenu = () => { document.getElementById('mobileMenu').classList.toggle('open'); };
-        
-        window.switchTab = (tabName) => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(tabName === 'mc') {
-                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
-                document.getElementById('mcSection').classList.remove('hidden');
-                document.getElementById('essaySection').classList.add('hidden');
-            } else {
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-                document.getElementById('mcSection').classList.add('hidden');
-                document.getElementById('essaySection').classList.remove('hidden');
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user && user.email === "westoria28@gmail.com") {
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('dashboardSection').classList.remove('hidden');
-                initMCForm();
-                addEssayRow(); // 기본 1개
-                loadExamList();
-            } else if (user) {
-                alert("권한이 없습니다."); signOut(auth);
-            }
-        });
-
-        // 객관식 폼 30개 생성
-        function initMCForm() {
-            const list = document.getElementById('mcList');
-            list.innerHTML = '';
-            for(let i=1; i<=30; i++) {
-                const row = document.createElement('div');
-                row.className = 'mc-row';
-                row.innerHTML = `
-                    <div class="q-num">${i}번</div>
-                    <div class="omr-group">
-                        ${[1,2,3,4,5].map(num => `
-                            <input type="radio" name="q${i}" id="q${i}_${num}" value="${num}" class="omr-radio">
-                            <label for="q${i}_${num}" class="omr-label">${num}</label>
-                        `).join('')}
-                    </div>
-                    <textarea class="exp-input" id="exp${i}" placeholder="${i}번 해설 입력 (선택)"></textarea>
-                `;
-                list.appendChild(row);
+    <script>
+        // 공통: 요소 삭제 함수
+        function removeElement(element) {
+            if(confirm('이 문항을 삭제하시겠습니까?')) {
+                element.remove();
             }
         }
 
-        // 서술형 행 추가
-        window.addEssayRow = (data = null) => {
-            const list = document.getElementById('essayList');
+        /* --- 객관식 관련 함수 --- */
+        function addMultipleChoice() {
+            const container = document.getElementById('container-multiple');
             const div = document.createElement('div');
-            div.className = 'essay-row';
+            div.className = 'question-box';
             
-            const numVal = data ? data.label : '';
-            const ansVal = data ? data.answer : '';
-
+            // 객관식 HTML 구조
             div.innerHTML = `
-                <input type="text" class="essay-num" placeholder="번호(1-1)" value="${numVal}">
-                <textarea class="essay-ans" placeholder="서술형 정답 및 채점 기준 입력">${ansVal}</textarea>
-                <button onclick="this.parentElement.remove()" style="background:#e74c3c; color:white; border:none; border-radius:4px; cursor:pointer; width:30px;">x</button>
+                <div class="question-header">
+                    <div>
+                        <strong>[객관식]</strong>
+                        <input type="text" class="input-text" placeholder="질문을 입력하세요" style="width: 400px;">
+                    </div>
+                    <div>
+                        <input type="number" class="input-score" placeholder="배점"> 점
+                        <button class="btn btn-del" onclick="removeElement(this.closest('.question-box'))">삭제</button>
+                    </div>
+                </div>
+                <div class="question-body">
+                    ${[1, 2, 3, 4, 5].map(num => `
+                        <div class="choice-row">
+                            <span class="choice-num">①②③④⑤`[num-1] + `</span>
+                            <input type="text" class="input-text" placeholder="보기 ${num}" style="width: 90%;">
+                        </div>
+                    `).join('')}
+                </div>
             `;
-            list.appendChild(div);
-        };
-
-        // 데이터 저장
-        window.saveExamData = async () => {
-            const year = document.getElementById('yearInput').value;
-            const semester = document.getElementById('semesterInput').value;
-            const grade = document.getElementById('gradeInput').value;
-            const subject = document.getElementById('subjectInput').value;
-
-            // 객관식 데이터 수집
-            const mcData = [];
-            for(let i=1; i<=30; i++) {
-                const selected = document.querySelector(`input[name="q${i}"]:checked`);
-                const exp = document.getElementById(`exp${i}`).value;
-                if(selected || exp) {
-                    mcData.push({
-                        qNum: i,
-                        answer: selected ? parseInt(selected.value) : null,
-                        explanation: exp
-                    });
-                }
-            }
-
-            // 서술형 데이터 수집
-            const essayData = [];
-            document.querySelectorAll('.essay-row').forEach(row => {
-                const label = row.querySelector('.essay-num').value.trim();
-                const answer = row.querySelector('.essay-ans').value.trim();
-                if(label && answer) {
-                    essayData.push({ label, answer });
-                }
-            });
-
-            if(mcData.length === 0 && essayData.length === 0) {
-                alert("입력된 정답이 없습니다."); return;
-            }
-
-            const saveData = {
-                year, semester, grade, subject,
-                mcQuestions: mcData,
-                essayQuestions: essayData,
-                updatedAt: new Date()
-            };
-
-            try {
-                if(editingDocId) {
-                    await updateDoc(doc(db, "exam_answers", editingDocId), saveData);
-                    alert("수정 완료!");
-                } else {
-                    saveData.createdAt = new Date();
-                    await addDoc(collection(db, "exam_answers"), saveData);
-                    alert("저장 완료!");
-                }
-                resetForm();
-                loadExamList();
-            } catch(e) {
-                console.error(e); alert("저장 실패");
-            }
-        };
-
-        // 목록 불러오기
-        async function loadExamList() {
-            const listDiv = document.getElementById('savedExamList');
-            listDiv.innerHTML = '로딩 중...';
-            
-            const q = query(collection(db, "exam_answers"), orderBy("updatedAt", "desc"));
-            const snapshot = await getDocs(q);
-            
-            allExams = [];
-            listDiv.innerHTML = '';
-            
-            snapshot.forEach(doc => {
-                const d = doc.data();
-                const div = document.createElement('div');
-                div.className = 'exam-item';
-                div.innerHTML = `
-                    <div class="exam-info">
-                        <h4>${d.year} ${d.semester.replace('_',' ')} [${d.grade}] ${d.subject}</h4>
-                        <div class="exam-meta">객관식 ${d.mcQuestions ? d.mcQuestions.length : 0}문항 / 서술형 ${d.essayQuestions ? d.essayQuestions.length : 0}문항</div>
-                    </div>
-                    <div style="margin-top:10px; text-align:right;">
-                        <button onclick="editExam('${doc.id}')" style="background:#f39c12; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">수정</button>
-                        <button onclick="deleteExam('${doc.id}')" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">삭제</button>
-                    </div>
-                `;
-                listDiv.appendChild(div);
-                allExams.push({ id: doc.id, ...d });
-            });
+            container.appendChild(div);
         }
 
-        // 수정 모드 진입
-        window.editExam = (id) => {
-            const data = allExams.find(e => e.id === id);
-            if(!data) return;
+        /* --- 서술형 관련 함수 --- */
+        function addSubjective() {
+            const container = document.getElementById('container-subjective');
+            const div = document.createElement('div');
+            div.className = 'question-box';
             
-            editingDocId = id;
-            document.getElementById('yearInput').value = data.year;
-            document.getElementById('semesterInput').value = data.semester;
-            document.getElementById('gradeInput').value = data.grade;
-            document.getElementById('subjectInput').value = data.subject;
+            // 고유 ID 생성 (새끼 문제 연결용)
+            const questionId = 'sub-' + Date.now(); 
 
-            // 객관식 복원
-            initMCForm(); // 초기화
-            if(data.mcQuestions) {
-                data.mcQuestions.forEach(q => {
-                    const radio = document.getElementById(`q${q.qNum}_${q.answer}`);
-                    if(radio) radio.checked = true;
-                    const exp = document.getElementById(`exp${q.qNum}`);
-                    if(exp) exp.value = q.explanation || '';
-                });
-            }
+            // 서술형 HTML 구조 (계열화 포함)
+            div.innerHTML = `
+                <div class="question-header">
+                    <div>
+                        <strong>[서술형 큰 번호]</strong>
+                        <input type="text" class="input-text" placeholder="큰 질문을 입력하세요 (예: 다음 자료를 보고...)" style="width: 350px;">
+                    </div>
+                    <div>
+                        <input type="number" class="input-score" placeholder="배점"> 점
+                        <button class="btn btn-del" onclick="removeElement(this.closest('.question-box'))">삭제</button>
+                    </div>
+                </div>
+                
+                <div class="question-body">
+                    <button class="btn btn-sub" onclick="addSubQuestion('${questionId}')">└ 새끼 문제 추가</button>
+                    <div id="${questionId}" class="sub-question-container"></div>
+                </div>
+            `;
+            container.appendChild(div);
+        }
 
-            // 서술형 복원
-            document.getElementById('essayList').innerHTML = '';
-            if(data.essayQuestions && data.essayQuestions.length > 0) {
-                data.essayQuestions.forEach(item => addEssayRow(item));
-            } else {
-                addEssayRow();
-            }
+        // 서술형 하위(새끼) 문제 추가 함수
+        function addSubQuestion(parentId) {
+            const parentContainer = document.getElementById(parentId);
+            const subDiv = document.createElement('div');
+            subDiv.className = 'sub-question-box';
 
-            document.getElementById('saveBtn').innerText = "🔄 수정사항 저장";
-            document.getElementById('cancelBtn').style.display = 'block';
-            document.getElementById('formTitle').innerText = "📝 시험 정보 수정 중";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        window.deleteExam = async (id) => {
-            if(confirm("정말 삭제하시겠습니까?")) {
-                await deleteDoc(doc(db, "exam_answers", id));
-                loadExamList();
-                if(editingDocId === id) resetForm();
-            }
-        };
-
-        window.resetForm = () => {
-            editingDocId = null;
-            document.getElementById('subjectInput').value = '역사';
-            initMCForm();
-            document.getElementById('essayList').innerHTML = '';
-            addEssayRow();
-            document.getElementById('saveBtn').innerText = "💾 정답 및 해설 저장";
-            document.getElementById('cancelBtn').style.display = 'none';
-            document.getElementById('formTitle').innerText = "✏️ 정답 입력";
-        };
+            subDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span>└ (소문항)</span>
+                        <input type="text" class="input-text" placeholder="새끼 질문 내용" style="width: 300px;">
+                    </div>
+                    <div>
+                        <input type="number" class="input-score" placeholder="배점"> 점
+                        <button class="btn btn-del" style="padding: 2px 5px; font-size: 0.8em;" onclick="removeElement(this.closest('.sub-question-box'))">X</button>
+                    </div>
+                </div>
+            `;
+            parentContainer.appendChild(subDiv);
+        }
     </script>
 </body>
 </html>
