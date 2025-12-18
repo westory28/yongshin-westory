@@ -5,93 +5,176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Westory: 우리들의 이야기</title>
     <style>
-        body { font-family: 'Pretendard', sans-serif; background-color: #f8f9fa; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
-        
-        /* 1. 로그인 전/후 화면 전환용 스타일 */
-        .hidden { display: none !important; }
-        
-        /* 2. 로그인 화면 (정중앙 배치) */
-        #login-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        
-        /* 브랜드 타이틀 색상 수정 (We:파랑, story:노랑) */
-        .brand-title { font-size: 3.5rem; font-weight: 800; margin-bottom: 0.5rem; }
-        .brand-title .we { color: #1a73e8; } /* 파란색 */
-        .brand-title .story { color: #f9ab00; } /* 노란색 */
-
-        .brand-subtitle { font-size: 1.5rem; color: #606770; margin-bottom: 3rem; font-weight: 500; }
-        
-        .google-btn { 
-            background: #fff; border: 1px solid #dadce0; padding: 12px 32px; border-radius: 40px; 
-            font-size: 18px; font-weight: 600; color: #3c4043; cursor: pointer; display: flex; align-items: center; gap: 12px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08); transition: all 0.2s;
+        /* 1. 기본 설정 및 폰트 */
+        body { 
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; 
+            background-color: #f8f9fa; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; /* 화면 전체 높이 사용 */
         }
-        .google-btn:hover { background: #f7f8f8; box-shadow: 0 4px 8px rgba(0,0,0,0.12); }
-        /* 구글 로고 이미지 스타일 지정 */
-        .google-icon { width: 24px; height: 24px; }
+        
+        a { text-decoration: none; color: inherit; }
 
-        /* 3. 메인 메뉴 화면 (로그인 후) - 기존과 동일 */
-        #main-view { max-width: 1000px; margin: 60px auto; padding: 0 20px; width: 100%; }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        /* 2. Meta 스타일 상단바 (Header) */
+        header {
+            background-color: #fff;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /* 로고 스타일 (We:파랑, story:노랑) */
+        .logo-text { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
+        .logo-text .we { color: #1a73e8; }
+        .logo-text .story { color: #f9ab00; }
+
+        /* 상단 우측 버튼 (로그인 전엔 숨김, 로그인 후 로그아웃 표시) */
+        .header-btn {
+            background-color: #0064e0; /* Meta Blue */
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .header-btn:hover { background-color: #0053ba; }
+        .header-btn.secondary { background-color: #e4e6eb; color: #050505; } /* 로그아웃용 회색 버튼 */
+        .header-btn.secondary:hover { background-color: #d8dadf; }
+
+        /* 3. 메인 컨텐츠 영역 */
+        main { flex: 1; display: flex; flex-direction: column; width: 100%; }
+
+        /* 화면 전환 유틸리티 */
+        .hidden { display: none !important; }
+
+        /* --- [화면 A] 로그인 뷰 스타일 --- */
+        #login-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        
+        .hero-title { font-size: 3rem; font-weight: 700; margin-bottom: 1rem; color: #1c1e21; line-height: 1.2; }
+        .hero-subtitle { font-size: 1.2rem; color: #606770; margin-bottom: 3rem; }
+        
+        .google-login-btn { 
+            background: #fff; border: 1px solid #dadce0; padding: 12px 32px; border-radius: 40px; 
+            font-size: 16px; font-weight: 500; color: #3c4043; cursor: pointer; display: flex; align-items: center; gap: 12px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: all 0.2s;
+        }
+        .google-login-btn:hover { background: #f7f8f8; box-shadow: 0 2px 6px rgba(0,0,0,0.12); }
+
+        /* --- [화면 B] 학생 대시보드 스타일 --- */
+        #main-view { max-width: 1000px; margin: 40px auto; padding: 0 20px; width: 100%; box-sizing: border-box; }
+        
+        .welcome-msg { font-size: 28px; font-weight: 700; margin-bottom: 40px; color: #1c1e21; }
         
         .card-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
         .menu-card {
-            background: white; border-radius: 16px; padding: 40px 30px; text-align: center; text-decoration: none; color: inherit;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: transform 0.2s; border: 1px solid #eee; display: block;
+            background: white; border-radius: 12px; padding: 40px 30px; text-align: center; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #ddd;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
         }
-        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: #1877f2; }
-        .emoji-icon { font-size: 48px; margin-bottom: 20px; display: block; }
-        .card-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
-        .card-desc { color: #606770; font-size: 15px; line-height: 1.4; }
+        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); border-color: #1a73e8; }
+        
+        .card-icon { width: 60px; height: 60px; background: #e8f0fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 20px; }
+        .card-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; color: #202124; }
+        .card-desc { color: #5f6368; font-size: 15px; line-height: 1.5; word-break: keep-all; }
+
+        /* 4. 푸터 (Copyright) */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #65676b;
+            font-size: 13px;
+            border-top: 1px solid #e4e6eb;
+            background: #fff;
+            margin-top: auto; /* 화면 하단 고정 */
+        }
     </style>
 </head>
 <body>
 
-    <div id="login-view">
-        <div class="brand-title">
+    <header>
+        <div class="logo-text" onclick="location.reload()">
             <span class="we">We</span><span class="story">story</span>
         </div>
-        <div class="brand-subtitle">: 우리들의 이야기</div>
-        
-        <button class="google-btn" onclick="handleLogin()">
-            <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" class="google-icon" alt="G">
-            Google 계정으로 시작하기
-        </button>
-    </div>
+        <div id="header-actions">
+            </div>
+    </header>
 
-    <div id="main-view" class="hidden">
-        <div class="header-bar">
-            <h2 style="margin:0; color: #1c1e21;">반갑습니다, 학생님 👋</h2>
-            <button class="google-btn" onclick="handleLogout()" style="padding: 8px 20px; font-size: 14px; border-radius: 8px;">로그아웃</button>
+    <main>
+        <div id="login-view">
+            <div class="hero-title">
+                역사를 잊은 민족에게<br>미래는 없다
+            </div>
+            <div class="hero-subtitle">
+                Westory와 함께하는 즐거운 역사 여행
+            </div>
+            
+            <button class="google-login-btn" onclick="handleLogin()">
+                <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" width="20" alt="G">
+                Google 계정으로 시작하기
+            </button>
         </div>
 
-        <div class="card-container">
-            <a href="quiz.html" class="menu-card">
-                <span class="emoji-icon">📝</span>
-                <div class="card-title">역사 퀴즈</div>
-                <div class="card-desc">이번 학기 배운 내용을<br>퀴즈로 확인해보세요.</div>
-            </a>
-            <a href="student.html" class="menu-card">
-                <span class="emoji-icon">📊</span>
-                <div class="card-title">학습 기록</div>
-                <div class="card-desc">나의 지난 퀴즈 결과와<br>오답 노트를 확인합니다.</div>
-            </a>
-            <a href="yourscore.html" class="menu-card">
-                <span class="emoji-icon">📑</span>
-                <div class="card-title">나의 성적표</div>
-                <div class="card-desc">수행평가 점수와<br>예상 등급을 관리하세요.</div>
-            </a>
+        <div id="main-view" class="hidden">
+            <div class="welcome-msg" id="greeting-text">반갑습니다, 학생님 👋</div>
+
+            <div class="card-container">
+                <a href="quiz.html" class="menu-card">
+                    <div class="card-icon">📝</div>
+                    <div class="card-title">역사 퀴즈</div>
+                    <div class="card-desc">이번 학기 배운 내용을<br>퀴즈로 확인해보세요.</div>
+                </a>
+                <a href="student.html" class="menu-card">
+                    <div class="card-icon">📊</div>
+                    <div class="card-title">학습 기록</div>
+                    <div class="card-desc">나의 지난 퀴즈 결과와<br>오답 노트를 확인합니다.</div>
+                </a>
+                <a href="yourscore.html" class="menu-card">
+                    <div class="card-icon">📑</div>
+                    <div class="card-title">나의 성적표</div>
+                    <div class="card-desc">수행평가 점수와<br>예상 등급을 관리하세요.</div>
+                </a>
+            </div>
         </div>
-    </div>
+    </main>
+
+    <footer>
+        Copyright © 역사교사 방재석. All rights reserved.
+    </footer>
 
     <script>
-        // 로그인 시뮬레이션 (기존과 동일)
+        // 로그인 시뮬레이션
         function handleLogin() {
+            // 1. 화면 전환
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('main-view').classList.remove('hidden');
+
+            // 2. 학생 이름 설정 (여기서 실제로는 구글 로그인 정보를 받아와야 함)
+            // 임시로 '방재석' 학생으로 설정
+            const studentName = "방재석"; 
+            document.getElementById('greeting-text').innerHTML = `반갑습니다, ${studentName} 학생님 👋`;
+
+            // 3. 헤더에 로그아웃 버튼 추가
+            const headerActions = document.getElementById('header-actions');
+            headerActions.innerHTML = '<button class="header-btn secondary" onclick="handleLogout()">로그아웃</button>';
         }
+
         function handleLogout() {
+            // 1. 화면 전환 (로그인 화면으로)
             document.getElementById('main-view').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
+
+            // 2. 헤더 버튼 제거
+            document.getElementById('header-actions').innerHTML = '';
         }
     </script>
 </body>
