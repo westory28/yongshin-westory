@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeStory - 채점 기준 관리</title>
+    <title>WeStory - 시험 채점 관리</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,13 +21,27 @@
         .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
         .logo-we { color: #2563eb; } .logo-story { color: #f59e0b; }
 
-        /* 네비게이션 */
+        /* 네비게이션 (메뉴 4개) */
         .desktop-nav { display: flex; height: 100%; }
-        .nav-link { font-weight: 500; color: #6b7280; margin: 0 1rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .nav-link { font-weight: 500; color: #6b7280; margin: 0 0.8rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .nav-link:hover { color: #111827; }
+        /* 시험 채점 관리가 Active 상태 */
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
 
-        /* 객관식 번호 버튼 스타일 (학생 화면과 유사하게) */
+        /* 모바일 메뉴 */
+        .mobile-menu-btn { display: none; margin-left: 1rem; font-size: 1.5rem; color: #374151; cursor: pointer; }
+        #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; }
+        .mobile-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: #374151; font-weight: 500; border-bottom: 1px solid #f3f4f6; text-decoration: none; transition: background 0.2s; }
+        .mobile-link:hover { background-color: #f9fafb; }
+        .mobile-link.active { color: #2563eb; background-color: #eff6ff; font-weight: 700; }
+        .mobile-icon { width: 20px; height: 20px; margin-right: 12px; fill: currentColor; }
+
+        @media (max-width: 1100px) { 
+            .desktop-nav { display: none; }
+            .mobile-menu-btn { display: block; }
+        }
+
+        /* 객관식 번호 버튼 스타일 */
         .choice-btn {
             width: 32px; height: 32px; border-radius: 50%; border: 1px solid #d1d5db;
             display: flex; align-items: center; justify-content: center;
@@ -56,16 +70,40 @@
             <div class="logo-text" onclick="location.href='index-test.html'">
                 <span class="logo-we">We</span><span class="logo-story">story</span>
             </div>
+
             <nav class="desktop-nav">
                 <a href="teacher_quiz-admin.html" class="nav-link">역사 퀴즈 대시보드</a>
                 <a href="teacher_student-list-admin.html" class="nav-link">학생 관리</a>
-                <a href="teacher_yourscore-admin.html" class="nav-link active">성적 산출 관리</a>
-            </nav>
+                <a href="teacher_yourscore-admin.html" class="nav-link">성적 산출 관리</a>
+                <a href="#" class="nav-link active">시험 채점 관리</a> </nav>
+
             <div class="flex items-center">
                 <button onclick="app.logout()" class="text-stone-500 hover:text-stone-800 text-sm font-bold py-2 px-3 rounded hover:bg-stone-100 transition">
                     로그아웃
                 </button>
+                <button class="mobile-menu-btn" onclick="app.toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
+        </div>
+
+        <div id="mobile-menu">
+            <a href="teacher_quiz-admin.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
+                역사 퀴즈 대시보드
+            </a>
+            <a href="teacher_student-list-admin.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"></path></svg>
+                학생 관리
+            </a>
+            <a href="teacher_yourscore-admin.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM7.5 15.5H9v2H7.5v-2zm0-4H9v2H7.5v-2zm4.5 4H16v2h-4v-2zm0-4H16v2h-4v-2zm4.5 4H18v2h-1.5v-2zm0-4H18v2h-1.5v-2z"></path></svg>
+                성적 산출 관리
+            </a>
+            <a href="#" class="mobile-link active">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                시험 채점 관리
+            </a>
         </div>
     </header>
 
@@ -77,7 +115,7 @@
                     <i class="fas fa-edit text-gray-600 mr-2"></i> 정답 및 채점 기준 설정
                 </h2>
                 <div class="text-right text-xs text-gray-500">
-                    * 여기서 저장한 정답 데이터가 학생들의 자동 채점 기준이 됩니다.
+                    * 여기서 저장한 데이터가 [시험 채점 관리]의 기준이 됩니다.
                 </div>
             </div>
             
@@ -160,6 +198,10 @@
                     }
                 });
             },
+            toggleMobileMenu: function() {
+                const menu = document.getElementById('mobile-menu');
+                menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+            },
             login: function() { const p = new firebase.auth.GoogleAuthProvider(); firebase.auth().signInWithPopup(p).catch(e => alert(e.message)); },
             logout: function() { firebase.auth().signOut().then(() => location.reload()); }
         };
@@ -167,16 +209,16 @@
         // --- 정답 설정 및 관리 로직 ---
         const configApp = {
             data: {
-                objective: [], // {id:1, score:5, answer:1, explain:""}
-                subjective: [] // {id:1, subItems:[{score:5, answer:"키워드"}]}
+                objective: [], 
+                subjective: []
             },
 
             // [객관식] 로직
             addObjective: function() {
                 this.data.objective.push({ 
                     id: this.data.objective.length + 1, 
-                    score: 5,       // 기본 배점
-                    answer: 0,      // 0이면 선택 안함
+                    score: 5,       
+                    answer: 0,      
                     explain: "" 
                 });
                 this.renderObjective();
@@ -187,10 +229,10 @@
                 this.renderObjective();
             },
 
-            // 객관식 정답 선택 (버튼 클릭)
+            // 객관식 정답 선택
             selectObjAnswer: function(idx, choiceNum) {
                 this.data.objective[idx].answer = choiceNum;
-                this.renderObjective(); // 다시 그려서 색상 반영
+                this.renderObjective(); 
             },
             
             updateObjField: function(idx, field, val) {
@@ -328,9 +370,8 @@
                 document.getElementById('total-count').innerText = count;
             },
 
-// --- DB 저장 로직 (mark_exam_2025-2 컬렉션 사용) ---
+            // --- [저장] mark_exam_2025-2 보관함 사용 ---
             saveToDB: function() {
-                // 유효성 검사
                 if(this.data.objective.length === 0 && this.data.subjective.length === 0) {
                     alert("저장할 문항이 없습니다."); return;
                 }
@@ -343,12 +384,9 @@
                     description: "2025학년도 2학기 역사 시험 채점 기준" 
                 };
 
-                // ★수정됨★: 'mark_exam_2025-2' 컬렉션에 저장
-                // 문서를 하나로 고정('final_exam')하여 덮어쓰기 되도록 설정했습니다.
-                // (필요 시 날짜 등을 넣어 버전을 나눌 수 있습니다)
                 db.collection("mark_exam_2025-2").doc("final_exam").set(saveData)
                     .then(() => {
-                        alert("✅ [mark_exam_2025-2] 보관함에 저장되었습니다!");
+                        alert("✅ [시험 채점 관리] 보관함(mark_exam_2025-2)에 저장되었습니다!");
                     })
                     .catch((error) => {
                         console.error("Error writing document: ", error);
@@ -358,6 +396,13 @@
         };
 
         window.onload = function() { app.init(); };
+        
+        // 메뉴 외부 클릭 시 닫기
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('mobile-menu');
+            const btn = document.querySelector('.mobile-menu-btn');
+            if (!menu.contains(e.target) && !btn.contains(e.target)) { menu.style.display = 'none'; }
+        });
     </script>
 </body>
 </html>
