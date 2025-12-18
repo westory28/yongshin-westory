@@ -22,7 +22,15 @@
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // 기존 파이어베이스 설정값 붙여넣기
-        const firebaseConfig = { /* 선생님의 config 값 */ };
+        const firebaseConfig = {
+  apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
+  authDomain: "history-quiz-yongsin.firebaseapp.com",
+  projectId: "history-quiz-yongsin",
+  storageBucket: "history-quiz-yongsin.firebasestorage.app",
+  messagingSenderId: "177587430482",
+  appId: "1:177587430482:web:1188e0f661368040c3ab8b",
+  measurementId: "G-YG2SLS45D8"
+};
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
