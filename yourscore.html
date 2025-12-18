@@ -56,7 +56,7 @@
         /* 과목 카드 스타일 */
         .subject-card { 
             background: #fff; border-radius: 8px; margin-bottom: 15px; 
-            border: 1px solid #e1e4e8; border-left: 5px solid #ccc; 
+            border: 1px solid #e1e4e8; border-left: 5px solid #ccc; /* 기본값 */
             transition: all 0.2s;
         }
         .subject-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
@@ -107,6 +107,8 @@
         .bg-C { background-color: #fab005; } 
         .bg-D { background-color: #51cf66; } 
         .bg-E { background-color: #339af0; } 
+        /* ★ 미입력 상태 색상 추가 */
+        .bg-none { background-color: #adb5bd; } 
 
     </style>
 </head>
@@ -202,7 +204,6 @@
         import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-        // Firebase 설정
         const firebaseConfig = {
           apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
           authDomain: "history-quiz-yongsin.firebaseapp.com",
@@ -222,12 +223,16 @@
 
         const FIXED_SUBJECT_ORDER = ['국어', '영어', '수학', '과학', '역사', '기가', '한문', '일본어', '미술', '체육'];
 
-        function getGradeInfo(score) {
-            if (score >= 90) return { grade: 'A', colorCode: '#fa5252', class: 'bg-A' };
-            if (score >= 80) return { grade: 'B', colorCode: '#fd7e14', class: 'bg-B' };
-            if (score >= 70) return { grade: 'C', colorCode: '#fab005', class: 'bg-C' };
-            if (score >= 60) return { grade: 'D', colorCode: '#51cf66', class: 'bg-D' };
-            return { grade: 'E', colorCode: '#339af0', class: 'bg-E' };
+        // ★ 등급 계산 함수 수정 (hasData 매개변수 추가)
+        function getGradeInfo(score, hasData) {
+            if (!hasData) return { grade: '-', colorCode: '#adb5bd', class: 'bg-none', text: '미입력' }; // 데이터 없으면 회색
+
+            // 데이터가 있으면 정상 등급 반환
+            if (score >= 90) return { grade: 'A', colorCode: '#fa5252', class: 'bg-A', text: `${score}점` };
+            if (score >= 80) return { grade: 'B', colorCode: '#fd7e14', class: 'bg-B', text: `${score}점` };
+            if (score >= 70) return { grade: 'C', colorCode: '#fab005', class: 'bg-C', text: `${score}점` };
+            if (score >= 60) return { grade: 'D', colorCode: '#51cf66', class: 'bg-D', text: `${score}점` };
+            return { grade: 'E', colorCode: '#339af0', class: 'bg-E', text: `${score}점` };
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -267,13 +272,25 @@
             }
         };
 
+        // ★ 점수 계산 함수 수정: 입력 데이터 존재 여부(hasData) 확인
         function calculateTotal(plan) {
             let total = 0;
+            let hasData = false; // 하나라도 입력했는지 체크
+
             plan.items.forEach((item, idx) => {
-                const saved = parseFloat(localStorage.getItem(`score_${plan.id}_${idx}`));
-                if(!isNaN(saved)) total += (saved / item.maxScore) * item.ratio;
+                const saved = localStorage.getItem(`score_${plan.id}_${idx}`);
+                // saved가 존재하고 빈 문자열이 아니면 데이터가 있는 것으로 간주
+                if(saved !== null && saved !== "") {
+                    hasData = true;
+                    const val = parseFloat(saved);
+                    if(!isNaN(val)) total += (val / item.maxScore) * item.ratio;
+                }
             });
-            return parseFloat(total.toFixed(1));
+            
+            return { 
+                score: parseFloat(total.toFixed(1)), 
+                hasData: hasData 
+            };
         }
 
         window.renderDashboard = () => {
@@ -292,11 +309,13 @@
                 return String(pGrade) === gradeFilter && pYear === yearFilter && pSem === semesterFilter;
             });
 
-            filteredPlans = filteredPlans.map(plan => ({
-                ...plan,
-                currentScore: calculateTotal(plan)
-            }));
+            // 계산 로직 변경 적용
+            filteredPlans = filteredPlans.map(plan => {
+                const result = calculateTotal(plan);
+                return { ...plan, currentScore: result.score, hasData: result.hasData };
+            });
 
+            // 정렬 로직 (미입력 된 것은 성적순 정렬시 맨 뒤로 보낼 수도 있으나, 여기선 점수(0) 기준으로 처리됨)
             if (sortMode === 'score_high') {
                 filteredPlans.sort((a, b) => b.currentScore - a.currentScore);
             } else if (sortMode === 'name') {
@@ -321,16 +340,18 @@
             const chartLabels = []; const chartData = []; const chartColors = [];
 
             filteredPlans.forEach(plan => {
-                const currentScore = plan.currentScore;
-                const { grade, colorCode, class: bgClass } = getGradeInfo(currentScore);
+                const { currentScore, hasData } = plan;
+                // ★ getGradeInfo에 hasData 전달
+                const info = getGradeInfo(currentScore, hasData);
 
                 chartLabels.push(plan.subject);
-                chartData.push(currentScore);
-                chartColors.push(colorCode);
+                // 차트에는 미입력이면 0으로 표시하되 색상은 회색
+                chartData.push(currentScore); 
+                chartColors.push(info.colorCode);
 
                 const card = document.createElement('div');
                 card.className = 'subject-card';
-                card.style.borderLeftColor = colorCode;
+                card.style.borderLeftColor = info.colorCode; // 등급 색상 또는 회색
 
                 let itemsHtml = '';
                 plan.items.forEach((item, idx) => {
@@ -354,8 +375,8 @@
                     <div class="card-header" onclick="toggleCard(this)">
                         <div class="subject-name">${plan.subject}</div>
                         <div class="score-info">
-                            <span class="total-score" id="score_text_${plan.id}" style="color:${colorCode}">${currentScore}점</span>
-                            <span class="grade-badge ${bgClass}" id="grade_badge_${plan.id}">${grade}</span>
+                            <span class="total-score" id="score_text_${plan.id}" style="color:${info.colorCode}">${info.text}</span>
+                            <span class="grade-badge ${info.class}" id="grade_badge_${plan.id}">${info.grade}</span>
                             <div class="toggle-text">▼ 점수 입력하기</div>
                         </div>
                     </div>
@@ -374,8 +395,11 @@
             const max = parseFloat(e.target.dataset.max);
             let val = parseFloat(e.target.value);
 
-            if(val > max) { val = max; e.target.value = max; }
-            if(val < 0) { val = 0; e.target.value = 0; }
+            // 값이 있으면 Max 제한, 없으면(빈칸) 유지
+            if (!isNaN(val)) {
+                if(val > max) { val = max; e.target.value = max; }
+                if(val < 0) { val = 0; e.target.value = 0; }
+            }
 
             localStorage.setItem(`score_${planId}_${idx}`, e.target.value);
             updateCardUI(planId);
@@ -385,23 +409,27 @@
             const plan = allGradingPlans.find(p => p.id === planId);
             if(!plan) return;
 
-            const total = calculateTotal(plan);
-            const { grade, colorCode, class: bgClass } = getGradeInfo(total);
+            // ★ UI 업데이트 시에도 hasData 로직 사용
+            const { score, hasData } = calculateTotal(plan);
+            const info = getGradeInfo(score, hasData);
 
             const textEl = document.getElementById(`score_text_${planId}`);
             const badgeEl = document.getElementById(`grade_badge_${planId}`);
             
-            textEl.innerText = `${total}점`;
-            textEl.style.color = colorCode;
-            badgeEl.innerText = grade;
-            badgeEl.className = `grade-badge ${bgClass}`;
-            badgeEl.closest('.subject-card').style.borderLeftColor = colorCode;
+            textEl.innerText = info.text; // "92점" or "미입력"
+            textEl.style.color = info.colorCode;
+            
+            badgeEl.innerText = info.grade;
+            badgeEl.className = `grade-badge ${info.class}`;
+            
+            // 카드 테두리 색 변경
+            badgeEl.closest('.subject-card').style.borderLeftColor = info.colorCode;
 
             if(myChart) {
                 const idx = myChart.data.labels.indexOf(plan.subject);
                 if(idx !== -1) {
-                    myChart.data.datasets[0].data[idx] = total;
-                    myChart.data.datasets[0].backgroundColor[idx] = colorCode;
+                    myChart.data.datasets[0].data[idx] = score;
+                    myChart.data.datasets[0].backgroundColor[idx] = info.colorCode;
                     myChart.update();
                 }
             }
