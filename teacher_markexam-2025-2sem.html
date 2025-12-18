@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeStory - 성적 산출 관리</title>
+    <title>WeStory - 성적 산출 및 기준 설정</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,38 +19,32 @@
         header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
         .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
         
-        /* 로고 */
         .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
         .logo-we { color: #2563eb; }
         .logo-story { color: #f59e0b; }
 
-        /* PC용 네비게이션 */
         .desktop-nav { display: flex; height: 100%; }
         .nav-link { font-weight: 500; color: #6b7280; margin: 0 1rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .nav-link:hover { color: #111827; }
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
 
-        /* 모바일 햄버거 버튼 */
         .mobile-menu-btn { display: none; margin-left: 1rem; font-size: 1.5rem; color: #374151; cursor: pointer; }
         
-        /* 모바일 드롭다운 메뉴 */
         #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; }
         .mobile-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: #374151; font-weight: 500; border-bottom: 1px solid #f3f4f6; text-decoration: none; transition: background 0.2s; }
         .mobile-link:hover { background-color: #f9fafb; }
         .mobile-link.active { color: #2563eb; background-color: #eff6ff; font-weight: 700; }
         .mobile-icon { width: 20px; height: 20px; margin-right: 12px; fill: currentColor; }
 
-        /* 반응형 미디어 쿼리 */
         @media (max-width: 1000px) {
             .desktop-nav { display: none; }
             .mobile-menu-btn { display: block; }
         }
 
-        /* 테이블 및 기타 스타일 */
+        /* 테이블 및 인풋 스타일 */
         .admin-table th, .admin-table td { border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
         .admin-table th:not(:last-child), .admin-table td:not(:last-child) { border-right: 1px solid #e5e7eb; }
         
-        /* 점수 입력 인풋 스타일 */
         .score-input { width: 100%; text-align: center; border: 1px solid transparent; padding: 4px; background: transparent; }
         .score-input:focus { border: 1px solid #2563eb; background: white; outline: none; border-radius: 4px; }
         .score-input:hover { background: #f3f4f6; }
@@ -108,19 +102,27 @@
         
         <div class="bg-white p-6 rounded shadow border border-stone-200 mb-8">
             <h2 class="font-bold text-xl text-stone-800 mb-4 flex items-center border-b pb-2">
-                <i class="fas fa-cog text-gray-600 mr-2"></i> 채점 기준 및 배점 설정
+                <i class="fas fa-cog text-gray-600 mr-2"></i> 채점 기준 및 정답 설정
             </h2>
             
             <div class="flex flex-col lg:flex-row gap-8">
                 <div class="flex-1 bg-stone-50 p-4 rounded border border-stone-200">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-lg">객관식 (선택형)</h3>
+                        <h3 class="font-bold text-lg">객관식 (5지 선다형)</h3>
                         <button onclick="configApp.addObjective()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-bold">
                             <i class="fas fa-plus"></i> 문항 추가
                         </button>
                     </div>
-                    <div id="config-objective-list" class="space-y-2 max-h-60 overflow-y-auto">
-                        <div class="text-stone-400 text-center py-4 text-sm">문항을 추가해주세요</div>
+
+                    <div class="flex gap-2 text-xs font-bold text-stone-500 mb-2 px-2">
+                        <span class="w-16">번호</span>
+                        <span class="w-20 text-center">정답(①-⑤)</span>
+                        <span class="w-20 text-center">배점</span>
+                        <span class="flex-1">해설/풀이</span>
+                    </div>
+
+                    <div id="config-objective-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                        <div class="text-stone-400 text-center py-4 text-sm border border-dashed border-stone-300 rounded">문항을 추가해주세요</div>
                     </div>
                 </div>
 
@@ -131,8 +133,8 @@
                             <i class="fas fa-plus"></i> 큰 문항 추가
                         </button>
                     </div>
-                    <div id="config-subjective-list" class="space-y-3 max-h-60 overflow-y-auto">
-                        <div class="text-stone-400 text-center py-4 text-sm">문항을 추가해주세요</div>
+                    <div id="config-subjective-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                        <div class="text-stone-400 text-center py-4 text-sm border border-dashed border-stone-300 rounded">문항을 추가해주세요</div>
                     </div>
                 </div>
             </div>
@@ -151,9 +153,12 @@
         <div id="grading-section" class="bg-white p-6 rounded shadow border border-stone-200 hidden">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="font-bold text-lg text-stone-800"><i class="fas fa-user-edit text-blue-600 mr-2"></i> 학생 채점표</h2>
-                <button onclick="alert('저장 기능은 DB 연결 후 구현됩니다.')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm shadow hover:bg-blue-700">
-                    <i class="fas fa-save mr-1"></i> 점수 저장
-                </button>
+                <div class="flex gap-2">
+                    <span class="text-xs text-stone-400 self-end mr-2">* 점수 입력 시 자동 저장되지 않습니다. 반드시 저장 버튼을 눌러주세요.</span>
+                    <button onclick="alert('저장 기능은 DB 연결 후 구현됩니다.')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm shadow hover:bg-blue-700">
+                        <i class="fas fa-save mr-1"></i> 점수 저장
+                    </button>
+                </div>
             </div>
 
             <div class="overflow-x-auto border rounded bg-stone-50">
@@ -229,48 +234,95 @@
         // --- 2. 평가 기준 설정 로직 (Config) ---
         const configApp = {
             data: {
-                objective: [], // {id:1, score:5}
+                objective: [], // {id:1, score:5, answer:1, explain:""}
                 subjective: [] // {id:1, subItems:[{score:10}]}
             },
 
-            // 객관식 관련
+            // --- 객관식 관련 (수정됨) ---
             addObjective: function() {
-                this.data.objective.push({ id: this.data.objective.length + 1, score: 0 });
+                this.data.objective.push({ 
+                    id: this.data.objective.length + 1, 
+                    score: 0, 
+                    answer: 1,      // 기본 정답 1번
+                    explain: ""     // 해설
+                });
                 this.renderObjective();
             },
+            
             removeObjective: function(idx) {
-                this.data.objective.splice(idx, 1);
-                this.renderObjective();
+                if(confirm(`${idx+1}번 문항을 삭제하시겠습니까?`)) {
+                    this.data.objective.splice(idx, 1);
+                    this.renderObjective();
+                }
             },
-            updateObjScore: function(idx, val) {
-                this.data.objective[idx].score = Number(val);
-                this.updateTotal();
+            
+            // 통합 업데이트 (배점, 정답, 해설)
+            updateObjField: function(idx, field, val) {
+                if(field === 'score' || field === 'answer') {
+                    this.data.objective[idx][field] = Number(val);
+                } else {
+                    this.data.objective[idx][field] = val;
+                }
+                if(field === 'score') this.updateTotal(); 
             },
+
             renderObjective: function() {
                 const container = document.getElementById('config-objective-list');
                 if(this.data.objective.length === 0) {
-                    container.innerHTML = '<div class="text-stone-400 text-center py-4 text-sm">문항을 추가해주세요</div>';
+                    container.innerHTML = '<div class="text-stone-400 text-center py-4 text-sm border border-dashed border-stone-300 rounded">문항을 추가해주세요</div>';
                     this.updateTotal(); return;
                 }
                 container.innerHTML = this.data.objective.map((item, idx) => `
-                    <div class="flex items-center gap-2 mb-2 bg-white p-2 rounded border border-gray-100 shadow-sm">
-                        <span class="font-bold text-stone-600 text-sm w-16">객관식 ${idx+1}</span>
-                        <input type="number" class="border rounded p-1 w-16 text-center text-sm" placeholder="배점" value="${item.score}" onchange="configApp.updateObjScore(${idx}, this.value)">
-                        <span class="text-sm text-stone-500">점</span>
-                        <button onclick="configApp.removeObjective(${idx})" class="ml-auto text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
+                    <div class="bg-white p-3 rounded border border-gray-200 shadow-sm transition hover:shadow-md">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="font-bold text-stone-700 text-sm w-16 bg-stone-100 py-1 text-center rounded">
+                                객관식 ${idx+1}
+                            </span>
+                            
+                            <div class="flex flex-col items-center">
+                                <select class="border border-stone-300 rounded p-1 text-sm w-20 text-center focus:border-blue-500 bg-white"
+                                        onchange="configApp.updateObjField(${idx}, 'answer', this.value)">
+                                    <option value="1" ${item.answer===1?'selected':''}>①번</option>
+                                    <option value="2" ${item.answer===2?'selected':''}>②번</option>
+                                    <option value="3" ${item.answer===3?'selected':''}>③번</option>
+                                    <option value="4" ${item.answer===4?'selected':''}>④번</option>
+                                    <option value="5" ${item.answer===5?'selected':''}>⑤번</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center relative">
+                                <input type="number" 
+                                    class="border border-stone-300 rounded p-1 w-16 text-center text-sm font-bold text-blue-600 focus:border-blue-500" 
+                                    placeholder="0" value="${item.score}" 
+                                    onchange="configApp.updateObjField(${idx}, 'score', this.value)">
+                                <span class="absolute right-[-15px] text-xs text-stone-400">점</span>
+                            </div>
+
+                            <button onclick="configApp.removeObjective(${idx})" class="ml-auto text-stone-300 hover:text-red-500 p-1"><i class="fas fa-times"></i></button>
+                        </div>
+                        
+                        <div class="w-full">
+                            <input type="text" 
+                                class="w-full border border-stone-200 bg-stone-50 rounded px-2 py-1.5 text-xs text-stone-600 focus:bg-white focus:border-blue-400 focus:outline-none"
+                                placeholder="해설 또는 정답 근거를 입력하세요 (선택)"
+                                value="${item.explain}"
+                                onchange="configApp.updateObjField(${idx}, 'explain', this.value)">
+                        </div>
                     </div>
                 `).join('');
                 this.updateTotal();
             },
 
-            // 서술형 관련 (계열화)
+            // --- 서술형 관련 (계열화 유지) ---
             addSubjParent: function() {
                 this.data.subjective.push({ id: this.data.subjective.length + 1, subItems: [] });
                 this.renderSubjective();
             },
             removeSubjParent: function(idx) {
-                this.data.subjective.splice(idx, 1);
-                this.renderSubjective();
+                if(confirm('서술형 문항을 삭제하시겠습니까? 하위 문제도 모두 삭제됩니다.')) {
+                    this.data.subjective.splice(idx, 1);
+                    this.renderSubjective();
+                }
             },
             addSubjItem: function(parentIdx) {
                 this.data.subjective[parentIdx].subItems.push({ score: 0 });
@@ -287,7 +339,7 @@
             renderSubjective: function() {
                 const container = document.getElementById('config-subjective-list');
                 if(this.data.subjective.length === 0) {
-                    container.innerHTML = '<div class="text-stone-400 text-center py-4 text-sm">문항을 추가해주세요</div>';
+                    container.innerHTML = '<div class="text-stone-400 text-center py-4 text-sm border border-dashed border-stone-300 rounded">문항을 추가해주세요</div>';
                     this.updateTotal(); return;
                 }
                 container.innerHTML = this.data.subjective.map((parent, pIdx) => `
@@ -295,20 +347,20 @@
                         <div class="flex justify-between items-center mb-2 border-b pb-1">
                             <span class="font-bold text-indigo-700 text-sm">서술형 큰 ${pIdx+1}번</span>
                             <div class="space-x-1">
-                                <button onclick="configApp.addSubjItem(${pIdx})" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100">+ 소문항</button>
+                                <button onclick="configApp.addSubjItem(${pIdx})" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100 font-bold">+ 소문항</button>
                                 <button onclick="configApp.removeSubjParent(${pIdx})" class="text-xs text-red-400 hover:text-red-600 px-1"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
                         <div class="pl-2 space-y-1">
                             ${parent.subItems.map((sub, sIdx) => `
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs text-gray-500">└ (${sIdx+1})</span>
-                                    <input type="number" class="border rounded p-1 w-14 text-center text-sm" placeholder="배점" value="${sub.score}" onchange="configApp.updateSubjScore(${pIdx}, ${sIdx}, this.value)">
+                                    <span class="text-xs text-gray-500 font-bold">└ (${sIdx+1})</span>
+                                    <input type="number" class="border rounded p-1 w-14 text-center text-sm font-bold text-indigo-600" placeholder="배점" value="${sub.score}" onchange="configApp.updateSubjScore(${pIdx}, ${sIdx}, this.value)">
                                     <span class="text-xs text-stone-500">점</span>
                                     <button onclick="configApp.removeSubjItem(${pIdx}, ${sIdx})" class="text-gray-400 hover:text-red-500 ml-1"><i class="fas fa-times text-xs"></i></button>
                                 </div>
                             `).join('')}
-                            ${parent.subItems.length === 0 ? '<div class="text-xs text-gray-400 pl-4">소문항을 추가하세요</div>' : ''}
+                            ${parent.subItems.length === 0 ? '<div class="text-xs text-gray-400 pl-4 py-1">- 소문항을 추가하세요 -</div>' : ''}
                         </div>
                     </div>
                 `).join('');
@@ -318,9 +370,7 @@
             updateTotal: function() {
                 let total = 0;
                 let count = 0;
-                // 객관식
                 this.data.objective.forEach(o => { total += (o.score||0); count++; });
-                // 서술형 (소문항 기준)
                 this.data.subjective.forEach(p => {
                     p.subItems.forEach(s => { total += (s.score||0); count++; });
                 });
@@ -348,8 +398,11 @@
                 
                 // 객관식 헤더
                 obj.forEach((o, i) => {
+                    // 정답도 헤더에 작게 표시해줌 (선생님 확인용)
                     theadHtml += `<th class="p-2 text-center w-16 bg-blue-50 text-blue-800 text-xs">
-                        객${i+1}<br><span class="text-[10px] text-gray-500">(${o.score}점)</span>
+                        객${i+1}<br>
+                        <span class="text-[10px] text-gray-500">(${o.score}점)</span><br>
+                        <span class="text-[10px] text-red-500 font-bold">답:${o.answer}</span>
                     </th>`;
                 });
 
@@ -390,8 +443,6 @@
 
                 document.getElementById('grading-table-body').innerHTML = tbodyHtml;
                 document.getElementById('grading-section').classList.remove('hidden');
-                
-                // 화면 스크롤 이동
                 document.getElementById('grading-section').scrollIntoView({behavior: "smooth"});
             },
 
@@ -401,8 +452,6 @@
                 let sum = 0;
                 inputs.forEach(inp => {
                     let val = Number(inp.value);
-                    let max = Number(inp.getAttribute('data-max'));
-                    // (옵션) 배점보다 큰 점수 입력시 경고? 일단은 합산만
                     sum += val;
                 });
                 row.querySelector('.total-cell').innerText = sum;
