@@ -68,36 +68,39 @@
         }
         input:focus { border-color: #3498db; outline: none; }
 
-        /* ★ 평가 항목 리스트 (스타일 수정됨) */
+        /* ★ 평가 항목 리스트 (입력칸 너비 수정됨) */
         #criteriaList { background-color: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; }
         
         .criteria-row { 
             display: flex; 
-            gap: 8px; 
+            gap: 10px; /* 칸 사이 간격 */
             margin-bottom: 10px; 
             align-items: center; 
         }
         
-        /* 칸 너비 조정 (여기가 핵심!) */
+        /* 1) 유형 선택 (고정 너비) */
         .c-type { 
-            flex: 0 0 90px; /* 고정 너비 */
+            flex: 0 0 100px; 
             padding: 10px; border: 1px solid #ddd; border-radius: 4px; 
         }
+        
+        /* 2) 항목명 (가장 넓게 - 비율 3) */
         .c-name { 
-            flex: 1; /* ★ 남은 공간을 모두 차지함 */
-            min-width: 0; /* 내용이 많아도 레이아웃 깨짐 방지 */
+            flex: 3; 
+            min-width: 120px;
             padding: 10px; border: 1px solid #ddd; border-radius: 4px; 
         }
-        .c-max { 
-            flex: 0 0 60px; /* 고정 너비 */
+        
+        /* 3) 만점 & 비율 (적당히 넓게 - 비율 1씩) */
+        .c-max, .c-ratio { 
+            flex: 1; 
+            min-width: 80px; /* 최소 너비 확보 */
             padding: 10px; border: 1px solid #ddd; border-radius: 4px; text-align: center; 
         }
-        .c-ratio { 
-            flex: 0 0 60px; /* 고정 너비 */
-            padding: 10px; border: 1px solid #ddd; border-radius: 4px; text-align: center; 
-        }
+        
+        /* 4) 삭제 버튼 (고정) */
         .remove-btn { 
-            flex: 0 0 35px; /* 고정 너비 */
+            flex: 0 0 40px; 
             background: #e74c3c; color: white; border: none; height: 38px; border-radius: 4px; cursor: pointer; 
         }
 
@@ -112,11 +115,14 @@
             transition: transform 0.2s;
             margin-bottom: 20px; 
         }
+        .plan-card:last-child { margin-bottom: 0; }
         .plan-card:hover { transform: translateX(5px); }
+        
         .plan-info h3 { margin: 0 0 5px 0; font-size: 18px; color: #333; }
         .plan-meta { font-size: 13px; color: #666; }
         .plan-items { font-size: 13px; color: #555; margin-top: 10px; line-height: 1.6; background: #f9f9f9; padding: 10px; border-radius: 6px; }
         .plan-actions { display: flex; gap: 8px; flex-direction: column; }
+        
         .btn-sm { padding: 8px 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 13px; font-weight: bold; }
         .btn-edit { background-color: #f39c12; }
         .btn-delete { background-color: #e74c3c; }
@@ -312,7 +318,7 @@
         };
 
         window.deletePlan = async (id) => {
-            if(confirm("정말 삭제하시겠습니까?")) {
+            if(confirm("정말 삭제하시겠습니까?\n복구할 수 없습니다.")) {
                 try {
                     await deleteDoc(doc(db, "grading_plans", id));
                     allPlansData = allPlansData.filter(p => p.id !== id);
