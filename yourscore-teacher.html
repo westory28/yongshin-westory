@@ -68,41 +68,15 @@
         }
         input:focus { border-color: #3498db; outline: none; }
 
-        /* ★ 평가 항목 리스트 (입력칸 너비 수정됨) */
+        /* 평가 항목 리스트 */
         #criteriaList { background-color: #fafafa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; }
         
-        .criteria-row { 
-            display: flex; 
-            gap: 10px; /* 칸 사이 간격 */
-            margin-bottom: 10px; 
-            align-items: center; 
-        }
+        .criteria-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
         
-        /* 1) 유형 선택 (고정 너비) */
-        .c-type { 
-            flex: 0 0 100px; 
-            padding: 10px; border: 1px solid #ddd; border-radius: 4px; 
-        }
-        
-        /* 2) 항목명 (가장 넓게 - 비율 3) */
-        .c-name { 
-            flex: 3; 
-            min-width: 120px;
-            padding: 10px; border: 1px solid #ddd; border-radius: 4px; 
-        }
-        
-        /* 3) 만점 & 비율 (적당히 넓게 - 비율 1씩) */
-        .c-max, .c-ratio { 
-            flex: 1; 
-            min-width: 80px; /* 최소 너비 확보 */
-            padding: 10px; border: 1px solid #ddd; border-radius: 4px; text-align: center; 
-        }
-        
-        /* 4) 삭제 버튼 (고정) */
-        .remove-btn { 
-            flex: 0 0 40px; 
-            background: #e74c3c; color: white; border: none; height: 38px; border-radius: 4px; cursor: pointer; 
-        }
+        .c-type { flex: 0 0 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .c-name { flex: 3; min-width: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .c-max, .c-ratio { flex: 1; min-width: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; text-align: center; }
+        .remove-btn { flex: 0 0 40px; background: #e74c3c; color: white; border: none; height: 38px; border-radius: 4px; cursor: pointer; }
 
         .btn-add { background-color: #3498db; color: white; padding: 12px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
         .btn-save { background-color: #2ecc71; color: white; padding: 15px; width: 100%; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; }
@@ -159,7 +133,7 @@
                 
                 <div class="left-panel">
                     <div class="big-filter-card">
-                        <div class="filter-header">📌 Step 1. 학년도와 학기를 선택하세요</div>
+                        <div class="filter-header">📌 Step 1. 학년도, 학기, 학년을 선택하세요</div>
                         <div class="filter-row">
                             <select id="yearFilter" onchange="handleFilterChange()">
                                 <option value="2025">2025학년도</option>
@@ -169,6 +143,11 @@
                             <select id="semesterFilter" onchange="handleFilterChange()">
                                 <option value="1학기">1학기</option>
                                 <option value="2학기">2학기</option>
+                            </select>
+                            <select id="gradeFilter" onchange="handleFilterChange()">
+                                <option value="1학년">1학년</option>
+                                <option value="2학년">2학년</option>
+                                <option value="3학년">3학년</option>
                             </select>
                         </div>
                     </div>
@@ -261,13 +240,18 @@
         function renderPlansList() {
             const year = document.getElementById('yearFilter').value;
             const semester = document.getElementById('semesterFilter').value;
+            // ★ 학년 필터 값 가져오기
+            const grade = document.getElementById('gradeFilter').value;
+            
             const listDiv = document.getElementById('savedPlansList');
             listDiv.innerHTML = '';
 
             const filtered = allPlansData.filter(plan => {
                 const pYear = plan.academicYear || "2025";
                 const pSem = plan.semester || "1학기";
-                return pYear === year && pSem === semester;
+                // 기존 데이터에 학년 정보가 없으면 '1학년'으로 가정
+                const pGrade = plan.grade || "1학년"; 
+                return pYear === year && pSem === semester && pGrade === grade;
             });
 
             if (filtered.length === 0) {
@@ -279,11 +263,12 @@
                 const card = document.createElement('div');
                 card.className = 'plan-card';
                 const summary = data.items.map(i => `<span style="display:inline-block; margin-right:5px; color:#555;">• ${i.name}(${i.ratio}%)</span>`).join('');
+                const displayGrade = data.grade || '1학년';
 
                 card.innerHTML = `
                     <div class="plan-info">
                         <h3>${data.subject}</h3>
-                        <div class="plan-meta">${data.academicYear || '2025'}학년도 ${data.semester}</div>
+                        <div class="plan-meta">${data.academicYear || '2025'}학년도 ${data.semester} [${displayGrade}]</div>
                         <div class="plan-items">${summary}</div>
                     </div>
                     <div class="plan-actions">
@@ -302,7 +287,10 @@
 
             if(data.academicYear) document.getElementById('yearFilter').value = data.academicYear;
             document.getElementById('semesterFilter').value = data.semester || "1학기";
-            renderPlansList();
+            // ★ 수정 시 저장된 학년으로 필터 변경
+            document.getElementById('gradeFilter').value = data.grade || "1학년";
+            
+            renderPlansList(); // 필터 바뀐것 반영
 
             document.getElementById('subjectName').value = data.subject;
             const listDiv = document.getElementById('criteriaList');
@@ -367,6 +355,8 @@
 
             const academicYear = document.getElementById('yearFilter').value;
             const semester = document.getElementById('semesterFilter').value;
+            // ★ 저장 시 학년 정보 포함
+            const grade = document.getElementById('gradeFilter').value;
             const subject = document.getElementById('subjectName').value.trim();
             if (!subject) { alert("과목명을 입력해주세요."); return; }
 
@@ -388,7 +378,8 @@
             if (totalRatio !== 100) { alert(`비율 합계가 ${totalRatio}% 입니다. 100%를 맞춰주세요.`); return; }
 
             try {
-                const saveData = { academicYear, semester, subject, items, updatedAt: new Date() };
+                // ★ grade 필드 추가됨
+                const saveData = { academicYear, semester, grade, subject, items, updatedAt: new Date() };
                 if (editingDocId) {
                     await updateDoc(doc(db, "grading_plans", editingDocId), saveData);
                     const idx = allPlansData.findIndex(p => p.id === editingDocId);
