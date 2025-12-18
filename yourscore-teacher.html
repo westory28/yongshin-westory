@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>교사 대시보드 - 평가 기준 관리</title>
     <style>
-        /* 기본 스타일 및 레이아웃 */
+        /* 기본 스타일 */
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #f4f7f6;
@@ -14,7 +14,7 @@
             color: #333;
         }
         .container {
-            max-width: 900px;
+            max-width: 1000px; /* 폭을 조금 더 넓혔습니다 */
             margin: 0 auto;
             background-color: #fff;
             padding: 30px;
@@ -27,7 +27,7 @@
             margin-bottom: 30px;
         }
 
-        /* 폼 스타일 */
+        /* 입력 폼 스타일 */
         .form-row {
             display: flex;
             gap: 20px;
@@ -42,14 +42,14 @@
             font-weight: 600;
             color: #555;
         }
-        input[type="text"], input[type="number"], select {
+        input, select {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             box-sizing: border-box;
             transition: border-color 0.3s;
-            font-size: 16px;
+            font-size: 15px;
             background-color: #fff;
         }
         input:focus, select:focus {
@@ -57,7 +57,7 @@
             outline: none;
         }
 
-        /* 평가 항목 리스트 스타일 */
+        /* 평가 항목 리스트 */
         #criteriaList {
             border: 1px solid #eee;
             padding: 20px;
@@ -67,18 +67,22 @@
         }
         .criteria-row {
             display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 10px;
+            margin-bottom: 10px;
             align-items: center;
             background-color: #fff;
             padding: 15px;
             border-radius: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .criteria-row input {
-            flex: 1;
-        }
-        /* 삭제 버튼 스타일 */
+        
+        /* 각 입력 필드 비율 조정 */
+        .c-type { flex: 0 0 120px; } /* 유형 선택 (고정폭) */
+        .c-name { flex: 2; }         /* 항목명 (가변) */
+        .c-max { flex: 1; }          /* 만점 */
+        .c-ratio { flex: 1; }        /* 비율 */
+        
+        /* 삭제 버튼 */
         .remove-btn {
             background-color: #e74c3c;
             color: white;
@@ -86,14 +90,13 @@
             padding: 10px 15px;
             border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.2s;
             white-space: nowrap;
         }
         .remove-btn:hover {
             background-color: #c0392b;
         }
 
-        /* 메인 버튼 스타일 */
+        /* 버튼 */
         .btn {
             padding: 12px 24px;
             border: none;
@@ -101,16 +104,11 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
-            transition: background-color 0.2s;
-            display: inline-block;
         }
         .btn-add {
             background-color: #3498db;
             color: white;
             margin-bottom: 20px;
-        }
-        .btn-add:hover {
-            background-color: #2980b9;
         }
         .btn-save {
             background-color: #2ecc71;
@@ -118,26 +116,11 @@
             width: 100%;
             font-size: 18px;
         }
-        .btn-save:hover {
-            background-color: #27ae60;
-        }
+        .btn-save:hover { background-color: #27ae60; }
 
-        /* 반응형 디자인 */
         @media (max-width: 768px) {
-            .form-row {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .criteria-row {
-                flex-direction: column;
-            }
-            .criteria-row input, .remove-btn {
-                width: 100%;
-                margin-bottom: 10px;
-            }
-            .remove-btn {
-                margin-bottom: 0;
-            }
+            .criteria-row { flex-direction: column; gap: 10px; }
+            .criteria-row > * { width: 100%; flex: auto; }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
@@ -147,7 +130,8 @@
         <h1>📝 평가 기준 관리</h1>
 
         <div class="form-row">
-            <div class="form-group" style="flex: 0 0 150px;"> <label for="semesterSelect">학기</label>
+            <div class="form-group" style="flex: 0 0 150px;">
+                <label for="semesterSelect">학기</label>
                 <select id="semesterSelect">
                     <option value="1학기">1학기</option>
                     <option value="2학기">2학기</option>
@@ -172,9 +156,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getAuth } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-        // 선생님의 파이어베이스 설정 키 (그대로 유지)
         const firebaseConfig = {
           apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
           authDomain: "history-quiz-yongsin.firebaseapp.com",
@@ -187,15 +170,20 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app); // 로그인 체크용
 
-        // 행 추가 함수
+        // 행 추가 함수 (유형 선택 추가됨)
         window.addRow = () => {
             const div = document.createElement('div');
             div.className = 'criteria-row';
             div.innerHTML = `
-                <input type="text" placeholder="항목명 (예: 1차 지필)" class="c-name" required>
-                <input type="number" placeholder="만점 (예: 100)" class="c-max" min="1" required>
-                <input type="number" placeholder="반영비율 (%) (예: 30)" class="c-ratio" min="1" max="100" required>
+                <select class="c-type">
+                    <option value="지필">지필평가</option>
+                    <option value="수행">수행평가</option>
+                </select>
+                <input type="text" placeholder="항목명 (예: 기말고사)" class="c-name" required>
+                <input type="number" placeholder="만점" class="c-max" min="1" required>
+                <input type="number" placeholder="반영비율(%)" class="c-ratio" min="1" max="100" required>
                 <button class="remove-btn" onclick="removeRow(this)">삭제</button>
             `;
             document.getElementById('criteriaList').appendChild(div);
@@ -205,68 +193,63 @@
             button.parentElement.remove();
         };
 
-        addRow(); // 초기 행 추가
+        addRow(); // 초기 행 실행
 
-        // 저장 함수 (학기 정보 추가됨)
+        // 저장 함수
         window.saveToFirebase = async () => {
-            const semester = document.getElementById('semesterSelect').value; // 학기 값 가져오기
-            const subject = document.getElementById('subjectName').value.trim();
-            
-            if (!subject) {
-                alert("과목명을 입력해주세요.");
+            // 로그인 체크 (선생님만 저장 가능)
+            const user = auth.currentUser;
+            if (!user) {
+                alert("로그인이 필요합니다. 기존 대시보드에서 로그인 후 이용해주세요.");
                 return;
             }
+
+            const semester = document.getElementById('semesterSelect').value;
+            const subject = document.getElementById('subjectName').value.trim();
+            
+            if (!subject) { alert("과목명을 입력해주세요."); return; }
 
             const rows = document.querySelectorAll('.criteria-row');
             const items = [];
             let totalRatio = 0;
 
             for (const row of rows) {
+                const type = row.querySelector('.c-type').value; // 유형 가져오기
                 const name = row.querySelector('.c-name').value.trim();
                 const maxScore = row.querySelector('.c-max').value;
                 const ratio = row.querySelector('.c-ratio').value;
 
                 if (!name || !maxScore || !ratio) {
-                    alert("모든 평가 항목의 내용을 입력해주세요.");
+                    alert("빈칸을 모두 채워주세요.");
                     return;
                 }
 
                 totalRatio += Number(ratio);
                 items.push({
+                    type: type, // 저장 데이터에 유형 포함
                     name: name,
                     maxScore: Number(maxScore),
                     ratio: Number(ratio)
                 });
             }
 
-            if (items.length === 0) {
-                 alert("최소 한 개 이상의 평가 항목을 추가해주세요.");
-                 return;
-            }
-
-            if (totalRatio !== 100) {
-                alert(`반영 비율의 합이 ${totalRatio}% 입니다. 100%가 되도록 맞춰주세요.`);
-                return;
-            }
+            if (items.length === 0) { alert("항목을 추가해주세요."); return; }
+            if (totalRatio !== 100) { alert(`반영 비율 합계가 ${totalRatio}% 입니다. 100%를 맞춰주세요.`); return; }
 
             try {
-                // Firestore에 데이터 저장 (semester 필드 추가)
                 await addDoc(collection(db, "grading_plans"), {
-                    semester: semester, // 여기 학기가 저장됩니다!
+                    semester: semester,
                     subject: subject,
                     items: items,
-                    createdAt: new Date()
+                    createdAt: new Date(),
+                    teacherEmail: user.email // 누가 저장했는지 기록
                 });
                 
-                alert(`[${semester}] '${subject}' 과목 기준이 저장되었습니다!`);
-                
-                // 초기화
-                document.getElementById('subjectName').value = '';
-                document.getElementById('criteriaList').innerHTML = '';
-                addRow(); 
+                alert(`[${semester}] ${subject} 평가 기준 저장 완료!`);
+                location.reload(); // 저장 후 새로고침
             } catch (e) {
-                console.error("Error adding document: ", e);
-                alert("저장 중 오류가 발생했습니다.");
+                console.error("Error: ", e);
+                alert("저장 실패: " + e.message);
             }
         };
     </script>
