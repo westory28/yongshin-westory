@@ -3,706 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>교사 대시보드 - 방재석</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
-    
+    <title>Westory Teacher: 우리들의 이야기꾼</title>
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f5f5f4; margin: 0; padding: 0; }
-        .admin-table th, .admin-table td { border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
-        .admin-table th:not(:last-child), .admin-table td:not(:last-child) { border-right: 2px solid #d6d3d1; }
-        .col-answer { background-color: #fffbeb; color: #b45309; font-weight: bold; }
-        .rate-bar-bg { background-color: #e5e7eb; height: 6px; border-radius: 3px; overflow: hidden; width: 100%; margin-top: 4px; }
-        .rate-bar-fill { height: 100%; transition: width 0.5s ease; }
-        .page-btn { padding: 6px 12px; margin: 0 2px; border: 1px solid #d1d5db; border-radius: 4px; background: white; cursor: pointer; font-size: 0.9rem; }
-        .page-btn.active { background-color: #4b5563; color: white; border-color: #4b5563; font-weight: bold; }
-        .choice-btn { width: 100%; text-align: left; padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; background-color: white; margin-bottom: 0.5rem; }
-        .choice-btn.selected { border: 2px solid #d97706; background-color: #fffbeb; color: #92400e; font-weight: bold; }
-        
-        /* 로딩 오버레이 */
-        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; }
-        
-        /* 모달 오버레이 */
-        .modal-overlay { background-color: rgba(0, 0, 0, 0.5); }
-        
-        /* 이미지 줌 */
-        .q-image-thumb { max-width: 100%; max-height: 200px; border-radius: 4px; border: 1px solid #ddd; cursor: zoom-in; }
-        #image-zoom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; }
-        #image-zoom-content { max-width: 95%; max-height: 95%; border-radius: 4px; }
+        /* 학생용과 기본 스타일 공유하되, 포인트 컬러 변경 (교사용: 짙은 네이비/골드) */
+        body { font-family: 'Pretendard', sans-serif; background-color: #f0f2f5; margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+        .hidden { display: none !important; }
 
-        /* 팝업 애니메이션 */
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in-up { animation: fadeInUp 0.3s ease-out; }
+        /* 로그인 뷰 */
+        #login-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .brand-title { font-size: 3rem; font-weight: 800; color: #2c3e50; margin-bottom: 0.5rem; }
+        .brand-subtitle { font-size: 1.5rem; color: #b78a36; margin-bottom: 3rem; font-weight: 600; } /* 금색 포인트 */
+        .google-btn { background: #fff; border: 1px solid #ccc; padding: 12px 24px; border-radius: 40px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        
+        /* 대시보드 뷰 */
+        #dashboard-view { width: 100%; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* 상단 네비게이션 바 */
+        nav { background: #fff; padding: 0 40px; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; }
+        .nav-logo { font-weight: 800; font-size: 20px; color: #2c3e50; }
+        
+        .tabs { display: flex; gap: 30px; height: 100%; }
+        .tab-btn { 
+            background: none; border: none; height: 100%; font-size: 16px; font-weight: 600; color: #606770; cursor: pointer; position: relative; 
+        }
+        .tab-btn.active { color: #1877f2; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: #1877f2; }
+
+        /* 메인 컨텐츠 영역 */
+        .content-area { flex: 1; padding: 30px 40px; overflow-y: auto; }
+        .page-section { display: none; }
+        .page-section.active { display: block; animation: fadeIn 0.3s; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        h2 { border-left: 5px solid #2c3e50; padding-left: 15px; margin-bottom: 20px; color: #333; }
+        
+        /* iframe 스타일 (기존 페이지 임베드용) */
+        .frame-container { width: 100%; height: 80vh; border: none; border-radius: 12px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     </style>
 </head>
-<body class="text-stone-800 min-h-screen">
+<body>
 
-    <div id="loading-overlay">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-white border-solid mb-4"></div>
-        <p class="text-xl font-bold">처리 중입니다...</p>
-        <p class="text-sm mt-2">잠시만 기다려 주세요.</p>
+    <div id="login-view">
+        <div class="brand-title">Westory</div>
+        <div class="brand-subtitle">: 우리들의 이야기꾼</div>
+        <button class="google-btn" onclick="teacherLogin()">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20" alt="G">
+            교사 계정으로 로그인
+        </button>
     </div>
 
-    <div id="image-zoom-modal" onclick="document.getElementById('image-zoom-modal').style.display='none'"><img id="image-zoom-content" src=""></div>
+    <div id="dashboard-view" class="hidden">
+        <nav>
+            <div class="nav-logo">Westory Teacher</div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('tab1')">퀴즈 대시보드</button>
+                <button class="tab-btn" onclick="switchTab('tab2')">평가 기준 관리</button>
+                <button class="tab-btn" onclick="switchTab('tab3')">학생 관리</button>
+            </div>
+            <button class="google-btn" onclick="teacherLogout()" style="padding: 6px 16px; font-size: 14px;">로그아웃</button>
+        </nav>
 
-    <div id="view-login-screen" style="display: flex;" class="items-center justify-center min-h-screen flex-col bg-stone-100 p-4">
-        <div class="bg-white p-8 rounded-xl shadow-xl max-w-sm w-full text-center border-t-4 border-amber-600">
-            <h1 class="text-2xl font-bold mb-2">교사 인증</h1>
-            <p class="text-stone-500 mb-8 text-sm">구글 계정으로 로그인하세요.<br>(60분 미활동 시 자동 로그아웃)</p>
-            <button onclick="app.login()" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 px-4 rounded shadow hover:bg-gray-50 flex items-center justify-center gap-2 transition cursor-pointer">
-                <i class="fab fa-google text-red-500"></i> 구글 계정으로 로그인
-            </button>
-            <p class="text-xs text-gray-400 mt-4">용신중학교 역사과 방재석</p>
-        </div>
-    </div>
-
-    <div id="view-dashboard" style="display: none;" class="p-6 max-w-7xl mx-auto">
-        <div class="bg-white p-6 rounded shadow-xl border border-stone-300">
-            <div class="flex justify-between items-center mb-6 border-b pb-4">
-                <div class="flex items-center gap-4">
-                    <div>
-                        <h2 class="font-bold text-2xl text-stone-800"><i class="fas fa-chalkboard-teacher text-amber-600 mr-2"></i>교사 대시보드</h2>
-                        <p class="text-xs text-stone-500 mt-1">Firebase 연동됨 (자동 로그아웃 설정됨)</p>
-                    </div>
-                    
-                    <div class="hidden md:flex bg-stone-100 p-1 rounded border border-stone-300 ml-4">
-                        <input type="text" id="search-student-desktop" placeholder="학생 이름 검색" class="bg-transparent px-2 py-1 text-sm outline-none" onkeypress="if(event.key==='Enter') app.searchStudent()">
-                        <button onclick="app.searchStudent()" class="bg-stone-800 text-white px-3 py-1 rounded text-xs font-bold hover:bg-stone-700">검색</button>
-                    </div>
-
-                    <button onclick="document.getElementById('mobile-search-modal').style.display='flex'; document.getElementById('search-student-mobile').focus();" 
-                            class="md:hidden ml-auto text-stone-500 hover:text-stone-800 bg-stone-100 p-2 rounded-full w-10 h-10 flex items-center justify-center shadow-sm">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-                <button onclick="app.logout()" class="bg-stone-200 hover:bg-stone-300 text-stone-700 px-4 py-2 rounded text-sm font-bold">로그아웃</button>
+        <div class="content-area">
+            <div id="tab1" class="page-section active">
+                <h2>실시간 퀴즈 제출 현황</h2>
+                <iframe src="dashboard-content.html" class="frame-container" title="대시보드"></iframe>
             </div>
 
-            <div class="flex flex-wrap gap-2 mb-6">
-                <button onclick="app.setTeacherTab('log')" id="btn-tab-log" class="px-5 py-2 rounded-full bg-stone-800 text-white text-sm font-bold shadow transition">실시간 기록</button>
-                <button onclick="app.setTeacherTab('bank')" id="btn-tab-bank" class="px-5 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-bold shadow transition">문제 은행</button>
-                <button onclick="app.setTeacherTab('add')" id="btn-tab-add" class="px-5 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-bold shadow transition">문제 추가</button>
-                <button onclick="app.setTeacherTab('student')" id="btn-tab-student" class="px-5 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-bold shadow transition">학생 관리</button>
+            <div id="tab2" class="page-section">
+                <h2>수행평가 기준 설정</h2>
+                <iframe src="yourscore-teacher.html" class="frame-container" title="평가관리"></iframe>
             </div>
 
-            <div id="tab-log">
-                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                    <h3 class="font-bold text-lg flex items-center">제출 현황 <span id="log-count" class="text-sm font-normal text-stone-500 ml-2"></span></h3>
-                    <div class="flex gap-2 items-center flex-wrap">
-                        <span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded">▼ 반 선택</span>
-                        <select id="select-class-trigger" onchange="app.loadByClass(this.value)" class="p-2 border-2 border-amber-500 rounded text-sm font-bold bg-amber-50 cursor-pointer">
-                            <option value="">선택 대기</option>
-                            <option value="1">1반</option><option value="2">2반</option><option value="3">3반</option><option value="4">4반</option><option value="5">5반</option>
-                            <option value="6">6반</option><option value="7">7반</option><option value="8">8반</option><option value="9">9반</option><option value="10">10반</option>
-                            <option value="all">전체 (최근 50개)</option>
-                        </select>
-                        <button onclick="app.analyzeClassStats()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm font-bold shadow"><i class="fas fa-chart-bar mr-1"></i> 통계 분석</button>
-                        <select id="sort-logs" onchange="app.renderLogs()" class="p-2 border rounded text-sm"><option value="time">최신순</option><option value="number">번호순</option><option value="score_desc">점수 높은순</option></select>
-                        <button onclick="app.loadByClass(document.getElementById('select-class-trigger').value)" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-bold"><i class="fas fa-sync-alt"></i></button>
-                        <button onclick="app.deleteSelectedLogs()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm font-bold"><i class="fas fa-trash"></i></button>
-                        <button onclick="app.downloadExcel()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-bold"><i class="fas fa-file-excel"></i> 엑셀</button>
-                    </div>
-                </div>
-                <div class="overflow-auto max-h-[600px] border rounded bg-stone-50">
-                    <table class="w-full text-sm text-left admin-table"><thead class="bg-stone-200 text-stone-700 sticky top-0 font-bold"><tr><th class="p-3 w-10 text-center"><input type="checkbox" onchange="document.querySelectorAll('.log-checkbox').forEach(cb=>cb.checked=this.checked)"></th><th class="p-3">시간</th><th class="p-3">정보</th><th class="p-3">점수</th><th class="p-3">상태</th><th class="p-3">삭제</th></tr></thead><tbody id="teacher-log-body" class="bg-white"><tr><td colspan="6" class="p-10 text-center text-stone-500 font-bold">👆 위에서 반을 선택하면 데이터를 불러옵니다.</td></tr></tbody></table>
-                </div>
-                <div id="pagination-controls" class="flex justify-center gap-2 mt-4"></div>
-            </div>
-
-            <div id="tab-bank" style="display:none;">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-4 bg-stone-50 p-3 rounded border border-stone-200 gap-3">
-                    <h3 class="font-bold text-lg">전체 문제 <span id="total-q-count" class="text-sm text-stone-500"></span></h3>
-                    <div class="flex gap-2 flex-wrap">
-                        <span class="text-xs text-gray-500 flex items-center bg-white px-2 rounded border">💡 전체 통계는 [갱신] 버튼을 누를 때만 업데이트됩니다.</span>
-                        <button onclick="app.calculateGlobalStats()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-xs font-bold shadow-md flex items-center"><i class="fas fa-sync mr-1"></i> 전체 통계 갱신 (서버 저장)</button>
-                        
-                        <select id="bank-sort" onchange="app.renderBank()" class="p-2 border rounded text-xs">
-                            <option value="id">번호순</option>
-                            <option value="unit">단원순</option>
-                            <option value="type">유형순</option>
-                            <option value="rate_asc">취약 유형순 (정답률 낮음)</option>
-                            <option value="rate_desc">정답률 높은 순</option>
-                        </select>
-                        <select id="bank-filter-unit" onchange="app.renderBank()" class="p-2 border rounded text-xs w-32"><option value="all">모든 단원</option><option value="I.">I. 고대</option><option value="II.">II. 종교/문화</option><option value="III.">III. 지역교류</option><option value="IV.">IV. 제국주의</option><option value="V.">V. 세계대전</option></select>
-                        <button onclick="app.deleteSelectedQuestions()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-xs font-bold"><i class="fas fa-trash"></i> 삭제</button>
-                    </div>
-                </div>
-                <div class="overflow-auto max-h-[500px] border rounded bg-stone-50">
-                    <table class="w-full text-sm text-left admin-table"><thead class="bg-stone-200 text-stone-700 sticky top-0 font-bold"><tr><th class="p-3 w-10 text-center"><input type="checkbox" onchange="document.querySelectorAll('.q-checkbox').forEach(cb=>cb.checked=this.checked)"></th><th class="p-3 w-16 text-center">ID</th><th class="p-3 w-32">단원</th><th class="p-3 w-20 text-center">유형</th><th class="p-3">문제</th><th class="p-3 w-20 text-center">보기</th><th class="p-3 w-32 col-answer text-center">정답</th><th class="p-3 w-24 text-center">정답률 (전체)</th></tr></thead><tbody id="bank-body" class="bg-white"></tbody></table>
+            <div id="tab3" class="page-section">
+                <h2>학생 명단 및 계정 관리</h2>
+                <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; color: #888;">
+                    <p>학생들의 명단을 업로드하거나 관리하는 기능이 추가될 예정입니다.</p>
+                    <button style="padding: 10px 20px; background: #2c3e50; color: white; border: none; border-radius: 6px; cursor: pointer;">학생 명단 엑셀 업로드</button>
                 </div>
             </div>
-
-            <div id="tab-add" style="display:none;">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-stone-50 p-6 rounded border border-stone-200">
-                        <div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="font-bold text-xl">문제 만들기</h3><span id="next-q-id-display" class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full border border-amber-200"></span></div>
-                        <div class="space-y-4">
-                            <div><label class="block text-sm font-bold mb-1">단원</label><select id="new-q-unit" class="w-full p-2 border rounded"><option value="I. 문명의 발생과 고대 세계의 형성">I. 고대 세계</option><option value="II. 세계 종교의 확산과 지역 문화의 형성">II. 세계 종교</option><option value="III. 지역 세계의 교류와 변화">III. 지역 세계</option><option value="IV. 제국주의 침략과 국민 국가 건설 운동">IV. 제국주의</option><option value="V. 세계 대전과 사회 변동">V. 세계 대전</option></select></div>
-                            <div><label class="block text-sm font-bold mb-1">유형</label><select id="new-q-type" class="w-full p-2 border rounded" onchange="app.toggleOptionInput('new')"><option value="choice">객관식</option><option value="word">단답형</option><option value="order">순서 맞추기</option><option value="ox">O/X 퀴즈</option></select></div>
-                            <div><label class="block text-sm font-bold mb-1">이미지</label><input type="file" id="new-q-image" accept="image/*" class="w-full text-xs" onchange="app.handleImageUpload(this, 'new')"><img id="new-q-image-preview" style="display:none;" class="mt-2 h-20 rounded border"><input type="hidden" id="new-q-image-base64"></div>
-                            <div><label class="block text-sm font-bold mb-1">문제</label><textarea id="new-q-text" class="w-full p-2 border rounded h-20"></textarea></div>
-                            <div id="option-container-new"><label class="block text-sm font-bold mb-1">보기</label><input type="text" id="new-q-options" class="w-full p-2 border rounded"></div>
-                            <div><label class="block text-sm font-bold mb-1">정답</label><input type="text" id="new-q-answer" class="w-full p-2 border rounded"></div>
-                            <div><label class="block text-sm font-bold mb-1">해설</label><input type="text" id="new-q-exp" class="w-full p-2 border rounded"></div>
-                            <button onclick="app.addCustomQuestion()" class="w-full bg-amber-600 text-white font-bold py-3 rounded hover:bg-amber-700">추가하기</button>
-                        </div>
-                    </div>
-                    <div class="bg-green-50 p-6 rounded border border-green-200 h-fit">
-                        <h3 class="font-bold text-xl mb-4 border-b pb-2 text-green-800">엑셀 업로드</h3>
-                        <input type="file" id="excel-file" accept=".xlsx, .xls" class="block w-full text-sm text-slate-500 mb-4"/>
-                        <button onclick="app.uploadExcel()" class="w-full bg-green-600 text-white font-bold py-3 rounded hover:bg-green-700 mb-4">엑셀 업로드 시작</button>
-                        <div class="text-center"><button onclick="app.downloadTemplate()" class="text-xs text-gray-500 underline">양식 다운로드</button></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-student" style="display:none;">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-4 bg-stone-50 p-3 rounded border border-stone-200 gap-3">
-                    <h3 class="font-bold text-lg">가입 학생 목록 <span id="student-total-count" class="text-sm text-stone-500"></span></h3>
-                    <div class="flex gap-2">
-                        <input type="text" id="search-student-mgmt" placeholder="이름/반 검색" class="p-2 border rounded text-xs w-40" onkeypress="if(event.key==='Enter') app.filterStudents()">
-                        <button onclick="app.filterStudents()" class="bg-stone-800 text-white px-3 py-2 rounded text-xs font-bold">검색</button>
-                        <button onclick="app.loadStudents()" class="bg-indigo-600 text-white px-3 py-2 rounded text-xs font-bold"><i class="fas fa-sync"></i> 새로고침</button>
-                    </div>
-                </div>
-                <div class="overflow-auto max-h-[600px] border rounded bg-stone-50">
-                    <table class="w-full text-sm text-left admin-table">
-                        <thead class="bg-stone-200 text-stone-700 sticky top-0 font-bold">
-                            <tr>
-                                <th class="p-3 w-16 text-center">반</th>
-                                <th class="p-3 w-16 text-center">번호</th>
-                                <th class="p-3">이름 (기록 조회)</th>
-                                <th class="p-3">이메일 (구글)</th>
-                                <th class="p-3 text-center">가입/수정일</th>
-                                <th class="p-3 text-center w-32">관리</th>
-                            </tr>
-                        </thead>
-                        <tbody id="student-list-body" class="bg-white">
-                            </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="mobile-search-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-        <div class="modal-overlay absolute inset-0" onclick="document.getElementById('mobile-search-modal').style.display='none'"></div>
-        <div class="bg-white p-6 rounded-lg shadow-xl z-10 w-full max-w-sm mx-4">
-            <h3 class="font-bold text-lg mb-4 text-stone-800">학생 검색</h3>
-            <div class="flex gap-2">
-                <input type="text" id="search-student-mobile" placeholder="이름을 입력하세요" class="flex-1 p-3 border rounded text-sm outline-none bg-stone-50" onkeypress="if(event.key==='Enter') app.searchStudent()">
-                <button onclick="app.searchStudent()" class="bg-stone-800 text-white px-4 py-2 rounded font-bold hover:bg-stone-700">검색</button>
-            </div>
-            <div class="mt-4 text-center">
-                <button onclick="document.getElementById('mobile-search-modal').style.display='none'" class="text-sm text-gray-500 underline">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="student-detail-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center"><div class="modal-overlay absolute inset-0" onclick="document.getElementById('student-detail-modal').style.display='none'"></div><div class="bg-white p-8 rounded-lg shadow-2xl z-10 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto"><h3 class="font-bold text-xl mb-4 border-b pb-2">상세 정보</h3><div id="student-detail-content"></div><div class="mt-4 text-center"><button onclick="document.getElementById('student-detail-modal').style.display='none'" class="bg-gray-200 px-4 py-2 rounded">닫기</button></div></div></div>
-    
-    <div id="preview-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center"><div class="modal-overlay absolute inset-0" onclick="document.getElementById('preview-modal').style.display='none'"></div><div class="bg-white p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto"><div id="preview-content"></div><div class="mt-6 text-center"><button onclick="document.getElementById('preview-modal').style.display='none'" class="bg-gray-200 px-4 py-2 rounded">닫기</button></div></div></div>
-    
-    <div id="edit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center"><div class="modal-overlay absolute inset-0" onclick="app.closeEditModal()"></div><div class="bg-white p-6 rounded-lg shadow-xl z-10 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"><h3 class="font-bold text-xl mb-4 border-b pb-2">문제 수정</h3><input type="hidden" id="edit-q-id"><div class="space-y-4"><div><label class="block text-sm font-bold mb-1">단원</label><select id="edit-q-unit" class="w-full p-2 border rounded"><option value="I. 문명의 발생과 고대 세계의 형성">I. 고대 세계</option><option value="II. 세계 종교의 확산과 지역 문화의 형성">II. 세계 종교</option><option value="III. 지역 세계의 교류와 변화">III. 지역 세계</option><option value="IV. 제국주의 침략과 국민 국가 건설 운동">IV. 제국주의</option><option value="V. 세계 대전과 사회 변동">V. 세계 대전</option></select></div><div><label class="block text-sm font-bold mb-1">유형</label><select id="edit-q-type" class="w-full p-2 border rounded" onchange="app.toggleOptionInput('edit')"><option value="choice">객관식</option><option value="word">단답형</option><option value="order">순서 맞추기</option><option value="ox">O/X 퀴즈</option></select></div><div><label class="block text-sm font-bold mb-1">이미지</label><input type="file" id="edit-q-image-input" accept="image/*" class="w-full text-xs" onchange="app.handleImageUpload(this, 'edit')"><img id="edit-q-image-preview" class="hidden q-image-thumb mt-2"><input type="hidden" id="edit-q-image-base64"><button onclick="document.getElementById('edit-q-image-preview').style.display='none';document.getElementById('edit-q-image-base64').value='';" class="text-red-500 text-xs">이미지 삭제</button></div><div><label class="block text-sm font-bold mb-1">문제</label><textarea id="edit-q-text" class="w-full p-2 border rounded h-20"></textarea></div><div id="option-container-edit"><label class="block text-sm font-bold mb-1">보기</label><input type="text" id="edit-q-options" class="w-full p-2 border rounded"></div><div><label class="block text-sm font-bold mb-1">정답</label><input type="text" id="edit-q-answer" class="w-full p-2 border rounded"></div><div><label class="block text-sm font-bold mb-1">해설</label><input type="text" id="edit-q-exp" class="w-full p-2 border rounded"></div><div class="flex gap-2 pt-2"><button onclick="app.saveEditedQuestion()" class="flex-1 bg-green-600 text-white font-bold py-3 rounded">저장</button><button onclick="app.closeEditModal()" class="flex-1 bg-stone-200 text-stone-700 font-bold py-3 rounded">취소</button></div></div></div></div>
-    
-    <div id="stats-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center"><div class="modal-overlay absolute inset-0" onclick="document.getElementById('stats-modal').style.display='none'"></div><div class="bg-white p-8 rounded-lg shadow-2xl z-10 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto"><h3 class="font-bold text-xl mb-4 border-b pb-2">통계 분석 (학생별 정답률)</h3><div id="stats-content"></div><div class="mt-4 text-center"><button onclick="document.getElementById('stats-modal').style.display='none'" class="bg-gray-200 px-4 py-2 rounded">닫기</button></div></div></div>
-
-    <div id="student-edit-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-        <div class="modal-overlay absolute inset-0" onclick="document.getElementById('student-edit-modal').style.display='none'"></div>
-        <div class="bg-white p-6 rounded-lg shadow-xl z-10 w-full max-w-sm mx-4">
-            <h3 class="font-bold text-xl mb-4 border-b pb-2">학생 정보 수정</h3>
-            <input type="hidden" id="edit-std-docId">
-            <div class="space-y-4">
-                <div><label class="block text-sm font-bold mb-1">이메일</label><input type="text" id="edit-std-email" class="w-full p-2 border rounded bg-gray-100" readonly></div>
-                <div class="flex gap-2">
-                    <div class="flex-1"><label class="block text-sm font-bold mb-1">반</label><input type="number" id="edit-std-class" class="w-full p-2 border rounded"></div>
-                    <div class="flex-1"><label class="block text-sm font-bold mb-1">번호</label><input type="number" id="edit-std-number" class="w-full p-2 border rounded"></div>
-                </div>
-                <div><label class="block text-sm font-bold mb-1">이름</label><input type="text" id="edit-std-name" class="w-full p-2 border rounded"></div>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="app.saveStudentInfo()" class="flex-1 bg-green-600 text-white font-bold py-3 rounded">저장</button>
-                    <button onclick="document.getElementById('student-edit-modal').style.display='none'" class="flex-1 bg-stone-200 text-stone-700 font-bold py-3 rounded">취소</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="student-history-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-        <div class="modal-overlay absolute inset-0" onclick="document.getElementById('student-history-modal').style.display='none'"></div>
-        <div class="bg-white p-6 rounded-lg shadow-xl z-10 w-full max-w-3xl mx-4 max-h-[85vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 class="font-bold text-xl"><span id="history-student-name" class="text-indigo-700"></span> 학생의 학습 기록</h3>
-                <button onclick="document.getElementById('student-history-modal').style.display='none'" class="text-gray-500 hover:text-black"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <div id="history-list-content" class="overflow-y-auto flex-1 bg-stone-50 p-4 rounded border border-stone-200 space-y-3"></div>
-            <div class="mt-4 text-center"><button onclick="document.getElementById('student-history-modal').style.display='none'" class="bg-stone-200 px-6 py-2 rounded font-bold hover:bg-stone-300">닫기</button></div>
-        </div>
-    </div>
-
-    <div id="history-detail-popup" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
-        <div class="absolute inset-0 bg-black bg-opacity-50" onclick="document.getElementById('history-detail-popup').style.display='none'"></div>
-        <div class="bg-white p-6 rounded-lg shadow-2xl z-10 w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col relative animate-fade-in-up">
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <div>
-                    <h3 class="font-bold text-xl text-stone-800">상세 정오답 확인</h3>
-                    <p id="detail-popup-info" class="text-sm text-stone-500"></p>
-                </div>
-                <button onclick="document.getElementById('history-detail-popup').style.display='none'" class="text-gray-400 hover:text-black transition"><i class="fas fa-times text-2xl"></i></button>
-            </div>
-            <div id="history-detail-body" class="overflow-y-auto flex-1 bg-stone-50 p-4 rounded border border-stone-200 space-y-3"></div>
-            <div class="mt-4 text-center"><button onclick="document.getElementById('history-detail-popup').style.display='none'" class="bg-stone-800 text-white px-6 py-2 rounded font-bold hover:bg-stone-700 shadow">닫기</button></div>
         </div>
     </div>
 
     <script>
-        const firebaseConfig = { apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU", authDomain: "history-quiz-yongsin.firebaseapp.com", projectId: "history-quiz-yongsin", storageBucket: "history-quiz-yongsin.firebasestorage.app", messagingSenderId: "177587430482", appId: "1:177587430482:web:d79cc145c11e335cc3ab8b", measurementId: "G-LHN97D7R2R" };
-        let db; 
-        try { 
-            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } 
-            db = firebase.firestore(); 
-        } catch(e) { console.error("Firebase 초기화 실패", e); }
-
-        const TEACHER_EMAIL = "westoria28@gmail.com";
-        const SESSION_TIMEOUT = 60 * 60 * 1000;
-
-        const app = {
-            state: { allQuestions:[], logs:[], students:[], currentStudentHistory: [], questionStats: {}, logPage: 1, logsPerPage: 50 },
-            idleTimer: null,
-
-            init: function() {
-                if (typeof firebase === 'undefined' || !firebase.auth) { alert("Firebase 로드 실패"); return; }
-                
-                firebase.auth().onAuthStateChanged((user) => {
-                    if (user) {
-                        if(user.email === TEACHER_EMAIL) {
-                            document.getElementById('view-login-screen').style.display = 'none';
-                            document.getElementById('view-dashboard').style.display = 'block';
-                            this.loadQuestionsFromFirebase();
-                            this.setTeacherTab('log');
-                            this.startIdleTimer();
-                        } else {
-                            alert("허용되지 않은 계정: " + user.email);
-                            firebase.auth().signOut();
-                        }
-                    } else {
-                        this.stopIdleTimer();
-                        document.getElementById('view-login-screen').style.display = 'flex';
-                        document.getElementById('view-dashboard').style.display = 'none';
-                    }
-                });
-            },
-
-            startIdleTimer: function() {
-                this.resetIdleTimer();
-                ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
-                    document.addEventListener(evt, this.resetIdleTimerWrapper);
-                });
-            },
-            stopIdleTimer: function() {
-                clearTimeout(this.idleTimer);
-                ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
-                    document.removeEventListener(evt, this.resetIdleTimerWrapper);
-                });
-            },
-            resetIdleTimerWrapper: function() { app.resetIdleTimer(); },
-            resetIdleTimer: function() {
-                clearTimeout(this.idleTimer);
-                this.idleTimer = setTimeout(() => {
-                    alert("60분 동안 활동이 없어 자동 로그아웃됩니다.");
-                    app.logout();
-                }, SESSION_TIMEOUT);
-            },
-            login: function() {
-                firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
-                    .then(() => {
-                        const provider = new firebase.auth.GoogleAuthProvider();
-                        return firebase.auth().signInWithPopup(provider);
-                    })
-                    .catch((error) => alert("로그인 에러: " + error.message));
-            },
-            logout: function() { firebase.auth().signOut().then(() => location.reload()); },
+        function teacherLogin() {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+        }
+        function teacherLogout() {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+        }
+        
+        function switchTab(tabId) {
+            // 모든 탭 컨텐츠 숨기기
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            // 모든 탭 버튼 비활성화
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             
-            showLoading: function(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; },
-            
-            setTeacherTab: function(tab) {
-                ['log','bank','add','student'].forEach(t => {
-                    document.getElementById('tab-'+t).style.display = 'none'; 
-                    const btn = document.getElementById('btn-tab-'+t);
-                    if(t===tab) btn.className = "px-5 py-2 rounded-full bg-stone-800 text-white text-sm font-bold shadow transition";
-                    else btn.className = "px-5 py-2 rounded-full bg-stone-100 text-stone-600 text-sm font-bold shadow transition";
-                });
-                document.getElementById('tab-'+tab).style.display = 'block'; 
-                
-                if (tab === 'add') this.updateNextQuestionNumber(); 
-                else if (tab === 'bank') this.renderBank();
-                else if (tab === 'student') this.loadStudents();
-            },
-
-            // --- [탭 1: 로그] ---
-            loadByClass: function(cls) {
-                if(!db || !cls) return;
-                this.showLoading(true);
-                let query = db.collection("quiz_results");
-                if (cls === 'all') { query = query.orderBy("timestamp", "desc").limit(50); } 
-                else { query = query.where("class", "==", cls).orderBy("timestamp", "desc"); } 
-
-                query.get().then((querySnapshot) => {
-                    let logs = []; 
-                    querySnapshot.forEach((doc) => { let d = doc.data(); d.docId = doc.id; logs.push(d); });
-                    this.state.logs = logs; this.state.logPage = 1; this.renderLogs(); 
-                    document.getElementById('log-count').innerText = `(${logs.length}건)`;
-                    this.showLoading(false);
-                }).catch(e => {
-                    this.showLoading(false);
-                    if(e.message.includes("index")) alert("⚠️ 인덱스 설정 필요: F12 콘솔 링크 클릭");
-                    else alert("로드 실패: " + e.message);
-                });
-            },
-            
-            // [검색 기능 수정] - PC/모바일 통합 및 팝업 결과창 사용
-            searchStudent: function() {
-                // PC 입력값 우선 확인, 없으면 모바일 입력값 확인
-                let name = document.getElementById('search-student-desktop').value.trim();
-                if (!name) name = document.getElementById('search-student-mobile').value.trim();
-
-                if(!name) { alert("이름을 입력하세요"); return; }
-                
-                // 모바일 모달이 열려있다면 닫기
-                document.getElementById('mobile-search-modal').style.display = 'none';
-
-                this.showLoading(true);
-                db.collection("quiz_results").where("name", "==", name).orderBy("timestamp", "desc").get().then(snapshot => {
-                    let logs = [];
-                    snapshot.forEach(doc => { let d = doc.data(); d.docId = doc.id; logs.push(d); });
-                    if(logs.length === 0) { alert("검색 결과가 없습니다."); this.showLoading(false); return; }
-                    
-                    // ★ 상세 보기를 위해 상태 저장
-                    this.state.currentStudentHistory = logs;
-
-                    let totalScore = logs.reduce((sum, l) => sum + l.score, 0);
-                    let avg = Math.round(totalScore / logs.length);
-                    let html = `<div class="bg-blue-50 p-4 rounded mb-4 border border-blue-200"><h4 class="font-bold text-lg text-blue-800">${name} 학생 검색 결과</h4><p class="text-sm">총 응시: <b>${logs.length}회</b> / 평균 점수: <b>${avg}점</b></p></div><div class="space-y-2">`;
-                    
-                    // 카드 리스트 생성 (클릭 시 팝업 띄우기)
-                    logs.forEach((l, index) => {
-                        let scoreColor = l.score >= 80 ? 'text-green-600' : (l.score >= 50 ? 'text-amber-600' : 'text-red-500');
-                        html += `
-                        <div class="border rounded-lg bg-white shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-indigo-300 group p-3 flex justify-between items-center" 
-                             onclick="app.showHistoryDetail(${index})">
-                            <div>
-                                <span class="font-bold">${l.class}반 ${l.number}번</span> 
-                                <span class="text-xs text-gray-500 ml-2">${l.timeString}</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-bold text-lg ${scoreColor}">${l.score}점</div>
-                                <div class="text-[10px] text-indigo-400 opacity-0 group-hover:opacity-100 transition">상세보기 ></div>
-                            </div>
-                        </div>`; 
-                    });
-                    
-                    html += `</div>`;
-                    document.getElementById('stats-content').innerHTML = html;
-                    document.getElementById('stats-modal').style.display = 'flex';
-                    
-                    // 입력창 초기화
-                    document.getElementById('search-student-desktop').value = '';
-                    document.getElementById('search-student-mobile').value = '';
-                    
-                    this.showLoading(false);
-                }).catch(e => {
-                    this.showLoading(false);
-                    if(e.message.includes("index")) alert("⚠️ 인덱스 설정 필요: 콘솔창 확인");
-                    else alert("검색 실패: " + e.message);
-                });
-            },
-
-            analyzeClassStats: function() {
-                if(!this.state.logs || this.state.logs.length === 0) { alert("먼저 반을 선택하여 데이터를 불러오세요."); return; }
-                const studentMap = {};
-                this.state.logs.forEach(log => {
-                    const key = `${log.class}-${log.number}-${log.name}`;
-                    if(!studentMap[key]) studentMap[key] = { name: log.name, cls: log.class, num: log.number, total: 0, count: 0 };
-                    studentMap[key].total += log.score; studentMap[key].count++;
-                });
-                const list = Object.values(studentMap).map(s => ({ ...s, avg: Math.round(s.total / s.count) })).sort((a, b) => b.avg - a.avg);
-                let html = `<div class="mb-2 text-sm text-gray-500">현재 목록 평균 점수</div><table class="w-full text-sm text-left border"><thead class="bg-stone-100"><tr><th class="p-2 border">순위</th><th class="p-2 border">학생</th><th class="p-2 border">응시 횟수</th><th class="p-2 border">평균 점수</th></tr></thead><tbody>`;
-                list.forEach((s, i) => { let rankColor = i < 3 ? 'bg-yellow-50 font-bold' : ''; html += `<tr class="${rankColor} border-b"><td class="p-2 border text-center">${i+1}</td><td class="p-2 border">${s.cls}반 ${s.num}번 ${s.name}</td><td class="p-2 border text-center">${s.count}</td><td class="p-2 border text-center text-blue-600 font-bold">${s.avg}점</td></tr>`; });
-                html += `</tbody></table>`;
-                document.getElementById('stats-content').innerHTML = html; document.getElementById('stats-modal').style.display = 'flex';
-            },
-            renderLogs: function() {
-                const sortType = document.getElementById('sort-logs').value;
-                let filtered = [...this.state.logs];
-                if (sortType === 'number') filtered.sort((a,b) => parseInt(a.number) - parseInt(b.number));
-                else if (sortType === 'score_desc') filtered.sort((a,b) => b.score - a.score);
-                const start = (this.state.logPage - 1) * this.state.logsPerPage;
-                const end = start + this.state.logsPerPage;
-                const pageData = filtered.slice(start, end);
-                let html = '';
-                if(filtered.length===0) html='<tr><td colspan="6" class="p-10 text-center text-stone-400">데이터가 없습니다.</td></tr>';
-                else pageData.forEach((d) => { html += `<tr class="border-b hover:bg-stone-50 cursor-pointer" onclick="app.showStudentDetail('${d.docId}')"><td class="p-3 text-center"><input type="checkbox" class="log-checkbox" value="${d.docId}" onclick="event.stopPropagation()"></td><td class="p-3 text-stone-500 text-xs">${d.timeString}</td><td class="p-3 font-medium">${d.class}반 ${d.number}번 ${d.name}</td><td class="p-3 font-bold text-amber-600">${d.score}</td><td class="p-3 text-xs">${d.status}</td><td class="p-3 text-center"><button onclick="app.deleteLog('${d.docId}')" class="text-red-500" onclick="event.stopPropagation()"><i class="fas fa-trash-alt"></i></button></td></tr>`; });
-                document.getElementById('teacher-log-body').innerHTML = html;
-                const totalPages = Math.ceil(filtered.length / this.state.logsPerPage);
-                let pHtml = ''; if(totalPages > 1) { for(let i=1; i<=totalPages; i++) pHtml += `<button class="page-btn ${i===this.state.logPage ? 'active' : ''}" onclick="app.changeLogPage(${i})">${i}</button>`; }
-                document.getElementById('pagination-controls').innerHTML = pHtml;
-            },
-            changeLogPage: function(p) { this.state.logPage = p; this.renderLogs(); },
-            deleteSelectedLogs: function() { 
-                const checked = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.value); 
-                if(checked.length && confirm("삭제하시겠습니까?")) { 
-                    this.showLoading(true);
-                    const batch = db.batch(); 
-                    checked.forEach(id => batch.delete(db.collection("quiz_results").doc(id))); 
-                    batch.commit().then(() => { this.loadByClass(document.getElementById('select-class-trigger').value); }).catch(e=>{ this.showLoading(false); alert("삭제 실패: "+e.message); }); 
-                } 
-            },
-            deleteLog: function(docId) { 
-                if(confirm("삭제?")) { this.showLoading(true); db.collection("quiz_results").doc(docId).delete().then(() => { this.loadByClass(document.getElementById('select-class-trigger').value); }).catch(e=>{ this.showLoading(false); alert("삭제 실패: "+e.message); }); } 
-            },
-
-            // --- [탭 2, 3: 문제 은행 & 추가] ---
-            loadQuestionsFromFirebase: function() {
-                this.showLoading(true);
-                db.collection("quiz_questions").get().then((querySnapshot) => {
-                    const loadedData = []; querySnapshot.forEach((doc) => { let data = doc.data(); data.id = parseInt(doc.id); loadedData.push(data); });
-                    loadedData.sort((a, b) => a.id - b.id); this.state.allQuestions = loadedData; 
-                    if(document.getElementById('tab-bank').style.display !== 'none') this.renderBank();
-                    this.showLoading(false);
-                }).catch((e) => { console.error("문제 로드 에러:", e); this.showLoading(false); });
-            },
-            calculateGlobalStats: function() {
-                if(!confirm("⚠️ 경고: 모든 데이터를 다운로드합니다. 진행하시겠습니까?")) return;
-                this.showLoading(true);
-                db.collection("quiz_results").get().then(snapshot => {
-                    const stats = {}; 
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (data.details) {
-                            data.details.forEach(item => {
-                                const qId = String(item.id);
-                                if (!stats[qId]) stats[qId] = { total: 0, correct: 0 };
-                                stats[qId].total++; if (item.correct) stats[qId].correct++;
-                            });
-                        }
-                    });
-                    const batch = db.batch();
-                    Object.keys(stats).forEach(qId => {
-                        const ref = db.collection("quiz_questions").doc(qId);
-                        batch.update(ref, { stat_total: stats[qId].total, stat_correct: stats[qId].correct });
-                    });
-                    return batch.commit();
-                }).then(() => { alert("✅ 통계 갱신 완료"); this.loadQuestionsFromFirebase(); }).catch(e => { this.showLoading(false); alert("실패: " + e.message); });
-            },
-            renderBank: function() {
-                let filtered = [...this.state.allQuestions];
-                const unitFilter = document.getElementById('bank-filter-unit').value; 
-                if (unitFilter !== 'all') filtered = filtered.filter(q => (q.unit || "").indexOf(unitFilter) !== -1);
-                const sortType = document.getElementById('bank-sort').value;
-                if (sortType === 'id') filtered.sort((a, b) => a.id - b.id);
-                else if (sortType === 'unit') filtered.sort((a, b) => (a.unit || "").localeCompare(b.unit || ""));
-                else if (sortType === 'type') filtered.sort((a, b) => (a.type || "").localeCompare(b.type || ""));
-                else if (sortType.startsWith('rate')) { filtered.sort((a, b) => { const rA = (a.stat_total > 0) ? a.stat_correct / a.stat_total : 0; const rB = (b.stat_total > 0) ? b.stat_correct / b.stat_total : 0; return (sortType === 'rate_asc') ? rA - rB : rB - rA; }); }
-
-                document.getElementById('total-q-count').innerText = `(${filtered.length}문항)`;
-                document.getElementById('bank-body').innerHTML = filtered.map(q => {
-                    const total = q.stat_total || 0; const correct = q.stat_correct || 0;
-                    const rate = total > 0 ? Math.round((correct / total) * 100) : 0;
-                    let barColor = rate < 40 ? 'bg-red-500' : (rate < 70 ? 'bg-yellow-500' : 'bg-green-500');
-                    return `<tr class="border-b hover:bg-stone-50"><td class="p-3 text-center"><input type="checkbox" class="q-checkbox" value="${q.id}"></td><td class="p-3 text-xs text-center">${q.id}</td><td class="p-3 text-xs text-gray-500">${q.unit || '기타'}</td><td class="p-3 text-center text-xs">${q.type}</td><td class="p-3 text-sm cursor-pointer text-blue-600" onclick="app.editQuestion(${q.id})">${q.question}</td><td class="p-3 text-center"><button onclick="app.previewQuestion(${q.id})"><i class="fas fa-eye"></i></button></td><td class="p-3 text-xs font-bold text-center col-answer">${q.answer}</td><td class="p-3 text-center w-24 text-xs font-bold">${rate}% <span class="text-[10px] font-normal text-gray-400">(${total})</span><div class="rate-bar-bg"><div class="rate-bar-fill ${barColor}" style="width:${rate}%"></div></div></td></tr>`;
-                }).join('');
-            },
-            previewQuestion: function(id) { 
-                const q = this.state.allQuestions.find(x => x.id === id); if(!q) return; 
-                let html = `<div class="mb-4 font-bold text-lg text-stone-800">[Q] ${q.question}</div>`;
-                if(q.image) html += `<div class="text-center mb-4"><img src="${q.image}" class="max-w-full h-auto max-h-60 rounded border mx-auto"></div>`;
-                html += `<div id="preview-interaction-area" class="space-y-2">`;
-                if(q.type === 'choice') {
-                    q.options.forEach((opt, idx) => { html += `<div class="choice-btn p-3 border rounded cursor-pointer hover:bg-stone-50 transition-colors" onclick="app.handlePreviewClick(this, ${opt.trim() === q.answer.trim()})"><span class="font-bold mr-2 text-stone-500">${idx+1}.</span> ${opt}</div>`; });
-                } else if(q.type === 'ox') {
-                    const isO = q.answer === 'O'; html += `<div class="flex gap-4 h-24"><button class="flex-1 border-2 rounded-xl text-3xl font-bold text-blue-500 hover:bg-blue-50" onclick="alert('${isO?'O':'X'}')">O</button><button class="flex-1 border-2 rounded-xl text-3xl font-bold text-red-500 hover:bg-red-50" onclick="alert('${!isO?'O':'X'}')">X</button></div>`;
-                } else if(q.type === 'word') { 
-                    html += `<input type="text" class="w-full p-3 border-b-2 outline-none text-center text-lg" placeholder="정답 입력 후 엔터" onkeydown="if(event.key==='Enter') { alert(this.value.trim() === '${q.answer}' ? 'O' : 'X'); }">`;
-                } else if(q.type === 'order') { html += `<div class="p-4 bg-gray-100 rounded text-center text-gray-500">순서 유형은 미리보기 미지원<br>(정답: ${q.answer})</div>`; }
-                html += `</div>`; document.getElementById('preview-content').innerHTML = html; document.getElementById('preview-modal').style.display = 'flex';
-            },
-            handlePreviewClick: function(el, isCorrect) {
-                Array.from(el.parentNode.children).forEach(c => c.className = "choice-btn p-3 border rounded cursor-pointer hover:bg-stone-50 transition-colors");
-                el.className = "choice-btn p-3 border-2 border-amber-500 bg-amber-50 rounded cursor-pointer font-bold text-amber-900";
-                setTimeout(() => alert(isCorrect ? "⭕ 정답!" : "❌ 오답!"), 100);
-            },
-            deleteSelectedQuestions: function() { 
-                const checked = Array.from(document.querySelectorAll('.q-checkbox:checked')).map(cb => cb.value); 
-                if(checked.length && confirm("선택한 문제를 삭제하시겠습니까?")) { 
-                    this.showLoading(true); const batch = db.batch(); checked.forEach(id => batch.delete(db.collection("quiz_questions").doc(id))); 
-                    batch.commit().then(() => { this.loadQuestionsFromFirebase(); }).catch(e=>{ this.showLoading(false); alert("실패: "+e.message); }); 
-                } 
-            },
-            addCustomQuestion: function() { 
-                this.showLoading(true);
-                const newQ = { id: this.state.allQuestions.reduce((m,i)=>Math.max(m,i.id),0)+1, unit: document.getElementById('new-q-unit').value, type: document.getElementById('new-q-type').value, question: document.getElementById('new-q-text').value, options: document.getElementById('new-q-options').value.split(',').map(s=>s.trim()), answer: document.getElementById('new-q-answer').value, explanation: document.getElementById('new-q-exp').value, image: document.getElementById('new-q-image-base64').value || null }; 
-                db.collection("quiz_questions").doc(String(newQ.id)).set(newQ).then(() => { alert("추가됨"); this.loadQuestionsFromFirebase(); }).catch(e=>{ this.showLoading(false); alert("실패: "+e.message); }); 
-            },
-            uploadExcel: function() { 
-                const f = document.getElementById('excel-file').files[0]; if(!f) return; this.showLoading(true);
-                const r = new FileReader(); 
-                r.onload = async (e) => { 
-                    try {
-                        const wb = XLSX.read(e.target.result, {type:'array'}); const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1}); 
-                        let batch = db.batch(), cnt=0, id=this.state.allQuestions.reduce((m,i)=>Math.max(m,i.id),0); 
-                        for(let i=1; i<rows.length; i++) { if(!rows[i][2]) continue; id++; batch.set(db.collection("quiz_questions").doc(String(id)), { id, unit: rows[i][0]||"기타", type: "choice", question: rows[i][2], options: (rows[i][3]||"").split(','), answer: String(rows[i][4]), explanation: rows[i][5]||"", image: null }); cnt++; if(cnt%400===0) { await batch.commit(); batch=db.batch(); } } 
-                        await batch.commit(); alert(cnt+"개 추가됨"); this.loadQuestionsFromFirebase(); 
-                    } catch(e) { this.showLoading(false); alert("업로드 실패: " + e.message); }
-                }; r.readAsArrayBuffer(f); 
-            },
-            downloadTemplate: function() { XLSX.writeFile(XLSX.utils.book_new(), "양식.xlsx"); },
-            downloadExcel: function() { let csv="\uFEFF시간,반,번호,이름,점수\n"+this.state.logs.map(l=>`${l.timeString},${l.class},${l.number},${l.name},${l.score}`).join("\n"); const a=document.createElement("a"); a.href="data:text/csv;charset=utf-8,"+encodeURI(csv); a.download="결과.csv"; a.click(); },
-            showStudentDetail: function(docId) { const log = this.state.logs.find(l => l.docId === docId); if(!log) return; let html = `<div class="font-bold mb-2">${log.class}반 ${log.number}번 ${log.name} (${log.score}점)</div>`; log.details.forEach((d,i)=>{ const q=this.state.allQuestions.find(x=>x.id===d.id); html+=`<div class="p-2 border mb-2 ${d.correct?'bg-green-50':'bg-red-50'}"><div class="text-sm font-bold">Q${i+1}. ${q?q.question:'삭제된 문제'}</div><div class="text-xs">답: ${d.u} (정답여부:${d.correct?'O':'X'})</div></div>`; }); document.getElementById('student-detail-content').innerHTML=html; document.getElementById('student-detail-modal').style.display='flex'; },
-            editQuestion: function(id) { const q = this.state.allQuestions.find(q => q.id === id); if(!q) return; document.getElementById('edit-q-id').value = q.id; document.getElementById('edit-q-unit').value = q.unit; document.getElementById('edit-q-type').value = q.type; document.getElementById('edit-q-text').value = q.question; document.getElementById('edit-q-answer').value = q.answer; document.getElementById('edit-q-exp').value = q.explanation; document.getElementById('edit-q-options').value = q.options ? q.options.join(', ') : ''; this.toggleOptionInput('edit'); document.getElementById('edit-q-image-base64').value = q.image || ''; const img = document.getElementById('edit-q-image-preview'); if(q.image) { img.src = q.image; img.style.display='block'; } else img.style.display='none'; document.getElementById('edit-modal').style.display='flex'; },
-            closeEditModal: function() { document.getElementById('edit-modal').style.display='none'; },
-            saveEditedQuestion: function() { this.showLoading(true); const id = parseInt(document.getElementById('edit-q-id').value); const updatedQ = { id, unit: document.getElementById('edit-q-unit').value, type: document.getElementById('edit-q-type').value, question: document.getElementById('edit-q-text').value, options: document.getElementById('edit-q-options').value.split(',').map(s=>s.trim()), answer: document.getElementById('edit-q-answer').value, explanation: document.getElementById('edit-q-exp').value, image: document.getElementById('edit-q-image-base64').value || null }; db.collection("quiz_questions").doc(String(id)).set(updatedQ).then(() => { alert("수정됨"); this.closeEditModal(); this.loadQuestionsFromFirebase(); }).catch(e=>{ this.showLoading(false); alert("실패: "+e.message); }); },
-            toggleOptionInput: function(prefix) { const t = document.getElementById(prefix + '-q-type').value; document.getElementById('option-container-' + prefix).style.display = (t==='choice'||t==='order')?'block':'none'; },
-            updateNextQuestionNumber: function() { const maxId = this.state.allQuestions.reduce((max, item) => Math.max(max, item.id), 0); document.getElementById('next-q-id-display').innerText = `다음 번호: ${maxId + 1}`; },
-            handleImageUpload: function(input, prefix) { if(input.files[0]) { const reader = new FileReader(); reader.onload = (e) => { document.getElementById(prefix + '-q-image-base64').value = e.target.result; document.getElementById(prefix + '-q-image-preview').src = e.target.result; document.getElementById(prefix + '-q-image-preview').style.display='block'; }; reader.readAsDataURL(input.files[0]); } },
-
-            // --- [탭 4: 학생 관리 및 기록 조회 (통합)] ---
-            loadStudents: function() {
-                this.showLoading(true);
-                db.collection("users").get().then((snapshot) => {
-                    const list = [];
-                    snapshot.forEach(doc => {
-                        let d = doc.data(); d.docId = doc.id;
-                        d.class = d.class ? parseInt(d.class) : 0;
-                        d.number = d.number ? parseInt(d.number) : 0;
-                        list.push(d);
-                    });
-                    list.sort((a, b) => (a.class !== b.class) ? a.class - b.class : a.number - b.number);
-                    this.state.students = list; this.renderStudentList(list); this.showLoading(false);
-                }).catch(e => { this.showLoading(false); console.error(e); alert("로드 실패: " + e.message); });
-            },
-            
-            renderStudentList: function(list) {
-                document.getElementById('student-total-count').innerText = `(${list.length}명)`;
-                let html = '';
-                if(list.length === 0) { html = '<tr><td colspan="6" class="p-10 text-center text-stone-400">등록된 학생이 없습니다.</td></tr>'; } 
-                else {
-                    list.forEach(s => {
-                        let dateStr = '-';
-                        if(s.createdAt && s.createdAt.toDate) dateStr = s.createdAt.toDate().toLocaleDateString();
-                        else if(s.timestamp && s.timestamp.toDate) dateStr = s.timestamp.toDate().toLocaleDateString();
-                        const sName = s.name || '이름없음';
-                        html += `<tr class="border-b hover:bg-stone-50 transition-colors"><td class="p-3 text-center font-bold text-lg text-stone-700">${s.class}</td><td class="p-3 text-center font-bold text-lg text-stone-700">${s.number}</td>
-                        <td class="p-3"><span onclick="app.loadStudentHistory('${sName}', '${s.class}', '${s.number}')" class="cursor-pointer font-bold text-indigo-700 hover:text-indigo-900 hover:underline decoration-2 underline-offset-4 flex items-center gap-2" title="클릭하여 학습 기록 보기">${sName} <i class="fas fa-search-plus text-xs text-indigo-300"></i></span></td>
-                        <td class="p-3 text-xs text-gray-500">${s.email || '-'}</td><td class="p-3 text-center text-xs text-gray-400">${dateStr}</td>
-                        <td class="p-3 text-center"><div class="flex justify-center items-center gap-3"><button onclick="app.openStudentEdit('${s.docId}')" class="text-gray-400 hover:text-blue-600 transition p-2 rounded-full hover:bg-blue-50" title="정보 수정"><i class="fas fa-pen"></i></button><button onclick="app.deleteStudent('${s.docId}')" class="text-gray-400 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50" title="학생 삭제"><i class="fas fa-trash"></i></button></div></td></tr>`;
-                    });
-                }
-                document.getElementById('student-list-body').innerHTML = html;
-            },
-
-            loadStudentHistory: function(name, cls, num) {
-                if(!name) { alert("학생 정보 오류"); return; }
-                this.showLoading(true);
-                document.getElementById('history-student-name').innerText = `${cls}반 ${num}번 ${name}`;
-                
-                db.collection("quiz_results").where("name", "==", name).orderBy("timestamp", "desc").get().then(snapshot => {
-                    const history = [];
-                    snapshot.forEach(doc => { let data = doc.data(); data.id = doc.id; history.push(data); });
-                    
-                    // 상세 보기를 위해 데이터를 state에 저장
-                    this.state.currentStudentHistory = history; 
-
-                    this.renderStudentHistory(history); 
-                    this.showLoading(false);
-                    document.getElementById('student-history-modal').style.display = 'flex';
-                }).catch(e => {
-                    this.showLoading(false);
-                    if(e.message.includes("index")) alert("⚠️ 인덱스 설정 필요: F12 콘솔 링크를 클릭하세요.");
-                    else alert("기록 로드 실패: " + e.message);
-                });
-            },
-
-            renderStudentHistory: function(history) {
-                const container = document.getElementById('history-list-content');
-                if(history.length === 0) { container.innerHTML = `<div class="text-center p-10 text-gray-400">아직 응시한 기록이 없습니다.</div>`; return; }
-                
-                let html = '';
-                history.forEach((h, index) => {
-                    let scoreColor = h.score >= 80 ? 'text-green-600' : (h.score >= 50 ? 'text-amber-600' : 'text-red-500');
-                    // 클릭 시 해당 인덱스의 상세 내용을 팝업으로 띄움
-                    html += `
-                        <div class="border rounded-lg bg-white shadow-sm hover:shadow-md transition-all cursor-pointer hover:border-indigo-300 group" 
-                             onclick="app.showHistoryDetail(${index})">
-                            <div class="p-4 flex justify-between items-center">
-                                <div class="flex items-center gap-4">
-                                    <div class="bg-stone-100 text-stone-500 font-bold px-3 py-1 rounded text-xs group-hover:bg-indigo-100 group-hover:text-indigo-600 transition">#${history.length - index}</div>
-                                    <div>
-                                        <div class="text-sm font-bold text-stone-700"><i class="far fa-clock mr-1"></i> ${h.timeString}</div>
-                                        <div class="text-xs text-gray-400 mt-1">상태: ${h.status}</div>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-xl font-bold ${scoreColor}">${h.score}점</div>
-                                    <div class="text-xs text-indigo-400 font-bold opacity-0 group-hover:opacity-100 transition">상세보기 ></div>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-                container.innerHTML = html;
-            },
-
-            showHistoryDetail: function(index) {
-                const h = this.state.currentStudentHistory[index]; 
-                if(!h) return;
-                document.getElementById('detail-popup-info').innerText = `응시 일시: ${h.timeString} | 점수: ${h.score}점`;
-
-                let detailsHtml = '';
-                if(h.details && h.details.length > 0) {
-                    h.details.forEach((d, i) => {
-                        const qInfo = this.state.allQuestions.find(q => q.id === d.id);
-                        const qTitle = qInfo ? qInfo.question : '(삭제된 문제)';
-                        const isCorrect = d.correct;
-                        const icon = isCorrect ? '<i class="fas fa-circle text-green-500 text-[10px]"></i>' : '<i class="fas fa-times text-red-500"></i>';
-                        const bgClass = isCorrect ? 'bg-white' : 'bg-red-50';
-                        detailsHtml += `<div class="flex p-4 border-b last:border-0 ${bgClass} items-start gap-4 hover:bg-stone-100 transition"><div class="pt-1 w-6 text-center text-lg">${icon}</div><div class="flex-1"><div class="flex justify-between mb-1"><span class="text-xs text-gray-500 font-bold">Q${i+1}. (ID:${d.id})</span><span class="text-xs font-bold ${isCorrect?'text-green-600':'text-red-600'}">${isCorrect?'정답':'오답'}</span></div><div class="text-base font-bold text-stone-800 mb-2 leading-relaxed">${qTitle}</div><div class="p-2 bg-stone-100 rounded text-sm text-stone-600">학생 답안: <span class="${isCorrect?'text-green-700 font-bold':'text-red-600 font-bold line-through'}">${d.u}</span></div></div></div>`;
-                    });
-                } else { detailsHtml = '<div class="p-10 text-center text-gray-400">상세 데이터가 저장되지 않은 기록입니다.</div>'; }
-
-                document.getElementById('history-detail-body').innerHTML = detailsHtml;
-                document.getElementById('history-detail-popup').style.display = 'flex';
-            },
-
-            filterStudents: function() {
-                const keyword = document.getElementById('search-student-mgmt').value.trim();
-                if(!keyword) { this.renderStudentList(this.state.students); return; }
-                const filtered = this.state.students.filter(s => s.name.includes(keyword) || String(s.class) === keyword);
-                this.renderStudentList(filtered);
-            },
-            openStudentEdit: function(docId) {
-                const s = this.state.students.find(x => x.docId === docId); if(!s) return;
-                document.getElementById('edit-std-docId').value = s.docId; document.getElementById('edit-std-email').value = s.email || '';
-                document.getElementById('edit-std-class').value = s.class; document.getElementById('edit-std-number').value = s.number; document.getElementById('edit-std-name').value = s.name;
-                document.getElementById('student-edit-modal').style.display = 'flex';
-            },
-            saveStudentInfo: function() {
-                const docId = document.getElementById('edit-std-docId').value;
-                const newClass = parseInt(document.getElementById('edit-std-class').value); const newNumber = parseInt(document.getElementById('edit-std-number').value); const newName = document.getElementById('edit-std-name').value.trim();
-                if(!newName || isNaN(newClass) || isNaN(newNumber)) { alert("입력값 오류"); return; }
-                this.showLoading(true);
-                db.collection("users").doc(docId).update({ class: newClass, number: newNumber, name: newName, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }).then(() => {
-                    alert("수정 완료"); document.getElementById('student-edit-modal').style.display = 'none'; this.loadStudents();
-                }).catch(e => { this.showLoading(false); alert("수정 실패: " + e.message); });
-            },
-            deleteStudent: function(docId) {
-                if(confirm("정말 삭제하시겠습니까?")) { this.showLoading(true); db.collection("users").doc(docId).delete().then(() => { alert("삭제 완료"); this.loadStudents(); }).catch(e => { this.showLoading(false); alert("삭제 실패: " + e.message); }); }
-            }
-        };
-        window.onload = function() { app.init(); };
+            // 선택된 탭 활성화
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
     </script>
 </body>
 </html>
