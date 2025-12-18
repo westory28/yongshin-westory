@@ -3,134 +3,418 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>역사과 시험 문제 출제 도구</title>
+    <title>WeStory - 성적 산출 관리</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Malgun Gothic', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f6f8; }
-        h2 { border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 30px; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f9fafb; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* 공통 스타일 */
-        .btn { padding: 5px 10px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
-        .btn-add { background-color: #4CAF50; color: white; }
-        .btn-sub { background-color: #2196F3; color: white; font-size: 0.9em; margin-top: 5px; }
-        .btn-del { background-color: #ff5252; color: white; margin-left: 5px; }
+        /* --- [헤더 스타일] --- */
+        header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
+        .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
         
-        .input-text { padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
-        .input-score { width: 50px; text-align: center; padding: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        /* 로고 */
+        .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
+        .logo-we { color: #2563eb; }
+        .logo-story { color: #f59e0b; }
 
-        /* 문제 박스 스타일 */
-        .question-box { background: white; border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .question-body { margin-top: 10px; }
+        /* PC용 네비게이션 */
+        .desktop-nav { display: flex; height: 100%; }
+        .nav-link { font-weight: 500; color: #6b7280; margin: 0 1rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .nav-link:hover { color: #111827; }
+        .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
 
-        /* 객관식 보기 스타일 */
-        .choice-row { display: flex; align-items: center; margin: 5px 0; font-size: 0.9em; }
-        .choice-num { width: 20px; text-align: center; margin-right: 5px; font-weight: bold; }
+        /* 모바일 햄버거 버튼 */
+        .mobile-menu-btn { display: none; margin-left: 1rem; font-size: 1.5rem; color: #374151; cursor: pointer; }
+        
+        /* 모바일 드롭다운 메뉴 */
+        #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; }
+        .mobile-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: #374151; font-weight: 500; border-bottom: 1px solid #f3f4f6; text-decoration: none; transition: background 0.2s; }
+        .mobile-link:hover { background-color: #f9fafb; }
+        .mobile-link.active { color: #2563eb; background-color: #eff6ff; font-weight: 700; }
+        .mobile-icon { width: 20px; height: 20px; margin-right: 12px; fill: currentColor; }
 
-        /* 서술형 계열화(새끼 문제) 스타일 */
-        .sub-question-container { margin-left: 20px; padding-left: 15px; border-left: 3px solid #e0e0e0; margin-top: 10px; }
-        .sub-question-box { background-color: #fafafa; border: 1px solid #eee; padding: 10px; margin-bottom: 5px; border-radius: 4px; }
+        /* 반응형 미디어 쿼리 */
+        @media (max-width: 1000px) {
+            .desktop-nav { display: none; }
+            .mobile-menu-btn { display: block; }
+        }
+
+        /* 테이블 및 기타 스타일 */
+        .admin-table th, .admin-table td { border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
+        .admin-table th:not(:last-child), .admin-table td:not(:last-child) { border-right: 1px solid #e5e7eb; }
+        
+        /* 점수 입력 인풋 스타일 */
+        .score-input { width: 100%; text-align: center; border: 1px solid transparent; padding: 4px; background: transparent; }
+        .score-input:focus { border: 1px solid #2563eb; background: white; outline: none; border-radius: 4px; }
+        .score-input:hover { background: #f3f4f6; }
+
+        /* 로딩 오버레이 */
+        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; }
     </style>
 </head>
-<body>
+<body class="text-stone-800">
 
-    <h1 style="text-align: center;">역사과 시험 문제 출제</h1>
+    <div id="loading-overlay">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-white border-solid mb-4"></div>
+        <p class="text-xl font-bold">처리 중입니다...</p>
+    </div>
 
-    <h2>1. 객관식 (선택형) <button class="btn btn-add" onclick="addMultipleChoice()">+ 문항 추가</button></h2>
-    <div id="container-multiple">
+    <header>
+        <div class="header-container">
+            <div class="logo-text" onclick="location.href='index-test.html'">
+                <span class="logo-we">We</span><span class="logo-story">story</span>
+            </div>
+
+            <nav class="desktop-nav">
+                <a href="teacher_quiz-admin.html" class="nav-link">역사 퀴즈 대시보드</a>
+                <a href="teacher_student-list-admin.html" class="nav-link">학생 관리</a>
+                <a href="teacher_yourscore-admin.html" class="nav-link active">성적 산출 관리</a>
+            </nav>
+
+            <div class="flex items-center">
+                <button onclick="app.logout()" class="text-stone-500 hover:text-stone-800 text-sm font-bold py-2 px-3 rounded hover:bg-stone-100 transition">
+                    로그아웃
+                </button>
+                <button class="mobile-menu-btn" onclick="app.toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
         </div>
 
-    <h2>2. 서술형 (논술형) <button class="btn btn-add" onclick="addSubjective()">+ 문항 추가</button></h2>
-    <div id="container-subjective">
+        <div id="mobile-menu">
+            <a href="teacher_quiz-admin.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
+                역사 퀴즈 대시보드
+            </a>
+            <a href="teacher_student-list-admin.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"></path></svg>
+                학생 관리
+            </a>
+            <a href="teacher_yourscore-admin.html" class="mobile-link active">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM7.5 15.5H9v2H7.5v-2zm0-4H9v2H7.5v-2zm4.5 4H16v2h-4v-2zm0-4H16v2h-4v-2zm4.5 4H18v2h-1.5v-2zm0-4H18v2h-1.5v-2z"></path></svg>
+                성적 산출 관리
+            </a>
         </div>
+    </header>
+
+    <div id="view-dashboard" class="flex-1 max-w-[95%] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8" style="display:none;">
+        
+        <div class="bg-white p-6 rounded shadow border border-stone-200 mb-8">
+            <h2 class="font-bold text-xl text-stone-800 mb-4 flex items-center border-b pb-2">
+                <i class="fas fa-cog text-gray-600 mr-2"></i> 채점 기준 및 배점 설정
+            </h2>
+            
+            <div class="flex flex-col lg:flex-row gap-8">
+                <div class="flex-1 bg-stone-50 p-4 rounded border border-stone-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg">객관식 (선택형)</h3>
+                        <button onclick="configApp.addObjective()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-bold">
+                            <i class="fas fa-plus"></i> 문항 추가
+                        </button>
+                    </div>
+                    <div id="config-objective-list" class="space-y-2 max-h-60 overflow-y-auto">
+                        <div class="text-stone-400 text-center py-4 text-sm">문항을 추가해주세요</div>
+                    </div>
+                </div>
+
+                <div class="flex-1 bg-stone-50 p-4 rounded border border-stone-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg">서술형 (논술형)</h3>
+                        <button onclick="configApp.addSubjParent()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm font-bold">
+                            <i class="fas fa-plus"></i> 큰 문항 추가
+                        </button>
+                    </div>
+                    <div id="config-subjective-list" class="space-y-3 max-h-60 overflow-y-auto">
+                        <div class="text-stone-400 text-center py-4 text-sm">문항을 추가해주세요</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end items-center gap-4 border-t pt-4">
+                <div class="text-right">
+                    <p class="text-sm text-stone-500">총 문항 수: <span id="total-count" class="font-bold text-stone-800">0</span>개</p>
+                    <p class="text-lg">총 배점: <span id="total-score" class="font-bold text-red-600 text-2xl">0</span>점</p>
+                </div>
+                <button onclick="gradingApp.applyConfig()" class="bg-stone-800 hover:bg-stone-900 text-white px-6 py-3 rounded font-bold shadow-lg transition transform hover:scale-105">
+                    <i class="fas fa-check-circle mr-2"></i> 적용하여 채점표 만들기
+                </button>
+            </div>
+        </div>
+
+        <div id="grading-section" class="bg-white p-6 rounded shadow border border-stone-200 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-bold text-lg text-stone-800"><i class="fas fa-user-edit text-blue-600 mr-2"></i> 학생 채점표</h2>
+                <button onclick="alert('저장 기능은 DB 연결 후 구현됩니다.')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm shadow hover:bg-blue-700">
+                    <i class="fas fa-save mr-1"></i> 점수 저장
+                </button>
+            </div>
+
+            <div class="overflow-x-auto border rounded bg-stone-50">
+                <table class="w-full text-sm text-left admin-table min-w-max">
+                    <thead class="bg-stone-200 text-stone-700 font-bold sticky top-0" id="grading-table-head">
+                        </thead>
+                    <tbody id="grading-table-body" class="bg-white">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-login-screen" style="display: flex;" class="flex-1 items-center justify-center flex-col bg-stone-50 p-4">
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full text-center border border-stone-200">
+            <h1 class="text-2xl font-bold mb-2 text-stone-800">교사 인증</h1>
+            <button onclick="app.login()" class="w-full bg-white border border-stone-300 text-stone-700 font-bold py-3 px-4 rounded shadow-sm hover:bg-stone-50 flex items-center justify-center gap-2 transition cursor-pointer">
+                <i class="fab fa-google text-red-500"></i> 구글 계정으로 로그인
+            </button>
+        </div>
+    </div>
+
+    <footer class="text-center py-8 text-stone-400 text-sm border-t bg-white mt-auto">
+        Copyright © 역사교사 방재석
+    </footer>
 
     <script>
-        // 공통: 요소 삭제 함수
-        function removeElement(element) {
-            if(confirm('이 문항을 삭제하시겠습니까?')) {
-                element.remove();
+        const firebaseConfig = { apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU", authDomain: "history-quiz-yongsin.firebaseapp.com", projectId: "history-quiz-yongsin", storageBucket: "history-quiz-yongsin.firebasestorage.app", messagingSenderId: "177587430482", appId: "1:177587430482:web:d79cc145c11e335cc3ab8b", measurementId: "G-LHN97D7R2R" };
+        let db; try { if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } db = firebase.firestore(); } catch(e) { console.error("Firebase Init Error", e); }
+        const TEACHER_EMAIL = "westoria28@gmail.com";
+
+        // --- 1. 인증 및 기본 앱 로직 ---
+        const app = {
+            state: { students: [] },
+            init: function() {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user && user.email === TEACHER_EMAIL) {
+                        document.getElementById('view-login-screen').style.display = 'none';
+                        document.getElementById('view-dashboard').style.display = 'block';
+                        this.loadStudents();
+                    } else {
+                        if(user) { alert("권한이 없습니다."); firebase.auth().signOut(); }
+                        document.getElementById('view-login-screen').style.display = 'flex';
+                        document.getElementById('view-dashboard').style.display = 'none';
+                    }
+                });
+            },
+            toggleMobileMenu: function() {
+                const menu = document.getElementById('mobile-menu');
+                menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+            },
+            login: function() { const p = new firebase.auth.GoogleAuthProvider(); firebase.auth().signInWithPopup(p).catch(e => alert(e.message)); },
+            logout: function() { firebase.auth().signOut().then(() => location.reload()); },
+            showLoading: function(s) { document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none'; },
+            
+            loadStudents: function() {
+                this.showLoading(true);
+                db.collection("users").get().then((sn) => {
+                    const list = [];
+                    sn.forEach(doc => {
+                        let d = doc.data(); d.docId = doc.id;
+                        d.class = d.class ? parseInt(d.class) : 0; d.number = d.number ? parseInt(d.number) : 0;
+                        list.push(d);
+                    });
+                    // 반 번호순 정렬
+                    list.sort((a, b) => (a.class !== b.class) ? a.class - b.class : a.number - b.number);
+                    this.state.students = list;
+                    this.showLoading(false);
+                }).catch(e => { this.showLoading(false); alert("로드 실패: " + e.message); });
             }
-        }
+        };
 
-        /* --- 객관식 관련 함수 --- */
-        function addMultipleChoice() {
-            const container = document.getElementById('container-multiple');
-            const div = document.createElement('div');
-            div.className = 'question-box';
-            
-            // 객관식 HTML 구조
-            div.innerHTML = `
-                <div class="question-header">
-                    <div>
-                        <strong>[객관식]</strong>
-                        <input type="text" class="input-text" placeholder="질문을 입력하세요" style="width: 400px;">
+        // --- 2. 평가 기준 설정 로직 (Config) ---
+        const configApp = {
+            data: {
+                objective: [], // {id:1, score:5}
+                subjective: [] // {id:1, subItems:[{score:10}]}
+            },
+
+            // 객관식 관련
+            addObjective: function() {
+                this.data.objective.push({ id: this.data.objective.length + 1, score: 0 });
+                this.renderObjective();
+            },
+            removeObjective: function(idx) {
+                this.data.objective.splice(idx, 1);
+                this.renderObjective();
+            },
+            updateObjScore: function(idx, val) {
+                this.data.objective[idx].score = Number(val);
+                this.updateTotal();
+            },
+            renderObjective: function() {
+                const container = document.getElementById('config-objective-list');
+                if(this.data.objective.length === 0) {
+                    container.innerHTML = '<div class="text-stone-400 text-center py-4 text-sm">문항을 추가해주세요</div>';
+                    this.updateTotal(); return;
+                }
+                container.innerHTML = this.data.objective.map((item, idx) => `
+                    <div class="flex items-center gap-2 mb-2 bg-white p-2 rounded border border-gray-100 shadow-sm">
+                        <span class="font-bold text-stone-600 text-sm w-16">객관식 ${idx+1}</span>
+                        <input type="number" class="border rounded p-1 w-16 text-center text-sm" placeholder="배점" value="${item.score}" onchange="configApp.updateObjScore(${idx}, this.value)">
+                        <span class="text-sm text-stone-500">점</span>
+                        <button onclick="configApp.removeObjective(${idx})" class="ml-auto text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>
                     </div>
-                    <div>
-                        <input type="number" class="input-score" placeholder="배점"> 점
-                        <button class="btn btn-del" onclick="removeElement(this.closest('.question-box'))">삭제</button>
-                    </div>
-                </div>
-                <div class="question-body">
-                    ${[1, 2, 3, 4, 5].map(num => `
-                        <div class="choice-row">
-                            <span class="choice-num">①②③④⑤`[num-1] + `</span>
-                            <input type="text" class="input-text" placeholder="보기 ${num}" style="width: 90%;">
+                `).join('');
+                this.updateTotal();
+            },
+
+            // 서술형 관련 (계열화)
+            addSubjParent: function() {
+                this.data.subjective.push({ id: this.data.subjective.length + 1, subItems: [] });
+                this.renderSubjective();
+            },
+            removeSubjParent: function(idx) {
+                this.data.subjective.splice(idx, 1);
+                this.renderSubjective();
+            },
+            addSubjItem: function(parentIdx) {
+                this.data.subjective[parentIdx].subItems.push({ score: 0 });
+                this.renderSubjective();
+            },
+            removeSubjItem: function(parentIdx, subIdx) {
+                this.data.subjective[parentIdx].subItems.splice(subIdx, 1);
+                this.renderSubjective();
+            },
+            updateSubjScore: function(pIdx, sIdx, val) {
+                this.data.subjective[pIdx].subItems[sIdx].score = Number(val);
+                this.updateTotal();
+            },
+            renderSubjective: function() {
+                const container = document.getElementById('config-subjective-list');
+                if(this.data.subjective.length === 0) {
+                    container.innerHTML = '<div class="text-stone-400 text-center py-4 text-sm">문항을 추가해주세요</div>';
+                    this.updateTotal(); return;
+                }
+                container.innerHTML = this.data.subjective.map((parent, pIdx) => `
+                    <div class="bg-white p-3 rounded border border-gray-200 shadow-sm mb-3">
+                        <div class="flex justify-between items-center mb-2 border-b pb-1">
+                            <span class="font-bold text-indigo-700 text-sm">서술형 큰 ${pIdx+1}번</span>
+                            <div class="space-x-1">
+                                <button onclick="configApp.addSubjItem(${pIdx})" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100">+ 소문항</button>
+                                <button onclick="configApp.removeSubjParent(${pIdx})" class="text-xs text-red-400 hover:text-red-600 px-1"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
-                    `).join('')}
-                </div>
-            `;
-            container.appendChild(div);
-        }
-
-        /* --- 서술형 관련 함수 --- */
-        function addSubjective() {
-            const container = document.getElementById('container-subjective');
-            const div = document.createElement('div');
-            div.className = 'question-box';
-            
-            // 고유 ID 생성 (새끼 문제 연결용)
-            const questionId = 'sub-' + Date.now(); 
-
-            // 서술형 HTML 구조 (계열화 포함)
-            div.innerHTML = `
-                <div class="question-header">
-                    <div>
-                        <strong>[서술형 큰 번호]</strong>
-                        <input type="text" class="input-text" placeholder="큰 질문을 입력하세요 (예: 다음 자료를 보고...)" style="width: 350px;">
+                        <div class="pl-2 space-y-1">
+                            ${parent.subItems.map((sub, sIdx) => `
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-500">└ (${sIdx+1})</span>
+                                    <input type="number" class="border rounded p-1 w-14 text-center text-sm" placeholder="배점" value="${sub.score}" onchange="configApp.updateSubjScore(${pIdx}, ${sIdx}, this.value)">
+                                    <span class="text-xs text-stone-500">점</span>
+                                    <button onclick="configApp.removeSubjItem(${pIdx}, ${sIdx})" class="text-gray-400 hover:text-red-500 ml-1"><i class="fas fa-times text-xs"></i></button>
+                                </div>
+                            `).join('')}
+                            ${parent.subItems.length === 0 ? '<div class="text-xs text-gray-400 pl-4">소문항을 추가하세요</div>' : ''}
+                        </div>
                     </div>
-                    <div>
-                        <input type="number" class="input-score" placeholder="배점"> 점
-                        <button class="btn btn-del" onclick="removeElement(this.closest('.question-box'))">삭제</button>
-                    </div>
-                </div>
+                `).join('');
+                this.updateTotal();
+            },
+
+            updateTotal: function() {
+                let total = 0;
+                let count = 0;
+                // 객관식
+                this.data.objective.forEach(o => { total += (o.score||0); count++; });
+                // 서술형 (소문항 기준)
+                this.data.subjective.forEach(p => {
+                    p.subItems.forEach(s => { total += (s.score||0); count++; });
+                });
                 
-                <div class="question-body">
-                    <button class="btn btn-sub" onclick="addSubQuestion('${questionId}')">└ 새끼 문제 추가</button>
-                    <div id="${questionId}" class="sub-question-container"></div>
-                </div>
-            `;
-            container.appendChild(div);
-        }
+                document.getElementById('total-score').innerText = total;
+                document.getElementById('total-count').innerText = count;
+            }
+        };
 
-        // 서술형 하위(새끼) 문제 추가 함수
-        function addSubQuestion(parentId) {
-            const parentContainer = document.getElementById(parentId);
-            const subDiv = document.createElement('div');
-            subDiv.className = 'sub-question-box';
+        // --- 3. 채점표 렌더링 로직 ---
+        const gradingApp = {
+            applyConfig: function() {
+                const students = app.state.students;
+                if(students.length === 0) { alert('학생 데이터가 없습니다.'); return; }
+                
+                // 설정 데이터 가져오기
+                const obj = configApp.data.objective;
+                const subj = configApp.data.subjective;
 
-            subDiv.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span>└ (소문항)</span>
-                        <input type="text" class="input-text" placeholder="새끼 질문 내용" style="width: 300px;">
-                    </div>
-                    <div>
-                        <input type="number" class="input-score" placeholder="배점"> 점
-                        <button class="btn btn-del" style="padding: 2px 5px; font-size: 0.8em;" onclick="removeElement(this.closest('.sub-question-box'))">X</button>
-                    </div>
-                </div>
-            `;
-            parentContainer.appendChild(subDiv);
-        }
+                // 1. 헤더 생성
+                let theadHtml = `<tr>
+                    <th class="p-2 w-16 text-center bg-stone-100">반</th>
+                    <th class="p-2 w-16 text-center bg-stone-100">번호</th>
+                    <th class="p-2 w-32 text-center bg-stone-100">이름</th>`;
+                
+                // 객관식 헤더
+                obj.forEach((o, i) => {
+                    theadHtml += `<th class="p-2 text-center w-16 bg-blue-50 text-blue-800 text-xs">
+                        객${i+1}<br><span class="text-[10px] text-gray-500">(${o.score}점)</span>
+                    </th>`;
+                });
+
+                // 서술형 헤더 (소문항 펼치기)
+                subj.forEach((p, pi) => {
+                    p.subItems.forEach((s, si) => {
+                        theadHtml += `<th class="p-2 text-center w-20 bg-indigo-50 text-indigo-800 text-xs">
+                            서${pi+1}-(${si+1})<br><span class="text-[10px] text-gray-500">(${s.score}점)</span>
+                        </th>`;
+                    });
+                });
+
+                theadHtml += `<th class="p-2 w-24 text-center bg-yellow-50 font-bold">총점</th></tr>`;
+                document.getElementById('grading-table-head').innerHTML = theadHtml;
+
+                // 2. 바디 생성 (학생별 행)
+                let tbodyHtml = '';
+                students.forEach(std => {
+                    tbodyHtml += `<tr class="hover:bg-gray-50" id="row-${std.docId}">
+                        <td class="p-2 text-center font-bold">${std.class}</td>
+                        <td class="p-2 text-center font-bold">${std.number}</td>
+                        <td class="p-2 text-center text-stone-700">${std.name}</td>`;
+                    
+                    // 객관식 입력칸
+                    obj.forEach((o, i) => {
+                        tbodyHtml += `<td class="p-0"><input type="number" class="score-input obj-score" data-max="${o.score}" onchange="gradingApp.calcRowTotal('${std.docId}')"></td>`;
+                    });
+
+                    // 서술형 입력칸
+                    subj.forEach((p, pi) => {
+                        p.subItems.forEach((s, si) => {
+                            tbodyHtml += `<td class="p-0"><input type="number" class="score-input subj-score" data-max="${s.score}" onchange="gradingApp.calcRowTotal('${std.docId}')"></td>`;
+                        });
+                    });
+
+                    tbodyHtml += `<td class="p-2 text-center font-bold text-blue-600 total-cell">0</td></tr>`;
+                });
+
+                document.getElementById('grading-table-body').innerHTML = tbodyHtml;
+                document.getElementById('grading-section').classList.remove('hidden');
+                
+                // 화면 스크롤 이동
+                document.getElementById('grading-section').scrollIntoView({behavior: "smooth"});
+            },
+
+            calcRowTotal: function(rowId) {
+                const row = document.getElementById(`row-${rowId}`);
+                const inputs = row.querySelectorAll('input');
+                let sum = 0;
+                inputs.forEach(inp => {
+                    let val = Number(inp.value);
+                    let max = Number(inp.getAttribute('data-max'));
+                    // (옵션) 배점보다 큰 점수 입력시 경고? 일단은 합산만
+                    sum += val;
+                });
+                row.querySelector('.total-cell').innerText = sum;
+            }
+        };
+
+        window.onload = function() { app.init(); };
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('mobile-menu');
+            const btn = document.querySelector('.mobile-menu-btn');
+            if (!menu.contains(e.target) && !btn.contains(e.target)) { menu.style.display = 'none'; }
+        });
     </script>
 </body>
 </html>
