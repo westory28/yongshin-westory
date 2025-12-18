@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Westory Teacher: 교사 대시보드</title>
     <style>
-        /* 1. 기본 설정 (학생용과 동일) */
+        /* 1. 기본 설정 */
         body { 
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; 
             background-color: #f8f9fa; 
@@ -31,13 +31,11 @@
             z-index: 100;
         }
 
-        /* 상단바 로고 그룹 */
         .logo-group { display: flex; align-items: center; gap: 12px; }
         .header-logo { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
         .we { color: #1a73e8; }   
         .story { color: #f9ab00; } 
         
-        /* 교사 대시보드 배지 스타일 */
         .teacher-badge {
             font-size: 16px;
             color: #606770;
@@ -49,7 +47,6 @@
             align-items: center;
         }
 
-        /* 상단바 버튼 */
         .header-btn {
             background-color: #e4e6eb; 
             color: #050505;
@@ -145,22 +142,22 @@
             <div class="welcome-msg" id="greeting-text">반갑습니다, 선생님 👋</div>
 
             <div class="card-container">
-                <a href="https://github.com/westory28/Bang-westory/index.html" class="menu-card">
+                <a href="https://westory28.github.io/Bang-westory/teacher_quiz-admin.html" class="menu-card">
                     <div class="card-icon">🧩</div>
                     <div class="card-title">역사 퀴즈 대시보드</div>
-                    <div class="card-desc">학생들이 참여할<br>퀴즈 화면으로 이동합니다.</div>
+                    <div class="card-desc">학생들의 퀴즈 참여 현황과<br>통계를 확인합니다.</div>
                 </a>
                 
-                <a href="https://github.com/westory28/Bang-westory/teacher.html" class="menu-card">
+                <a href="https://westory28.github.io/Bang-westory/teacher_student-list-admin.html" class="menu-card">
                     <div class="card-icon">👨‍🏫</div>
                     <div class="card-title">학생 관리</div>
-                    <div class="card-desc">학생 명단을 확인하고<br>학습 현황을 관리합니다.</div>
+                    <div class="card-desc">학생 명단을 관리하고<br>개별 학습 기록을 조회합니다.</div>
                 </a>
 
-                <a href="https://github.com/westory28/Bang-westory/yourscore-teacher.html" class="menu-card">
+                <a href="https://westory28.github.io/Bang-westory/teacher_yourscore-admin.html" class="menu-card">
                     <div class="card-icon">📈</div>
                     <div class="card-title">성적 산출 관리</div>
-                    <div class="card-desc">수행평가 점수를 입력하고<br>등급을 산출합니다.</div>
+                    <div class="card-desc">수행평가 점수를 입력하고<br>성취도 등급을 산출합니다.</div>
                 </a>
             </div>
         </div>
