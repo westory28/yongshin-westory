@@ -21,11 +21,10 @@
         .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
         .logo-we { color: #2563eb; } .logo-story { color: #f59e0b; }
 
-        /* 네비게이션 (메뉴 4개) */
+        /* 네비게이션 */
         .desktop-nav { display: flex; height: 100%; }
         .nav-link { font-weight: 500; color: #6b7280; margin: 0 0.8rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .nav-link:hover { color: #111827; }
-        /* 시험 채점 관리가 Active 상태 */
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
 
         /* 모바일 메뉴 */
@@ -137,7 +136,7 @@
 
                     <div id="config-objective-list" class="space-y-3 overflow-y-auto pr-2 flex-1 max-h-[600px]">
                         <div class="text-stone-400 text-center py-10 text-sm border-2 border-dashed border-stone-200 rounded bg-white">
-                            문항을 추가해주세요.
+                            로딩 중...
                         </div>
                     </div>
                 </div>
@@ -152,7 +151,7 @@
 
                     <div id="config-subjective-list" class="space-y-3 overflow-y-auto pr-2 flex-1 max-h-[600px]">
                         <div class="text-stone-400 text-center py-10 text-sm border-2 border-dashed border-stone-200 rounded bg-white">
-                            문항을 추가해주세요.
+                            로딩 중...
                         </div>
                     </div>
                 </div>
@@ -184,13 +183,16 @@
         let db; try { if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } db = firebase.firestore(); } catch(e) { console.error("Firebase Init Error", e); }
         const TEACHER_EMAIL = "westoria28@gmail.com";
 
-        // --- 인증 및 초기화 ---
         const app = {
             init: function() {
                 firebase.auth().onAuthStateChanged((user) => {
                     if (user && user.email === TEACHER_EMAIL) {
                         document.getElementById('view-login-screen').style.display = 'none';
                         document.getElementById('view-dashboard').style.display = 'block';
+                        
+                        // ★핵심 추가: 로그인 성공 시 기존 저장된 데이터를 불러옵니다.
+                        configApp.loadFromDB(); 
+
                     } else {
                         if(user) { alert("권한이 없습니다."); firebase.auth().signOut(); }
                         document.getElementById('view-login-screen').style.display = 'flex';
@@ -203,14 +205,45 @@
                 menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
             },
             login: function() { const p = new firebase.auth.GoogleAuthProvider(); firebase.auth().signInWithPopup(p).catch(e => alert(e.message)); },
-            logout: function() { firebase.auth().signOut().then(() => location.reload()); }
+            logout: function() { firebase.auth().signOut().then(() => location.reload()); },
+            showLoading: function(s) { document.getElementById('loading-overlay').style.display = s ? 'flex' : 'none'; }
         };
 
-        // --- 정답 설정 및 관리 로직 ---
         const configApp = {
             data: {
                 objective: [], 
                 subjective: []
+            },
+
+            // --- [핵심] DB에서 데이터 불러오기 함수 ---
+            loadFromDB: function() {
+                app.showLoading(true);
+                // mark_exam_2025-2 컬렉션의 final_exam 문서 조회
+                db.collection("mark_exam_2025-2").doc("final_exam").get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const loadedData = doc.data();
+                            // 데이터가 있으면 상태에 반영
+                            this.data.objective = loadedData.objective || [];
+                            this.data.subjective = loadedData.subjective || [];
+                            
+                            // 화면 다시 그리기
+                            this.renderObjective();
+                            this.renderSubjective();
+                            console.log("기존 데이터 로드 완료");
+                        } else {
+                            // 데이터가 없으면 빈 화면 유지
+                            this.renderObjective();
+                            this.renderSubjective();
+                            console.log("저장된 데이터 없음 (신규 작성)");
+                        }
+                        app.showLoading(false);
+                    })
+                    .catch((error) => {
+                        console.error("데이터 로드 실패:", error);
+                        app.showLoading(false);
+                        alert("데이터를 불러오는 중 오류가 발생했습니다.");
+                    });
             },
 
             // [객관식] 로직
@@ -229,7 +262,6 @@
                 this.renderObjective();
             },
 
-            // 객관식 정답 선택
             selectObjAnswer: function(idx, choiceNum) {
                 this.data.objective[idx].answer = choiceNum;
                 this.renderObjective(); 
@@ -370,12 +402,13 @@
                 document.getElementById('total-count').innerText = count;
             },
 
-            // --- [저장] mark_exam_2025-2 보관함 사용 ---
             saveToDB: function() {
                 if(this.data.objective.length === 0 && this.data.subjective.length === 0) {
                     alert("저장할 문항이 없습니다."); return;
                 }
                 
+                app.showLoading(true);
+
                 const saveData = {
                     objective: this.data.objective,
                     subjective: this.data.subjective,
@@ -386,9 +419,11 @@
 
                 db.collection("mark_exam_2025-2").doc("final_exam").set(saveData)
                     .then(() => {
-                        alert("✅ [시험 채점 관리] 보관함(mark_exam_2025-2)에 저장되었습니다!");
+                        app.showLoading(false);
+                        alert("✅ 저장 완료! 이제 새로고침해도 데이터가 유지됩니다.");
                     })
                     .catch((error) => {
+                        app.showLoading(false);
                         console.error("Error writing document: ", error);
                         alert("저장 실패: " + error.message);
                     });
@@ -397,7 +432,6 @@
 
         window.onload = function() { app.init(); };
         
-        // 메뉴 외부 클릭 시 닫기
         document.addEventListener('click', function(e) {
             const menu = document.getElementById('mobile-menu');
             const btn = document.querySelector('.mobile-menu-btn');
