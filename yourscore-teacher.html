@@ -51,9 +51,9 @@
             box-shadow: 0 4px 10px rgba(33, 150, 243, 0.2);
         }
         .filter-header { font-size: 16px; font-weight: bold; color: #1565c0; margin-bottom: 10px; }
-        .filter-row { display: flex; gap: 10px; }
+        .filter-row { display: flex; gap: 10px; flex-wrap: wrap; }
         .filter-row select { 
-            flex: 1; padding: 12px; font-size: 16px; border: 1px solid #90caf9; 
+            flex: 1; min-width: 120px; padding: 12px; font-size: 16px; border: 1px solid #90caf9; 
             border-radius: 8px; background: white; font-weight: bold; cursor: pointer;
         }
 
@@ -133,7 +133,7 @@
                 
                 <div class="left-panel">
                     <div class="big-filter-card">
-                        <div class="filter-header">📌 Step 1. 학년도, 학기, 학년을 선택하세요</div>
+                        <div class="filter-header">📌 조회 필터 설정</div>
                         <div class="filter-row">
                             <select id="yearFilter" onchange="handleFilterChange()">
                                 <option value="2025">2025학년도</option>
@@ -148,6 +148,11 @@
                                 <option value="1학년">1학년</option>
                                 <option value="2학년">2학년</option>
                                 <option value="3학년">3학년</option>
+                            </select>
+                            <select id="sortFilter" onchange="handleFilterChange()" style="background-color: #fff3e0; border-color: #ffcc80;">
+                                <option value="custom">교과 기본순 (국영수...)</option>
+                                <option value="name">과목 가나다순 (ㄱ-ㅎ)</option>
+                                <option value="latest">최신 등록순</option>
                             </select>
                         </div>
                     </div>
@@ -202,6 +207,15 @@
         let editingDocId = null;
         let allPlansData = [];
 
+        // ★ 교과목 우선순위 정의 (학교 현장 표준)
+        const subjectPriority = {
+            "국어": 1, "영어": 2, "수학": 3, 
+            "사회": 4, "역사": 5, "한국사": 5, 
+            "도덕": 6, "과학": 7, "기술가정": 8, "기가": 8, 
+            "체육": 9, "음악": 10, "미술": 11, 
+            "한문": 12, "정보": 13, "진로": 14
+        };
+
         onAuthStateChanged(auth, (user) => {
             if (user && user.email === "westoria28@gmail.com") {
                 document.getElementById('loginSection').classList.add('hidden');
@@ -240,18 +254,42 @@
         function renderPlansList() {
             const year = document.getElementById('yearFilter').value;
             const semester = document.getElementById('semesterFilter').value;
-            // ★ 학년 필터 값 가져오기
             const grade = document.getElementById('gradeFilter').value;
+            const sortType = document.getElementById('sortFilter').value; // ★ 정렬 값
             
             const listDiv = document.getElementById('savedPlansList');
             listDiv.innerHTML = '';
 
-            const filtered = allPlansData.filter(plan => {
+            // 1. 기본 필터링
+            let filtered = allPlansData.filter(plan => {
                 const pYear = plan.academicYear || "2025";
                 const pSem = plan.semester || "1학기";
-                // 기존 데이터에 학년 정보가 없으면 '1학년'으로 가정
                 const pGrade = plan.grade || "1학년"; 
                 return pYear === year && pSem === semester && pGrade === grade;
+            });
+
+            // 2. 정렬 로직 적용
+            filtered.sort((a, b) => {
+                if (sortType === 'name') {
+                    // 가나다순
+                    return a.subject.localeCompare(b.subject);
+                } else if (sortType === 'custom') {
+                    // 교과 기본순 (국영수...)
+                    const scoreA = subjectPriority[a.subject] || 999;
+                    const scoreB = subjectPriority[b.subject] || 999;
+                    
+                    if (scoreA !== scoreB) {
+                        return scoreA - scoreB;
+                    } else {
+                        // 우선순위 같으면(기타 과목 등) 가나다순
+                        return a.subject.localeCompare(b.subject);
+                    }
+                } else {
+                    // 최신 등록순 (기본값)
+                    const timeA = a.createdAt ? a.createdAt.seconds : 0;
+                    const timeB = b.createdAt ? b.createdAt.seconds : 0;
+                    return timeB - timeA;
+                }
             });
 
             if (filtered.length === 0) {
@@ -287,7 +325,6 @@
 
             if(data.academicYear) document.getElementById('yearFilter').value = data.academicYear;
             document.getElementById('semesterFilter').value = data.semester || "1학기";
-            // ★ 수정 시 저장된 학년으로 필터 변경
             document.getElementById('gradeFilter').value = data.grade || "1학년";
             
             renderPlansList(); // 필터 바뀐것 반영
@@ -355,7 +392,6 @@
 
             const academicYear = document.getElementById('yearFilter').value;
             const semester = document.getElementById('semesterFilter').value;
-            // ★ 저장 시 학년 정보 포함
             const grade = document.getElementById('gradeFilter').value;
             const subject = document.getElementById('subjectName').value.trim();
             if (!subject) { alert("과목명을 입력해주세요."); return; }
@@ -378,7 +414,6 @@
             if (totalRatio !== 100) { alert(`비율 합계가 ${totalRatio}% 입니다. 100%를 맞춰주세요.`); return; }
 
             try {
-                // ★ grade 필드 추가됨
                 const saveData = { academicYear, semester, grade, subject, items, updatedAt: new Date() };
                 if (editingDocId) {
                     await updateDoc(doc(db, "grading_plans", editingDocId), saveData);
