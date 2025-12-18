@@ -21,11 +21,37 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+        
+        /* 로그인 섹션 스타일 */
+        #loginSection {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        #loginSection h2 { color: #2c3e50; margin-bottom: 30px; }
+        
+        /* 구글 로그인 버튼 */
+        .btn-google {
+            background-color: #fff; color: #444; border: 1px solid #ddd;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            padding: 15px; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 100%; cursor: pointer; border-radius: 6px; transition: background 0.2s;
+        }
+        .btn-google:hover { background-color: #f8f9fa; }
+        .btn-google img { width: 24px; height: 24px; }
+        
+        /* 로그아웃 버튼 */
+        .btn-logout {
+            background-color: #95a5a6; color: white; border: none;
+            padding: 5px 10px; border-radius: 4px; font-size: 12px;
+            cursor: pointer; float: right;
+        }
+
         h1 {
             text-align: center;
             color: #2c3e50;
             margin-bottom: 10px;
             font-size: 24px;
+            clear: both; /* float 해제 */
         }
         
         /* ⚠️ 경고 문구 스타일 */
@@ -77,80 +103,58 @@
             margin-right: 5px;
             vertical-align: middle;
         }
-        .b-ji { background-color: #e53e3e; } /* 지필: 빨강 */
-        .b-su { background-color: #3182ce; } /* 수행: 파랑 */
-        .b-etc { background-color: #718096; } /* 기타: 회색 */
+        .b-ji { background-color: #e53e3e; } 
+        .b-su { background-color: #3182ce; } 
+        .b-etc { background-color: #718096; } 
 
-        .input-label {
-            font-weight: 600;
-            font-size: 15px;
-            color: #2d3748;
-        }
-        .input-sub {
-            font-size: 12px;
-            color: #718096;
-            margin-top: 4px;
-        }
+        .input-label { font-weight: 600; font-size: 15px; color: #2d3748; }
+        .input-sub { font-size: 12px; color: #718096; margin-top: 4px; }
         input[type="number"] {
-            width: 80px;
-            padding: 8px;
-            border: 1px solid #cbd5e0;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 16px;
+            width: 80px; padding: 8px; border: 1px solid #cbd5e0;
+            border-radius: 6px; text-align: center; font-size: 16px;
             transition: border-color 0.2s;
         }
-        input[type="number"]:focus {
-            border-color: #3182ce;
-            outline: none;
-        }
+        input[type="number"]:focus { border-color: #3182ce; outline: none; }
 
         /* 결과 카드 스타일 */
         .result-card {
             background: linear-gradient(135deg, #3498db, #2980b9);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            margin-top: 30px;
+            color: white; padding: 20px; border-radius: 12px;
+            text-align: center; margin-top: 30px;
             box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
         }
-        .score-display {
-            font-size: 48px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
+        .score-display { font-size: 48px; font-weight: bold; margin: 10px 0; }
         .grade-badge {
             background-color: rgba(255,255,255,0.2);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            vertical-align: middle;
+            padding: 5px 15px; border-radius: 20px;
+            font-size: 14px; vertical-align: middle;
         }
         
         /* 시뮬레이션 메시지 */
         .simulation-box {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 14px;
-            line-height: 1.5;
+            background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
+            padding: 15px; border-radius: 8px; margin-top: 20px;
+            font-size: 14px; line-height: 1.5;
         }
-        .simulation-box strong {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 16px;
-        }
+        .simulation-box strong { display: block; margin-bottom: 5px; font-size: 16px; }
         
-        .hidden { display: none; }
+        .hidden { display: none !important; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
+    
+    <div id="loginSection" class="container">
+        <h1>🔐 학생 로그인</h1>
+        <p>학교 구글 계정으로 로그인해주세요.<br>등록된 학생만 이용 가능합니다.</p>
+        <button class="btn btn-google" onclick="loginWithGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+            Google 계정으로 로그인
+        </button>
+    </div>
+
+    <div id="appSection" class="container hidden">
+        <button class="btn-logout" onclick="logout()">로그아웃</button>
         <h1>📊 성적 목표 계산기</h1>
         
         <div class="alert-box">
@@ -163,8 +167,7 @@
             <option value="" disabled selected>과목을 선택해주세요</option>
         </select>
 
-        <div id="inputContainer">
-            </div>
+        <div id="inputContainer"></div>
 
         <div id="resultArea" class="hidden">
             <div class="result-card">
@@ -180,9 +183,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, orderBy, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        // Auth 관련 기능 추가
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-        // 선생님의 설정 키 적용
         const firebaseConfig = {
           apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
           authDomain: "history-quiz-yongsin.firebaseapp.com",
@@ -195,31 +199,82 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // ★ 핵심: 로그인 상태 감지 및 학생 신원 확인
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // 1. users 컬렉션에서 이메일 조회
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("email", "==", user.email));
+                const querySnapshot = await getDocs(q);
+
+                if (!querySnapshot.empty) {
+                    // 2. 등록된 학생임 -> 앱 보여주기 & 데이터 로드
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('appSection').classList.remove('hidden');
+                    loadSubjects(); // ★ 로그인이 확인된 후에 데이터를 불러옵니다.
+                } else {
+                    // 3. 등록되지 않은 학생
+                    alert("🚫 등록된 학생 정보가 없습니다.\n선생님께 문의해주세요.");
+                    signOut(auth);
+                }
+            } else {
+                // 로그아웃 상태
+                document.getElementById('loginSection').classList.remove('hidden');
+                document.getElementById('appSection').classList.add('hidden');
+            }
+        });
+
+        // 구글 로그인
+        window.loginWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            try { await signInWithPopup(auth, provider); } 
+            catch (error) { console.error(error); alert("로그인 실패"); }
+        };
+
+        // 로그아웃
+        window.logout = async () => {
+            if(confirm("로그아웃 하시겠습니까?")) {
+                await signOut(auth);
+                location.reload();
+            }
+        };
 
         let currentPlanItems = [];
 
-        // 1. 과목 목록 불러오기 (학기 순 정렬)
+        // 과목 목록 불러오기
         async function loadSubjects() {
-            const q = query(collection(db, "grading_plans"), orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(q);
-            
-            const select = document.getElementById("subjectSelect");
-            
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const option = document.createElement("option");
-                option.value = doc.id;
-                const semesterLabel = data.semester ? `[${data.semester}] ` : '';
-                option.text = `${semesterLabel}${data.subject}`;
+            try {
+                const q = query(collection(db, "grading_plans"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
                 
-                option.dataset.plan = JSON.stringify(data.items);
-                select.appendChild(option);
-            });
+                const select = document.getElementById("subjectSelect");
+                select.innerHTML = '<option value="" disabled selected>과목을 선택해주세요</option>'; // 초기화
 
-            select.addEventListener('change', renderInputs);
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const option = document.createElement("option");
+                    option.value = doc.id;
+                    
+                    // 제목 포맷: [2025학년도 1학기] 한국사
+                    const yearLabel = data.academicYear ? `${data.academicYear}학년도 ` : '';
+                    const semesterLabel = data.semester ? `${data.semester}` : '';
+                    const prefix = (yearLabel || semesterLabel) ? `[${yearLabel}${semesterLabel}] ` : '';
+                    
+                    option.text = `${prefix}${data.subject}`;
+                    option.dataset.plan = JSON.stringify(data.items);
+                    select.appendChild(option);
+                });
+
+                select.addEventListener('change', renderInputs);
+            } catch (e) {
+                console.error("데이터 로드 실패:", e);
+                // 권한 문제일 가능성이 높음 (로그인 처리 전에 호출했거나 등)
+            }
         }
 
-        // 2. 입력칸 생성
+        // 입력칸 생성
         function renderInputs() {
             const select = document.getElementById("subjectSelect");
             if (!select.value) return;
@@ -236,7 +291,6 @@
             items.forEach((item, index) => {
                 const savedScore = localStorage.getItem(`score_${subjectId}_${index}`) || "";
                 
-                // 배지 HTML 생성 (지필/수행 구분)
                 let badgeHtml = '';
                 if (item.type === '지필') badgeHtml = '<span class="badge b-ji">지필</span>';
                 else if (item.type === '수행') badgeHtml = '<span class="badge b-su">수행</span>';
@@ -263,13 +317,12 @@
             calculateAndSimulate(); 
         }
 
-        // 3. 입력 핸들러 (저장 + 계산)
+        // 입력 핸들러
         function handleInput(e) {
             const subjectId = document.getElementById("subjectSelect").value;
             const index = e.target.dataset.index;
             let value = e.target.value;
 
-            // 만점 초과 입력 방지
             const max = parseFloat(currentPlanItems[index].maxScore);
             if(parseFloat(value) > max) {
                 value = max; 
@@ -280,7 +333,7 @@
             calculateAndSimulate();
         }
 
-        // 4. 계산 및 시뮬레이션
+        // 계산 및 시뮬레이션
         function calculateAndSimulate() {
             let totalConverted = 0;
             let remainingItems = [];
@@ -368,8 +421,6 @@
                 simBox.style.borderColor = "#f5c6cb";
             }
         }
-
-        loadSubjects();
     </script>
 </body>
 </html>
