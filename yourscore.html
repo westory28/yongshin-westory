@@ -9,132 +9,124 @@
         /* 기본 스타일 */
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; color: #333; }
         
-        /* 상단 네비게이션 */
-        .navbar { background: #fff; padding: 15px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1001; }
-        .navbar h1 { margin: 0; font-size: 18px; color: #2c3e50; }
-        .btn-logout { background-color: #95a5a6; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-
+        /* ★ 1. 브랜드 헤더 (검은색 바) */
+        .brand-header {
+            background-color: #1a1a1a;
+            color: #fff;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .brand-icon { margin-right: 10px; font-size: 22px; }
+        
+        /* 메인 컨테이너 */
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* 페이지 타이틀 (중앙) */
+        .page-title-area { text-align: center; margin: 20px 0 30px 0; position: relative; }
+        .page-title { font-size: 28px; font-weight: 800; color: #2c3e50; margin: 0; display: inline-block; border-bottom: 3px solid #3498db; padding-bottom: 5px; }
+        .btn-logout { position: absolute; right: 0; top: 0; background-color: #95a5a6; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; }
 
         /* 로그인 섹션 */
         #loginSection { max-width: 400px; margin: 80px auto; text-align: center; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .btn-google { background-color: #fff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 15px; font-size: 16px; width: 100%; cursor: pointer; border-radius: 6px; margin-top: 20px; transition: background 0.2s; }
         .btn-google:hover { background-color: #f8f9fa; }
 
-        /* 메인 대시보드 레이아웃 (PC: Flex Row, Mobile: Column) */
+        /* ★ 레이아웃 (좌: 목록 / 우: 차트) */
         .dashboard-layout { display: flex; flex-direction: column; gap: 20px; }
         
-        /* 왼쪽: 과목 리스트 */
-        .subjects-section { flex: 1; order: 2; }
+        /* 왼쪽 패널 */
+        .left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; order: 2; }
         
-        /* 오른쪽: 차트 (모바일에선 상단 고정) */
-        .chart-section { 
+        /* 오른쪽 패널 (차트) */
+        .right-panel { 
             order: 1; 
-            background: #fff; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-            padding: 15px; 
-            position: sticky; 
-            top: 0; 
-            z-index: 999; 
-            /* 모바일 sticky 배경색 필수 */
-            background-color: #f0f2f5; 
-            padding-bottom: 10px;
-        }
-        
-        /* 차트 내부 컨테이너 (흰색 박스) */
-        .chart-inner {
-            background: #fff;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 15px; 
+            position: sticky; top: 0; z-index: 999; 
+            background-color: #f8f9fa; border-bottom: 1px solid #ddd;
         }
 
         /* PC 버전 미디어 쿼리 */
         @media (min-width: 900px) {
             .dashboard-layout { flex-direction: row; align-items: flex-start; }
-            .subjects-section { flex: 1; order: 1; } /* 왼쪽 */
-            .chart-section { 
-                flex: 0 0 400px; /* 오른쪽 고정 너비 */
-                order: 2; 
-                position: sticky; 
-                top: 20px; 
-                background: transparent; /* PC에선 배경 투명 */
-                padding: 0;
-                box-shadow: none;
+            .left-panel { flex: 1; order: 1; } 
+            .right-panel { 
+                flex: 0 0 420px; order: 2; 
+                position: sticky; top: 20px; 
+                background: transparent; border: none; padding: 0; box-shadow: none;
             }
-            .chart-inner { height: auto; min-height: 400px; }
+            .page-title-area { text-align: center; }
+            .btn-logout { top: 5px; }
         }
 
-        /* 필터 바 */
-        .filter-bar { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .filter-bar select { padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
+        /* ★ 2. 초대형 필터 박스 (왼쪽 상단) */
+        .big-filter-card {
+            background-color: #e3f2fd; /* 눈에 띄는 파란 배경 */
+            border: 2px solid #2196f3;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(33, 150, 243, 0.2);
+        }
+        .filter-header { font-size: 16px; font-weight: bold; color: #1565c0; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .filter-row { display: flex; gap: 10px; }
+        .filter-row select { 
+            flex: 1; 
+            padding: 12px; 
+            font-size: 16px; 
+            border: 1px solid #90caf9; 
+            border-radius: 8px; 
+            background: white; 
+            font-weight: bold; 
+            cursor: pointer;
+        }
+        .filter-row select:focus { border-color: #2196f3; outline: none; box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2); }
 
-        /* 차트 영역 */
-        .chart-container { 
-            position: relative; 
-            height: 250px; 
-            width: 100%; 
-            overflow-x: auto; /* 가로 스크롤 허용 */
-            overflow-y: hidden;
-        }
-        .chart-scroll-wrapper {
-            min-width: 100%; /* 기본 100% */
-            height: 100%;
-        }
+        /* 차트 내부 디자인 */
+        .chart-card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .chart-container { position: relative; height: 250px; width: 100%; overflow-x: auto; overflow-y: hidden; }
+        .chart-scroll-wrapper { min-width: 100%; height: 100%; }
 
         /* 등급 기준표 막대 */
-        .grade-scale-bar { display: flex; height: 30px; border-radius: 15px; overflow: hidden; margin-top: 15px; font-weight: bold; color: white; text-shadow: 0 1px 1px rgba(0,0,0,0.3); font-size: 11px; }
+        .grade-scale-bar { display: flex; height: 35px; border-radius: 8px; overflow: hidden; margin-top: 15px; font-weight: bold; color: white; text-shadow: 0 1px 1px rgba(0,0,0,0.3); font-size: 12px; }
         .scale-segment { flex: 1; display: flex; justify-content: center; align-items: center; }
         .bg-A { background-color: #28a745; } .bg-B { background-color: #82c91e; }
         .bg-C { background-color: #fab005; } .bg-D { background-color: #fd7e14; } .bg-E { background-color: #fa5252; }
 
-        /* 과목 카드 스타일 */
+        /* 과목 카드 (아코디언) */
         .subject-card { 
             background: #fff; border-radius: 12px; margin-bottom: 15px; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-            border-left: 6px solid #ddd; /* 왼쪽 테두리로 포인트 변경 */
-            cursor: pointer; /* 클릭 가능 표시 */
-            overflow: hidden;
-            transition: transform 0.2s;
+            border-left: 6px solid #ddd; 
+            cursor: pointer; overflow: hidden; transition: transform 0.2s;
         }
         .subject-card:hover { transform: translateY(-2px); }
+        .card-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .subject-name { font-size: 17px; font-weight: bold; color: #333; }
+        .total-score { font-size: 22px; font-weight: bold; margin-right: 8px; transition: color 0.3s; }
+        .grade-pill { display: inline-block; width: 30px; height: 30px; line-height: 30px; border-radius: 50%; text-align: center; color: white; font-weight: bold; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .toggle-hint { font-size: 12px; color: #999; margin-left: 10px; }
 
-        /* 카드 헤더 (항상 보임) */
-        .card-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .subject-name { font-size: 16px; font-weight: bold; color: #333; }
-        .subject-score-area { text-align: right; }
-        .total-score { font-size: 20px; font-weight: bold; margin-right: 5px; }
-        .grade-pill { display: inline-block; width: 28px; height: 28px; line-height: 28px; border-radius: 50%; text-align: center; color: white; font-weight: bold; font-size: 14px; }
-        .toggle-icon { font-size: 12px; color: #999; margin-left: 10px; transition: transform 0.3s; }
-
-        /* 카드 바디 (클릭 시 보임) */
-        .card-body { 
-            padding: 0 15px 15px 15px; 
-            display: none; /* 기본 숨김 */
-            background-color: #fafafa;
-            border-top: 1px solid #eee;
-        }
+        .card-body { padding: 0 20px 20px 20px; display: none; background-color: #fafafa; border-top: 1px solid #eee; }
         .card-body.expanded { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
+        /* 입력 폼 */
         .input-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
         .input-row:last-child { border-bottom: none; }
-        .item-name { font-size: 14px; margin-bottom: 2px; }
-        .item-meta { font-size: 11px; color: #888; }
-        .score-input { width: 50px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; text-align: center; font-size: 16px; background: #fff; }
+        .item-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .item-meta { font-size: 12px; color: #888; }
+        .score-input { width: 60px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; text-align: center; font-size: 16px; background: #fff; }
         
-        .badge { padding: 2px 5px; border-radius: 3px; font-size: 10px; color: white; margin-right: 4px; vertical-align: middle;}
+        .badge { padding: 3px 6px; border-radius: 4px; font-size: 11px; color: white; margin-right: 6px; vertical-align: middle; }
         .b-ji { background: #e74c3c; } .b-su { background: #3498db; }
 
         .hidden { display: none !important; }
-        .alert-box { background: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; font-size: 12px; }
+        .alert-box { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 13px; font-weight: bold;}
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -148,17 +140,24 @@
     </div>
 
     <div id="appSection" class="hidden">
-        <div class="navbar">
-            <h1>📊 성적 대시보드</h1>
-            <button class="btn-logout" onclick="logout()">로그아웃</button>
-        </div>
+        <header class="brand-header">
+            <span class="brand-icon">🧑‍🏫</span>
+            용신중학교 역사교사 방재석
+        </header>
 
         <div class="container">
+            <div class="page-title-area">
+                <h1 class="page-title">📊 성적 대시보드</h1>
+                <button class="btn-logout" onclick="logout()">로그아웃</button>
+            </div>
+
             <div class="dashboard-layout">
                 
-                <div class="chart-section">
-                    <div class="chart-inner">
-                        <div class="filter-bar">
+                <div class="left-panel">
+                    
+                    <div class="big-filter-card">
+                        <div class="filter-header">📌 Step 1. 학년도와 학기를 먼저 선택하세요</div>
+                        <div class="filter-row">
                             <select id="yearFilter" onchange="renderDashboard()">
                                 <option value="2025">2025학년도</option>
                                 <option value="2026">2026학년도</option>
@@ -169,29 +168,31 @@
                                 <option value="2학기">2학기</option>
                             </select>
                         </div>
+                    </div>
 
+                    <div class="alert-box">
+                        ⚠️ 결과는 시뮬레이션이며, 실제 성적은 나이스(NEIS)와 다를 수 있습니다.
+                    </div>
+
+                    <div id="subjectsList">
+                        </div>
+                </div>
+
+                <div class="right-panel">
+                    <div class="chart-card">
                         <div class="chart-container">
                             <div class="chart-scroll-wrapper">
                                 <canvas id="gradeChart"></canvas>
                             </div>
                         </div>
-
                         <div class="grade-scale-bar">
-                            <div class="scale-segment bg-E">E</div>
-                            <div class="scale-segment bg-D">D</div>
-                            <div class="scale-segment bg-C">C</div>
-                            <div class="scale-segment bg-B">B</div>
-                            <div class="scale-segment bg-A">A</div>
+                            <div class="scale-segment bg-E">E (~59)</div>
+                            <div class="scale-segment bg-D">D (60~)</div>
+                            <div class="scale-segment bg-C">C (70~)</div>
+                            <div class="scale-segment bg-B">B (80~)</div>
+                            <div class="scale-segment bg-A">A (90~)</div>
                         </div>
                     </div>
-                </div>
-
-                <div class="subjects-section">
-                    <div class="alert-box">
-                        ⚠️ 결과는 시뮬레이션이며, 실제 성적은 나이스(NEIS)와 다를 수 있습니다.
-                    </div>
-                    <div id="subjectsList">
-                        </div>
                 </div>
 
             </div>
@@ -219,10 +220,7 @@
 
         let allGradingPlans = [];
         let myChart = null;
-
-        const gradeColors = {
-            A: '#28a745', B: '#82c91e', C: '#fab005', D: '#fd7e14', E: '#fa5252'
-        };
+        const gradeColors = { A: '#28a745', B: '#82c91e', C: '#fab005', D: '#fd7e14', E: '#fa5252' };
 
         function getGradeInfo(score) {
             if (score >= 90) return { grade: 'A', color: gradeColors.A };
@@ -232,7 +230,6 @@
             return { grade: 'E', color: gradeColors.E };
         }
 
-        // 로그인 로직
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const q = query(collection(db, "users"), where("email", "==", user.email));
@@ -263,20 +260,13 @@
             } catch (e) { console.error(e); }
         }
 
-        // 카드 토글 함수 (아코디언)
         window.toggleCard = (cardHeader) => {
             const body = cardHeader.nextElementSibling;
-            const icon = cardHeader.querySelector('.toggle-icon');
-            
+            const hint = cardHeader.querySelector('.toggle-hint');
             if (body.classList.contains('expanded')) {
-                body.classList.remove('expanded');
-                icon.innerText = '▼ 입력하기';
+                body.classList.remove('expanded'); hint.innerText = '▼ 입력하기';
             } else {
-                // 다른 열린 카드 닫기 (선택사항 - 여기선 다중 오픈 허용)
-                // document.querySelectorAll('.card-body').forEach(b => b.classList.remove('expanded'));
-                
-                body.classList.add('expanded');
-                icon.innerText = '▲ 접기';
+                body.classList.add('expanded'); hint.innerText = '▲ 접기';
             }
         };
 
@@ -293,7 +283,7 @@
             });
 
             if (filteredPlans.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:40px; color:#888;">데이터가 없습니다.</div>';
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#888;">해당 학기의 데이터가 없습니다.</div>';
                 updateChart([], [], []); return;
             }
 
@@ -328,32 +318,25 @@
                 chartColors.push(color);
 
                 card.style.borderLeftColor = color;
-                // 카드 헤더에 onclick 이벤트 추가 (입력창 열기/닫기)
                 card.innerHTML = `
                     <div class="card-header" onclick="toggleCard(this)">
                         <div class="subject-name">${plan.subject}</div>
-                        <div class="subject-score-area" style="display:flex; align-items:center;">
+                        <div style="display:flex; align-items:center;">
                             <span class="total-score" id="total_${plan.id}" style="color:${color}">${finalScore}</span>
                             <span class="grade-pill" id="grade_${plan.id}" style="background-color:${color}">${grade}</span>
-                            <span class="toggle-icon">▼ 입력하기</span>
+                            <span class="toggle-hint">▼ 입력하기</span>
                         </div>
                     </div>
-                    <div class="card-body">
-                        ${inputHtml}
-                    </div>
+                    <div class="card-body">${inputHtml}</div>
                 `;
                 container.appendChild(card);
             });
 
             document.querySelectorAll('.score-input').forEach(input => input.addEventListener('input', handleInput));
             
-            // 데이터 개수에 따라 차트 너비 조정 (스와이프 가능하게)
             const wrapper = document.querySelector('.chart-scroll-wrapper');
-            if (filteredPlans.length > 5) {
-                wrapper.style.width = `${filteredPlans.length * 60}px`; // 항목당 60px 확보
-            } else {
-                wrapper.style.width = '100%';
-            }
+            if (filteredPlans.length > 5) wrapper.style.width = `${filteredPlans.length * 60}px`;
+            else wrapper.style.width = '100%';
 
             updateChart(chartLabels, chartData, chartColors);
         };
@@ -376,20 +359,16 @@
                 const val = parseFloat(localStorage.getItem(`score_${docId}_${i}`));
                 if(!isNaN(val)) total += (val / item.maxScore) * item.ratio;
             });
-
             const final = total.toFixed(1);
             const { grade, color } = getGradeInfo(final);
-
-            const scoreSpan = document.getElementById(`total_${docId}`);
-            scoreSpan.innerText = final;
-            scoreSpan.style.color = color;
             
+            document.getElementById(`total_${docId}`).innerText = final;
+            document.getElementById(`total_${docId}`).style.color = color;
             const badge = document.getElementById(`grade_${docId}`);
             badge.innerText = grade;
             badge.style.backgroundColor = color;
             badge.closest('.subject-card').style.borderLeftColor = color;
 
-            // 차트 값만 갱신 (전체 리렌더링 방지)
             if(myChart) {
                 const dataIndex = myChart.data.labels.indexOf(plan.subject);
                 if(dataIndex !== -1) {
@@ -411,10 +390,7 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { 
-                        y: { beginAtZero: true, max: 100, ticks: {font:{size:10}} },
-                        x: { ticks: {font:{size:11}} }
-                    },
+                    scales: { y: { beginAtZero: true, max: 100, ticks:{font:{size:10}} }, x: { ticks:{font:{size:11}} } },
                     plugins: { legend: { display: false } }
                 }
             });
