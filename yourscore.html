@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>나의 등급 시뮬레이터</title>
+    <style>
+        .result-box { border: 2px solid #333; padding: 15px; margin-top: 20px; border-radius: 10px; }
+        .simulation-tip { color: #d32f2f; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>📊 성적 시뮬레이터</h1>
+    
+    <label>과목 선택: </label>
+    <select id="subjectSelect"></select>
+
+    <div id="inputContainer" style="margin-top: 20px;"></div>
+
+    <div class="result-box">
+        <h3>현재 성적: <span id="currentScore">0</span>점 (<span id="currentGrade">E</span>)</h3>
+        <div id="simulationResult" class="simulation-tip"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = { /* 선생님의 config 값 */ };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentPlan = []; // 현재 선택된 과목의 기준 데이터
+
+        // 1. 과목 불러오기
+        async function loadSubjects() {
+            const querySnapshot = await getDocs(collection(db, "grading_plans"));
+            const select = document.getElementById("subjectSelect");
+            
+            querySnapshot.forEach((doc) => {
+                const option = document.createElement("option");
+                option.value = doc.id;
+                option.text = doc.data().subject;
+                option.dataset.plan = JSON.stringify(doc.data().items);
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', renderInputs);
+            if(querySnapshot.size > 0) renderInputs(); // 첫 항목 자동 로드
+        }
+
+        // 2. 입력칸 생성 및 로컬 스토리지 데이터 로드
+        function renderInputs() {
+            const select = document.getElementById("subjectSelect");
+            const items = JSON.parse(select.options[select.selectedIndex].dataset.plan);
+            currentPlan = items;
+            
+            const container = document.getElementById("inputContainer");
+            container.innerHTML = ""; // 초기화
+
+            // 로컬 스토리지 키: subjectID_itemName
+            const subjectId = select.value;
+
+            items.forEach((item, index) => {
+                const savedScore = localStorage.getItem(`${subjectId}_${index}`) || "";
+                
+                const div = document.createElement("div");
+                div.innerHTML = `
+                    <label>${item.name} (${item.maxScore}점 만점, ${item.ratio}%): </label>
+                    <input type="number" class="score-input" data-index="${index}" 
+                           placeholder="점수 입력" value="${savedScore}" 
+                           max="${item.maxScore}">
+                `;
+                container.appendChild(div);
+            });
+
+            // 이벤트 리스너 다시 연결
+            document.querySelectorAll('.score-input').forEach(input => {
+                input.addEventListener('input', handleInput);
+            });
+            
+            calculateAndSimulate(); // 초기 계산
+        }
+
+        // 3. 점수 입력 처리 (로컬 저장 + 계산 트리거)
+        function handleInput(e) {
+            const subjectId = document.getElementById("subjectSelect").value;
+            const index = e.target.dataset.index;
+            const value = e.target.value;
+
+            // ★ 핵심: 서버 전송 없이 내 컴퓨터(브라우저)에만 저장
+            localStorage.setItem(`${subjectId}_${index}`, value);
+            calculateAndSimulate();
+        }
+
+        // 4. 계산 및 시뮬레이션 로직
+        function calculateAndSimulate() {
+            let totalConverted = 0;
+            let totalRatio = 0;
+            let remainingItems = [];
+
+            const inputs = document.querySelectorAll('.score-input');
+            
+            // 현재 점수 계산
+            inputs.forEach((input, idx) => {
+                const score = parseFloat(input.value);
+                const item = currentPlan[idx];
+
+                if (!isNaN(score)) {
+                    // 환산 공식: (내점수 / 만점) * 반영비율
+                    totalConverted += (score / item.maxScore) * item.ratio;
+                } else {
+                    // 점수가 입력되지 않은 항목은 '남은 시험'으로 분류
+                    remainingItems.push(item);
+                }
+                totalRatio += item.ratio;
+            });
+
+            // 등급 산출 (소수점 1자리 반올림)
+            const finalScore = totalConverted.toFixed(1);
+            let grade = "E";
+            if (finalScore >= 90) grade = "A";
+            else if (finalScore >= 80) grade = "B";
+            else if (finalScore >= 70) grade = "C";
+            else if (finalScore >= 60) grade = "D";
+
+            document.getElementById('currentScore').innerText = finalScore;
+            document.getElementById('currentGrade').innerText = grade;
+
+            // 시뮬레이션: A등급(90점) 까지 남은 점수 계산
+            const targetScore = 90;
+            const gap = targetScore - totalConverted;
+            const simBox = document.getElementById('simulationResult');
+
+            if (gap <= 0) {
+                simBox.innerText = "🎉 이미 A등급 기준을 달성했습니다!";
+                simBox.style.color = "green";
+            } else if (remainingItems.length === 0) {
+                simBox.innerText = "모든 시험이 끝났습니다. 최종 등급이 확정되었습니다.";
+                simBox.style.color = "black";
+            } else {
+                // 남은 항목이 하나일 때 구체적인 점수 제시 (가장 흔한 케이스)
+                if (remainingItems.length === 1) {
+                    const item = remainingItems[0];
+                    // 공식 역산: (필요점수 / 만점 * 비율) = 부족한점수
+                    // 필요점수 = (부족한점수 * 만점) / 비율
+                    const requiredRawScore = (gap * item.maxScore) / item.ratio;
+                    
+                    if (requiredRawScore > item.maxScore) {
+                        simBox.innerText = `😓 남은 ${item.name}에서 만점을 받아도 A등급은 어렵습니다. (최대 ${item.maxScore}점)`;
+                    } else {
+                        simBox.innerText = `💡 팁: 남은 '${item.name}'에서 ${Math.ceil(requiredRawScore)}점 이상 받으면 A등급 가능!`;
+                    }
+                } else {
+                    // 남은 항목이 여러 개일 때
+                    simBox.innerText = `💡 A등급까지 환산점수 ${gap.toFixed(1)}점이 더 필요합니다. 남은 시험에서 힘내세요!`;
+                }
+            }
+        }
+        
+        // 초기 실행
+        loadSubjects();
+    </script>
+</body>
+</html>
