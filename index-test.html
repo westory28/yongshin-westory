@@ -31,8 +31,8 @@
             z-index: 100;
         }
 
-        /* 상단바 로고 스타일 */
-        .header-logo { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
+        /* 상단바 로고 스타일 (링크 태그로 변경) */
+        .header-logo { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; text-decoration: none; }
         .we { color: #1a73e8; }   /* 파란색 */
         .story { color: #f9ab00; } /* 노란색 */
 
@@ -86,6 +86,7 @@
             background: white; border-radius: 12px; padding: 40px 30px; text-align: center; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #ddd;
             display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
+            cursor: pointer;
         }
         .menu-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); border-color: #1a73e8; }
         
@@ -99,7 +100,7 @@
             padding: 30px;
             color: #65676b;
             font-size: 13px;
-            border-top: 1px solid #e4e6eb; /* 선택 사항: 첫 화면에서 선이 거슬리면 제거 가능 */
+            border-top: 1px solid #e4e6eb;
             background: #f8f9fa;
             margin-top: auto;
         }
@@ -108,9 +109,9 @@
 <body>
 
     <header id="main-header" class="hidden">
-        <div class="header-logo" onclick="location.reload()">
+        <a href="https://westory28.github.io/Bang-westory/index-test.html" class="header-logo">
             <span class="we">We</span><span class="story">story</span>
-        </div>
+        </a>
         <button class="header-btn" onclick="handleLogout()">로그아웃</button>
     </header>
 
@@ -131,17 +132,17 @@
             <div class="welcome-msg" id="greeting-text">반갑습니다, 학생님 👋</div>
 
             <div class="card-container">
-                <a href="quiz.html" class="menu-card">
+                <a href="https://westory28.github.io/Bang-westory/student_quiz-2025-2sem.html" class="menu-card">
                     <div class="card-icon">📝</div>
                     <div class="card-title">역사 퀴즈</div>
                     <div class="card-desc">이번 학기 배운 내용을<br>퀴즈로 확인해보세요.</div>
                 </a>
-                <a href="student.html" class="menu-card">
+                <a href="https://westory28.github.io/Bang-westory/student_quiz-history.html" class="menu-card">
                     <div class="card-icon">📊</div>
                     <div class="card-title">학습 기록</div>
                     <div class="card-desc">나의 지난 퀴즈 결과와<br>오답 노트를 확인합니다.</div>
                 </a>
-                <a href="yourscore.html" class="menu-card">
+                <a href="https://westory28.github.io/Bang-westory/student_yourscore.html" class="menu-card">
                     <div class="card-icon">📑</div>
                     <div class="card-title">나의 성적표</div>
                     <div class="card-desc">수행평가 점수와<br>예상 등급을 관리하세요.</div>
@@ -160,7 +161,7 @@
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('dashboard-view').classList.remove('hidden');
 
-            // 2. 헤더 표시 (이제 나타남)
+            // 2. 헤더 표시
             document.getElementById('main-header').classList.remove('hidden');
 
             // 3. 학생 이름 설정 (예시)
@@ -173,7 +174,7 @@
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
 
-            // 2. 헤더 숨김 (다시 사라짐)
+            // 2. 헤더 숨김
             document.getElementById('main-header').classList.add('hidden');
         }
     </script>
