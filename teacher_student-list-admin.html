@@ -39,18 +39,21 @@
 
     <header class="bg-white shadow-sm border-b border-stone-200 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center cursor-pointer" onclick="location.href='teacher.html'"> <span class="text-3xl font-bold tracking-tighter text-blue-600">We</span>
+            <div class="flex items-center cursor-pointer" onclick="location.href='teacher-test.html'">
+                <span class="text-3xl font-bold tracking-tighter text-blue-600">We</span>
                 <span class="text-3xl font-bold tracking-tighter text-amber-500">story</span>
             </div>
 
             <nav class="hidden md:flex space-x-8 h-full">
-                <a href="teacher.html" class="flex items-center text-stone-500 hover:text-stone-800 font-bold px-2 border-b-2 border-transparent hover:border-stone-300 transition-colors">
+                <a href="teacher_quiz-admin.html" class="flex items-center text-stone-500 hover:text-stone-800 font-bold px-2 border-b-2 border-transparent hover:border-stone-300 transition-colors">
                     역사 퀴즈 대시보드
                 </a>
-                <a href="#" class="flex items-center text-blue-600 font-bold px-2 border-b-4 border-blue-600">
+                
+                <a href="teacher_student-list-admin.html" class="flex items-center text-blue-600 font-bold px-2 border-b-4 border-blue-600">
                     학생 관리
                 </a>
-                <a href="#" class="flex items-center text-stone-500 hover:text-stone-800 font-bold px-2 border-b-2 border-transparent hover:border-stone-300 transition-colors">
+                
+                <a href="teacher_yourscore-admin.html" class="flex items-center text-stone-500 hover:text-stone-800 font-bold px-2 border-b-2 border-transparent hover:border-stone-300 transition-colors">
                     성적 산출 관리
                 </a>
             </nav>
@@ -185,7 +188,7 @@
     </div>
 
     <script>
-        // --- Firebase 설정 (기존과 동일) ---
+        // --- Firebase 설정 ---
         const firebaseConfig = { apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU", authDomain: "history-quiz-yongsin.firebaseapp.com", projectId: "history-quiz-yongsin", storageBucket: "history-quiz-yongsin.firebasestorage.app", messagingSenderId: "177587430482", appId: "1:177587430482:web:d79cc145c11e335cc3ab8b", measurementId: "G-LHN97D7R2R" };
         let db; 
         try { 
