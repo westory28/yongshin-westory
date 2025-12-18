@@ -15,10 +15,9 @@
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* --- [헤더 스타일: 요청하신 가이드라인 적용] --- */
+        /* --- [헤더 스타일] --- */
         header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
         
-        /* 네비게이션 컨테이너 */
         .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
         
         /* 네비게이션 링크 (데스크탑) */
@@ -36,7 +35,7 @@
         .btn-logout-text { color: #78716c; font-size: 0.875rem; font-weight: 700; padding: 0.5rem 0.75rem; border-radius: 0.25rem; background: transparent; border: none; cursor: pointer; transition: background 0.2s, color 0.2s; }
         .btn-logout-text:hover { color: #292524; background-color: #f5f5f4; }
 
-        /* --- [모바일 반응형 스타일 추가] --- */
+        /* --- [모바일 반응형 스타일] --- */
         .mobile-menu-btn { display: none; margin-left: 0.5rem; font-size: 1.5rem; color: #374151; cursor: pointer; background: none; border: none; }
         
         #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; }
@@ -46,8 +45,8 @@
         .mobile-icon { width: 20px; height: 20px; margin-right: 12px; fill: currentColor; }
 
         @media (max-width: 768px) {
-            .header-nav { display: none; } /* 데스크탑 메뉴 숨김 */
-            .mobile-menu-btn { display: block; } /* 햄버거 버튼 표시 */
+            .header-nav { display: none; }
+            .mobile-menu-btn { display: block; }
         }
 
         /* --- [자가 채점 컨텐츠 스타일] --- */
@@ -70,8 +69,8 @@
         
         /* 마킹 상태 */
         .omr-btn.selected { background-color: #1f2937; color: white; border-color: #1f2937; }
-        .omr-btn.correct { background-color: #22c55e; color: white; border-color: #22c55e; } /* 정답 초록 */
-        .omr-btn.wrong { background-color: #ef4444; color: white; border-color: #ef4444; } /* 오답 빨강 */
+        .omr-btn.correct { background-color: #22c55e; color: white; border-color: #22c55e; }
+        .omr-btn.wrong { background-color: #ef4444; color: white; border-color: #ef4444; }
         
         /* 결과 뱃지 */
         .result-badge { font-weight: 800; font-size: 1.1rem; width: 2rem; text-align: center; }
@@ -96,6 +95,7 @@
                 <a href="student_quiz-2025-2sem.html" class="nav-link">역사 퀴즈</a>
                 <a href="student_quiz-history.html" class="nav-link">학습 기록</a>
                 <a href="student_yourscore.html" class="nav-link">나의 성적표</a>
+                <a href="student_markexam-2025-2sem.html" class="nav-link active">시험 채점</a>
             </nav>
 
             <div class="flex items-center">
@@ -120,6 +120,10 @@
             <a href="student_yourscore.html" class="mobile-link">
                 <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM7.5 15.5H9v2H7.5v-2zm0-4H9v2H7.5v-2zm4.5 4H16v2h-4v-2zm0-4H16v2h-4v-2zm4.5 4H18v2h-1.5v-2zm0-4H18v2h-1.5v-2z"></path></svg>
                 나의 성적표
+            </a>
+            <a href="student_markexam-2025-2sem.html" class="mobile-link active">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                시험 채점
             </a>
         </div>
     </header>
@@ -186,14 +190,13 @@
             },
 
             init: function() {
-                // 로그인 체크 후 로드
+                // 로그인 상태가 확인되어야 DB 읽기가 가능 (Security Rule: request.auth != null)
                 firebase.auth().onAuthStateChanged((user) => {
                     if (user) {
                         this.loadExamData();
                     } else {
-                        // 학생용이므로 비로그인 시 로그인 페이지로 유도하거나, 그냥 작동하게 둘 수 있음.
-                        // 여기서는 데이터 로드 진행
-                        this.loadExamData();
+                        alert("로그인이 필요합니다.");
+                        location.href = 'index-test.html'; // 로그인 페이지로 이동
                     }
                 });
             },
@@ -204,47 +207,43 @@
             },
 
             logout: function() {
-                firebase.auth().signOut().then(() => location.href='index.html');
+                firebase.auth().signOut().then(() => location.href='index-test.html');
             },
 
+            // [DB 연동 수정] 실제 데이터베이스에서 정답지 가져오기
             loadExamData: function() {
-                // [DB 연결 시] db.collection('exam_config').doc('target_exam_id').get()...
-                // 테스트용 예시 데이터 사용
-                setTimeout(() => {
-                    this.state.examData = {
-                        objective: [
-                            { no: 1, answer: 3, score: 4 },
-                            { no: 2, answer: 1, score: 4 },
-                            { no: 3, answer: 5, score: 5 },
-                            { no: 4, answer: 2, score: 4 },
-                            { no: 5, answer: 4, score: 5 }
-                        ],
-                        subjective: [
-                            { 
-                                parentNo: 1, 
-                                subItems: [
-                                    { no: 1, answer: "묘청", score: 5 },
-                                    { no: 2, answer: "김부식", score: 5 }
-                                ] 
-                            },
-                            { 
-                                parentNo: 2, 
-                                subItems: [
-                                    { no: 1, answer: "직지심체요절", score: 10 }
-                                ] 
-                            }
-                        ]
-                    };
-                    
-                    // 총점 계산
-                    let max = 0;
-                    this.state.examData.objective.forEach(q => max += q.score);
-                    this.state.examData.subjective.forEach(p => p.subItems.forEach(s => max += s.score));
-                    this.state.maxScore = max;
-                    document.getElementById('max-score').innerText = max;
+                // 선생님이 생성한 채점 기준 문서 ID를 'final'이라고 가정합니다.
+                // 만약 선생님 페이지에서 ID를 날짜 등으로 생성했다면 그에 맞춰야 합니다.
+                // 여기서는 'mark_exam_2025-2' 컬렉션의 'final' 문서를 읽습니다.
+                db.collection('mark_exam_2025-2').doc('final').get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            this.state.examData = doc.data();
+                            this.calcMaxScore();
+                            this.render();
+                        } else {
+                            // 문서가 없을 경우 (아직 선생님이 등록 안 함)
+                            document.getElementById('loading-area').innerHTML = '<p class="text-red-500">채점 기준이 아직 등록되지 않았습니다.</p>';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error getting document:", error);
+                        document.getElementById('loading-area').innerHTML = '<p class="text-red-500">데이터를 불러오는 중 오류가 발생했습니다.</p>';
+                    });
+            },
 
-                    this.render();
-                }, 600);
+            calcMaxScore: function() {
+                let max = 0;
+                if(this.state.examData.objective) {
+                    this.state.examData.objective.forEach(q => max += (Number(q.score) || 0));
+                }
+                if(this.state.examData.subjective) {
+                    this.state.examData.subjective.forEach(p => {
+                        if(p.subItems) p.subItems.forEach(s => max += (Number(s.score) || 0));
+                    });
+                }
+                this.state.maxScore = max;
+                document.getElementById('max-score').innerText = max;
             },
 
             render: function() {
@@ -256,26 +255,37 @@
 
             renderObjective: function() {
                 const container = document.getElementById('objective-container');
-                container.innerHTML = this.state.examData.objective.map(q => `
-                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" id="obj-row-${q.no}">
+                if(!this.state.examData.objective || this.state.examData.objective.length === 0) {
+                    container.innerHTML = '<p class="text-stone-400">등록된 객관식 문항이 없습니다.</p>';
+                    return;
+                }
+                container.innerHTML = this.state.examData.objective.map((q, idx) => {
+                    // DB에 저장된 번호(q.no)가 없으면 인덱스+1 사용
+                    const qNum = q.no || (idx + 1);
+                    return `
+                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" id="obj-row-${qNum}">
                         <div class="flex items-center gap-4">
-                            <span class="font-bold text-lg text-blue-600 w-8 text-center">${q.no}</span>
+                            <span class="font-bold text-lg text-blue-600 w-8 text-center">${qNum}</span>
                             <div class="flex gap-2">
                                 ${[1,2,3,4,5].map(num => `
-                                    <div class="omr-btn" onclick="app.checkObjective(${q.no}, ${num}, ${q.answer}, ${q.score})">${num}</div>
+                                    <div class="omr-btn" onclick="app.checkObjective(${qNum}, ${num}, ${q.answer}, ${q.score})">${num}</div>
                                 `).join('')}
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="text-xs text-gray-400 font-medium">${q.score}점</span>
-                            <div class="result-badge" id="res-badge-${q.no}"></div>
+                            <div class="result-badge" id="res-badge-${qNum}"></div>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             },
 
             renderSubjective: function() {
                 const container = document.getElementById('subjective-container');
+                if(!this.state.examData.subjective || this.state.examData.subjective.length === 0) {
+                    container.innerHTML = '<p class="text-stone-400">등록된 서술형 문항이 없습니다.</p>';
+                    return;
+                }
                 container.innerHTML = this.state.examData.subjective.map((p, pIdx) => `
                     <div class="subj-box">
                         <div class="subj-header">
@@ -315,18 +325,21 @@
             },
 
             checkObjective: function(qNo, selected, answer, score) {
-                if(this.state.userMarks[`obj-${qNo}`]) return; // 이미 채점됨
+                if(this.state.userMarks[`obj-${qNo}`]) return;
 
                 const row = document.getElementById(`obj-row-${qNo}`);
                 const buttons = row.querySelectorAll('.omr-btn');
                 const badge = document.getElementById(`res-badge-${qNo}`);
-                const isCorrect = (selected === answer);
+                
+                // answer와 selected가 숫자인지 확인 (DB에서 문자열로 올 수 있음)
+                const isCorrect = (Number(selected) === Number(answer));
 
                 buttons.forEach((btn, idx) => {
-                    if((idx + 1) === selected) {
+                    const btnNum = idx + 1;
+                    if(btnNum === Number(selected)) {
                         btn.classList.add(isCorrect ? 'correct' : 'wrong');
                     }
-                    if(!isCorrect && (idx + 1) === answer) {
+                    if(!isCorrect && btnNum === Number(answer)) {
                         btn.style.borderColor = "#22c55e";
                         btn.style.color = "#22c55e";
                         btn.style.borderWidth = "2px";
@@ -335,7 +348,7 @@
 
                 if(isCorrect) {
                     badge.innerHTML = '<i class="fas fa-circle res-o text-xs"></i>';
-                    this.addScore(score);
+                    this.addScore(Number(score));
                 } else {
                     badge.innerHTML = '<i class="fas fa-times res-x"></i>';
                 }
@@ -359,7 +372,7 @@
 
                 if(isCorrect) {
                     badge.innerHTML = '<i class="fas fa-circle res-o text-xs"></i>';
-                    this.addScore(score);
+                    this.addScore(Number(score));
                 } else {
                     badge.innerHTML = '<i class="fas fa-times res-x"></i>';
                 }
@@ -372,7 +385,6 @@
                 this.state.totalScore += points;
                 const end = this.state.totalScore;
                 
-                // 간단한 카운팅 애니메이션
                 let current = start;
                 const step = () => {
                     if(current < end) {
@@ -389,7 +401,6 @@
 
         window.onload = function() { app.init(); };
         
-        // 메뉴 외부 클릭 시 닫기
         document.addEventListener('click', function(e) {
             const menu = document.getElementById('mobile-menu');
             const btn = document.querySelector('.mobile-menu-btn');
