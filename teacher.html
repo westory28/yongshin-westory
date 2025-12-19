@@ -17,7 +17,7 @@
         a { text-decoration: none; color: inherit; }
         .hidden { display: none !important; }
 
-        /* 헤더 스타일 (가이드라인 준수) */
+        /* 헤더 스타일 */
         header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
         
         .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
@@ -30,7 +30,7 @@
         .logo-we { color: #2563eb; }
         .logo-story { color: #f59e0b; }
 
-        /* Tailwind 스타일 유틸리티 (버튼용) */
+        /* 버튼 스타일 */
         .text-stone-500 { color: #78716c; }
         .hover\:text-stone-800:hover { color: #292524; }
         .text-sm { font-size: 0.875rem; }
@@ -42,7 +42,7 @@
         .transition { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
         button { border: none; background: transparent; cursor: pointer; }
 
-        /* 로그인 뷰 스타일 */
+        /* 로그인 뷰 */
         #login-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
         .main-logo { font-size: 4rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
         .main-subtitle { font-size: 1.6rem; color: #606770; margin-bottom: 50px; font-weight: 500; }
@@ -52,19 +52,19 @@
             font-size: 18px; font-weight: 600; color: #3c4043; cursor: pointer; display: flex; align-items: center; gap: 12px; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: all 0.2s;
         }
-        .google-login-btn:hover { background: #f7f8f8; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transform: translateY(-1px); }
 
-        /* 대시보드 뷰 스타일 */
+        /* 대시보드 뷰 */
         #dashboard-view { max-width: 1280px; margin: 40px auto; padding: 0 24px; width: 100%; box-sizing: border-box; }
         .welcome-msg { font-size: 28px; font-weight: 700; margin-bottom: 40px; color: #1c1e21; }
 
-        /* --- [PC/태블릿 카드 스타일] --- */
+        /* [PC용 그리드 설정] */
         .card-container { 
             display: grid; 
             gap: 24px; 
-            grid-template-columns: repeat(4, 1fr); /* PC 기본: 4열 */
+            grid-template-columns: repeat(4, 1fr); 
         }
 
+        /* [카드 공통 스타일] */
         .menu-card {
             background: white; border-radius: 12px; padding: 40px 24px; text-align: center; 
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #e5e7eb;
@@ -76,45 +76,46 @@
         .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #111827; }
         .card-desc { color: #6b7280; font-size: 0.95rem; line-height: 1.5; word-break: keep-all; }
 
-        /* --- [모바일 최적화 (768px 이하)] --- */
+        /* [★모바일 최적화 수정 - 768px 이하] */
         @media (max-width: 768px) {
+            /* 헤더 및 타이틀 축소 */
             .header-container { padding: 0 1rem; }
             .logo-text { font-size: 1.3rem; }
-            
             #dashboard-view { margin: 20px auto; padding: 0 16px; }
             .welcome-msg { font-size: 1.5rem; margin-bottom: 24px; }
 
-            /* 1. 그리드 1열로 변경 및 간격 강제 적용 */
+            /* 1. 컨테이너를 Flex 컬럼으로 변경하여 간격 강제 */
             .card-container {
-                grid-template-columns: 1fr;
-                gap: 16px !important; /* 카드 사이 간격 확실하게 줌 */
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 16px !important; /* 카드 사이 간격 확실하게 부여 */
             }
 
-            /* 2. 카드를 가로형 바(Bar) 스타일로 변경 -> 높이 축소 */
+            /* 2. 카드 스타일: 가로 배치, 높이 축소 */
             .menu-card {
-                flex-direction: row; /* 가로 배치 */
-                padding: 20px;       /* 패딩 축소 */
-                text-align: left;    /* 텍스트 왼쪽 정렬 */
-                align-items: center; /* 수직 중앙 정렬 */
+                flex-direction: row !important; /* 가로 정렬 */
+                padding: 16px 20px !important;  /* 패딩을 줄여서 카드 높이 축소 */
+                text-align: left;
+                align-items: center;
                 justify-content: flex-start;
-                gap: 16px;           /* 아이콘과 텍스트 사이 간격 */
-                min-height: auto;    /* 최소 높이 해제 */
+                gap: 20px;
+                min-height: auto; /* 최소 높이 해제 */
+                width: 100%; /* 가로 꽉 차게 */
+                box-sizing: border-box;
             }
 
-            /* 아이콘 크기 및 여백 조정 */
+            /* 3. 아이콘 및 텍스트 크기 조정 */
             .card-icon {
-                margin-bottom: 0;    /* 아래 여백 제거 */
-                width: 48px;         /* 크기 축소 */
+                margin-bottom: 0;
+                width: 48px; 
                 height: 48px;
                 font-size: 24px;
             }
-
-            /* 텍스트 크기 조정 */
             .card-title { font-size: 1.1rem; margin-bottom: 4px; }
             .card-desc { font-size: 0.85rem; line-height: 1.3; }
         }
 
-        /* 반응형 그리드 보조 (태블릿 구간) */
+        /* [태블릿 반응형] */
         @media (min-width: 769px) and (max-width: 1024px) {
             .card-container { grid-template-columns: repeat(2, 1fr); }
         }
