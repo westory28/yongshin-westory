@@ -26,17 +26,24 @@
         #appSection { display: flex; flex-direction: column; flex: 1; min-height: 100vh; width: 100%; }
 
         /* =========================================
-           [헤더 스타일 - 중앙 정렬 수정]
+           [★ 헤더 스타일 - 중앙 정렬 완벽 수정 ★]
            ========================================= */
-        header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 100; height: 64px; flex-shrink: 0; }
+        header { 
+            background-color: white; 
+            border-bottom: 1px solid #e5e7eb; 
+            position: sticky; top: 0; z-index: 100; height: 64px; flex-shrink: 0; 
+            width: 100%;
+        }
         
-        /* ★ 수정됨: max-width를 1200px로 변경하여 본문과 라인 맞춤 */
+        /* 헤더 내부 컨테이너: 본문(.container)과 동일한 max-width 및 padding 적용 */
         .header-container { 
-            max-width: 1200px; /* 본문 container와 동일하게 설정 */
-            margin: 0 auto; 
-            padding: 0 20px; /* 좌우 여백도 본문과 통일 */
+            width: 100%;
+            max-width: 1200px; /* 본문과 동일한 너비 */
+            margin: 0 auto;    /* 가운데 정렬 */
+            padding: 0 20px;   /* 본문과 동일한 여백 */
             height: 100%; 
             display: flex; align-items: center; justify-content: space-between; 
+            box-sizing: border-box;
         }
         
         /* 로고 */
@@ -95,9 +102,16 @@
         }
 
         /* =========================================
-           [컨텐츠 영역 스타일]
+           [컨텐츠 영역 스타일 - 헤더와 너비 통일]
            ========================================= */
-        .container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 40px 20px; box-sizing: border-box; }
+        .container { 
+            flex: 1; 
+            width: 100%; 
+            max-width: 1200px; /* 헤더와 동일한 너비 */
+            margin: 0 auto;    /* 가운데 정렬 */
+            padding: 40px 20px;/* 헤더와 동일한 좌우 여백(20px) */
+            box-sizing: border-box; 
+        }
 
         .page-header { margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; }
         .page-title { font-size: 24px; font-weight: 700; color: #111; margin: 0; }
