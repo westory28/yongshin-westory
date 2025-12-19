@@ -40,7 +40,7 @@
 
     <header>
         <div class="header-container relative">
-            <div class="logo-text" onclick="location.href='https://westory28.github.io/Bang-westory/index-test.html'">
+            <div class="logo-text" onclick="location.href='https://westory28.github.io/Bang-westory/index.html'">
                 <span class="logo-we">We</span><span class="logo-story">story</span>
             </div>
 
@@ -197,7 +197,7 @@
                         this.loadData();
                     } else {
                         alert("로그인이 필요합니다.");
-                        location.href = 'https://westory28.github.io/Bang-westory/index-test.html'; 
+                        location.href = 'https://westory28.github.io/Bang-westory/index.html'; 
                     }
                 });
             },
@@ -212,7 +212,7 @@
             // 로그아웃 기능
             logout: function() {
                 auth.signOut().then(() => {
-                    location.href = 'https://westory28.github.io/Bang-westory/index-test.html';
+                    location.href = 'https://westory28.github.io/Bang-westory/index.html';
                 }).catch((error) => {
                     console.error("로그아웃 실패:", error);
                     alert("로그아웃 중 오류가 발생했습니다.");
@@ -225,7 +225,7 @@
                     const userDoc = await db.collection('users').doc(this.currentUser.uid).get();
                     if (!userDoc.exists) {
                         alert("학생 정보를 찾을 수 없습니다.");
-                        location.href = 'https://westory28.github.io/Bang-westory/index-test.html';
+                        location.href = 'https://westory28.github.io/Bang-westory/index.html';
                         return;
                     }
                     
