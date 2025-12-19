@@ -151,7 +151,6 @@
             logout: function() { firebase.auth().signOut().then(() => location.href='index-test.html'); },
 
             loadExamData: function() {
-                // 수정됨: 문서 ID가 'final_exam'입니다.
                 db.collection('mark_exam_2025-2').doc('final_exam').get()
                     .then((doc) => {
                         if (doc.exists) {
@@ -196,7 +195,6 @@
                     return;
                 }
                 container.innerHTML = this.state.examData.objective.map((q, idx) => {
-                    // 스크린샷에 필드명이 id로 되어 있으므로 q.id를 사용
                     const qNum = q.id || q.no || (idx + 1);
                     return `
                     <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0" id="obj-row-${qNum}">
@@ -252,29 +250,63 @@
                 `).join('');
             },
 
+            // [수정] 객관식 재선택 허용 로직
             checkObjective: function(qNo, selected, answer, score) {
-                if(this.state.userMarks[`obj-${qNo}`]) return;
+                const key = `obj-${qNo}`;
+                const prevMark = this.state.userMarks[key];
+                
+                // 같은거 또 누르면 무시
+                if(prevMark && prevMark.selected === selected) return;
+
                 const row = document.getElementById(`obj-row-${qNo}`);
                 const buttons = row.querySelectorAll('.omr-btn');
                 const badge = document.getElementById(`res-badge-${qNo}`);
-                const isCorrect = (Number(selected) === Number(answer));
 
+                // 이미 마킹된게 있었다면 점수 및 스타일 초기화
+                if(prevMark) {
+                    if(prevMark.isCorrect) this.addScore(-Number(score)); // 기존 점수 차감
+                    
+                    // 스타일 전체 초기화 (해당 줄)
+                    buttons.forEach(btn => {
+                        btn.classList.remove('correct', 'wrong');
+                        btn.style.borderColor = "";
+                        btn.style.color = "";
+                        btn.style.borderWidth = "";
+                    });
+                }
+
+                // 새로운 선택 처리
+                const isCorrect = (Number(selected) === Number(answer));
+                
                 buttons.forEach((btn, idx) => {
                     const btnNum = idx + 1;
-                    if(btnNum === Number(selected)) btn.classList.add(isCorrect ? 'correct' : 'wrong');
+                    if(btnNum === Number(selected)) {
+                        btn.classList.add(isCorrect ? 'correct' : 'wrong');
+                    }
+                    // 틀렸을 때 정답 표시 (초록 테두리)
                     if(!isCorrect && btnNum === Number(answer)) {
-                        btn.style.borderColor = "#22c55e"; btn.style.color = "#22c55e"; btn.style.borderWidth = "2px";
+                        btn.style.borderColor = "#22c55e"; 
+                        btn.style.color = "#22c55e"; 
+                        btn.style.borderWidth = "2px";
                     }
                 });
-                if(isCorrect) { badge.innerHTML = '<i class="fas fa-circle res-o text-xs"></i>'; this.addScore(Number(score)); } 
-                else { badge.innerHTML = '<i class="fas fa-times res-x"></i>'; }
-                this.state.userMarks[`obj-${qNo}`] = true;
+
+                if(isCorrect) { 
+                    badge.innerHTML = '<i class="fas fa-circle res-o text-xs"></i>'; 
+                    this.addScore(Number(score)); 
+                } else { 
+                    badge.innerHTML = '<i class="fas fa-times res-x"></i>'; 
+                }
+
+                // 상태 저장 (선택한 번호와 정답여부 저장)
+                this.state.userMarks[key] = { selected: selected, isCorrect: isCorrect };
             },
 
             revealSubjective: function(id) {
                 document.getElementById(`${id}-actions`).style.display = 'none';
                 document.getElementById(`${id}-check`).classList.remove('hidden');
             },
+
             gradeSubjective: function(id, score, isCorrect) {
                 if(this.state.userMarks[id]) return;
                 const badge = document.getElementById(`${id}-badge`);
@@ -284,15 +316,26 @@
                 else { badge.innerHTML = '<i class="fas fa-times res-x"></i>'; }
                 this.state.userMarks[id] = true;
             },
+
+            // [수정] 점수 증감 애니메이션 (마이너스 점수도 처리 가능)
             addScore: function(points) {
                 const el = document.getElementById('current-score');
                 const start = this.state.totalScore;
                 this.state.totalScore += points;
                 const end = this.state.totalScore;
+                
+                // 증가/감소 방향 결정
+                const increment = end > start ? 1 : -1;
+                
                 let current = start;
                 const step = () => {
-                    if(current < end) { current++; el.innerText = current; requestAnimationFrame(step); } 
-                    else { el.innerText = end; }
+                    if(current !== end) {
+                        current += increment;
+                        el.innerText = current;
+                        requestAnimationFrame(step);
+                    } else {
+                        el.innerText = end;
+                    }
                 };
                 requestAnimationFrame(step);
             }
