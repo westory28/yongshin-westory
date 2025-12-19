@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Westory: 교사 대시보드</title>
     <style>
-        /* 1. 기본 설정 (폰트 등) */
+        /* 1. 기본 설정 */
         body { 
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; 
             background-color: #f8f9fa; 
@@ -17,12 +17,12 @@
         a { text-decoration: none; color: inherit; }
         .hidden { display: none !important; }
 
-        /* [요청하신 헤더 가이드라인 CSS 적용] */
+        /* [헤더 스타일] */
         header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
         
         .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
         
-        .nav-link { font-weight: 500; color: #6b7280; margin: 0 1rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .nav-link { font-weight: 500; color: #6b7280; margin: 0 1rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; cursor: pointer; }
         .nav-link:hover { color: #111827; }
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
         
@@ -30,7 +30,7 @@
         .logo-we { color: #2563eb; }
         .logo-story { color: #f59e0b; }
 
-        /* Tailwind 스타일의 유틸리티 클래스 일부 구현 (버튼용) */
+        /* Tailwind 스타일 유틸리티 (버튼용) */
         .text-stone-500 { color: #78716c; }
         .hover\:text-stone-800:hover { color: #292524; }
         .text-sm { font-size: 0.875rem; }
@@ -42,39 +42,26 @@
         .transition { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
         button { border: none; background: transparent; cursor: pointer; }
 
-
-        /* 2. 메인 컨텐츠 영역 스타일 */
-        main { flex: 1; width: 100%; }
-
-        /* 대시보드 컨테이너: 4개 카드를 위해 너비를 넉넉하게 잡음 (기존 1000px -> 1280px) */
-        #dashboard-view { 
-            max-width: 1280px; 
-            margin: 40px auto; 
-            padding: 0 24px; 
-            width: 100%; 
-            box-sizing: border-box; 
-        }
+        /* 로그인 뷰 스타일 */
+        #login-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; }
+        .main-logo { font-size: 4rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
+        .main-subtitle { font-size: 1.6rem; color: #606770; margin-bottom: 50px; font-weight: 500; }
         
+        .google-login-btn { 
+            background: #fff; border: 1px solid #dadce0; padding: 14px 36px; border-radius: 40px; 
+            font-size: 18px; font-weight: 600; color: #3c4043; cursor: pointer; display: flex; align-items: center; gap: 12px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: all 0.2s;
+        }
+        .google-login-btn:hover { background: #f7f8f8; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transform: translateY(-1px); }
+
+        /* 대시보드 뷰 스타일 */
+        #dashboard-view { max-width: 1280px; margin: 40px auto; padding: 0 24px; width: 100%; box-sizing: border-box; }
         .welcome-msg { font-size: 28px; font-weight: 700; margin-bottom: 40px; color: #1c1e21; }
 
-        /* 카드 그리드 컨테이너 */
-        .card-container { 
-            display: grid; 
-            gap: 24px; 
-            /* 기본(모바일)은 1열 */
-            grid-template-columns: 1fr; 
-        }
-
-        /* 반응형 그리드 설정 */
-        @media (min-width: 768px) {
-            /* 태블릿: 2열 */
-            .card-container { grid-template-columns: repeat(2, 1fr); }
-        }
-        
-        @media (min-width: 1200px) {
-            /* 데스크톱: 4열 (한 줄에 4개 배치) */
-            .card-container { grid-template-columns: repeat(4, 1fr); }
-        }
+        /* 카드 그리드 */
+        .card-container { display: grid; gap: 24px; grid-template-columns: 1fr; }
+        @media (min-width: 768px) { .card-container { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1200px) { .card-container { grid-template-columns: repeat(4, 1fr); } }
 
         /* 카드 디자인 */
         .menu-card {
@@ -83,40 +70,48 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
         }
         .menu-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: #2563eb; }
-        
         .card-icon { width: 64px; height: 64px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin-bottom: 20px; color: #2563eb; }
         .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: #111827; }
         .card-desc { color: #6b7280; font-size: 0.95rem; line-height: 1.5; word-break: keep-all; }
 
-        /* 3. 푸터 */
-        footer {
-            text-align: center; padding: 30px; color: #9ca3af; font-size: 13px;
-            border-top: 1px solid #e5e7eb; background: #f9fafb; margin-top: auto;
-        }
+        footer { text-align: center; padding: 30px; color: #9ca3af; font-size: 13px; border-top: 1px solid #e5e7eb; background: #f9fafb; margin-top: auto; }
     </style>
 </head>
 <body>
 
-    <header>
+    <header id="app-header" class="hidden">
         <div class="header-container">
-            <div class="logo-text" onclick="location.href='teacher.html'">
+            <div class="logo-text" onclick="location.reload()">
                 <span class="logo-we">We</span><span class="logo-story">story</span>
             </div>
     
-            <nav class="hidden md:flex h-full" style="display: flex;"> <a href="teacher_quiz-admin.html" class="nav-link">역사 퀴즈 대시보드</a>
+            <nav class="hidden md:flex h-full" style="display: flex;">
+                <a href="teacher_quiz-admin.html" class="nav-link">역사 퀴즈 대시보드</a>
                 <a href="teacher_student-list-admin.html" class="nav-link">학생 관리</a>
                 <a href="teacher_yourscore-admin.html" class="nav-link">성적 산출 관리</a>
             </nav>
     
-            <button onclick="app.logout()" class="text-stone-500 hover:text-stone-800 text-sm font-bold py-2 px-3 rounded hover:bg-stone-100 transition">
+            <button id="logout-btn" class="text-stone-500 hover:text-stone-800 text-sm font-bold py-2 px-3 rounded hover:bg-stone-100 transition">
                 로그아웃
             </button>
         </div>
     </header>
 
     <main>
-        <div id="dashboard-view">
-            <div class="welcome-msg">반갑습니다, 방재석 선생님 👋</div>
+        <div id="login-view">
+            <div class="main-logo">
+                <span class="we" style="color:#2563eb">We</span><span class="story" style="color:#f59e0b">story</span>
+            </div>
+            <div class="main-subtitle">: 교사 대시보드</div>
+            
+            <button id="google-login-btn" class="google-login-btn">
+                <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" width="24" alt="G">
+                Google 교사 계정으로 로그인
+            </button>
+        </div>
+
+        <div id="dashboard-view" class="hidden">
+            <div class="welcome-msg" id="greeting-msg">반갑습니다, 선생님 👋</div>
 
             <div class="card-container">
                 <a href="teacher_quiz-admin.html" class="menu-card">
@@ -150,18 +145,100 @@
         Copyright © 역사교사 방재석. All rights reserved.
     </footer>
 
-    <script>
-        // 헤더 가이드라인의 app.logout()을 처리하기 위한 객체 정의
-        const app = {
-            logout: function() {
-                const confirmLogout = confirm("로그아웃 하시겠습니까?");
-                if (confirmLogout) {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // [선생님 설정값]
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
+            authDomain: "history-quiz-yongsin.firebaseapp.com",
+            projectId: "history-quiz-yongsin",
+            storageBucket: "history-quiz-yongsin.firebasestorage.app",
+            messagingSenderId: "177587430482",
+            appId: "1:177587430482:web:d79cc145c11e335cc3ab8b",
+            measurementId: "G-LHN97D7R2R"
+        };
+
+        // 선생님 이메일 상수 정의
+        const TEACHER_EMAIL = "westoria28@gmail.com";
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // DOM 요소 가져오기
+        const loginView = document.getElementById('login-view');
+        const dashboardView = document.getElementById('dashboard-view');
+        const appHeader = document.getElementById('app-header');
+        const loginBtn = document.getElementById('google-login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const greetingMsg = document.getElementById('greeting-msg');
+
+        // [1] 로그인 상태 감지 (핵심 로직)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // 로그인 된 상태
+                console.log("로그인 시도 유저:", user.email);
+
+                if (user.email === TEACHER_EMAIL) {
+                    // 선생님이 맞으면 대시보드 보여주기
+                    showDashboard(user);
+                } else {
+                    // 선생님이 아니면 강제 로그아웃
+                    alert("접근 권한이 없습니다.\n(교사 계정 westoria28@gmail.com 만 접근 가능)");
+                    signOut(auth);
+                }
+            } else {
+                // 로그아웃 된 상태
+                showLogin();
+            }
+        });
+
+        // [2] 로그인 버튼 클릭 이벤트
+        loginBtn.addEventListener('click', async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+                // onAuthStateChanged에서 자동으로 처리됨
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert("로그인 중 오류가 발생했습니다: " + error.message);
+            }
+        });
+
+        // [3] 로그아웃 버튼 클릭 이벤트
+        logoutBtn.addEventListener('click', async () => {
+            if(confirm("로그아웃 하시겠습니까?")) {
+                try {
+                    await signOut(auth);
                     alert("로그아웃 되었습니다.");
-                    // 실제 로그인 페이지로 이동하는 로직이 있다면 여기에 추가
-                    // location.href = 'login.html'; 
+                    // onAuthStateChanged에서 자동으로 로그인 화면으로 전환됨
+                } catch (error) {
+                    console.error("Logout Error:", error);
                 }
             }
-        };
+        });
+
+        // [UI 함수] 대시보드 보이기
+        function showDashboard(user) {
+            loginView.classList.add('hidden');
+            dashboardView.classList.remove('hidden');
+            appHeader.classList.remove('hidden');
+            
+            // 이름 표시 (없으면 '선생님')
+            const displayName = user.displayName || "선생님";
+            greetingMsg.innerHTML = `반갑습니다, ${displayName} 선생님 👋`;
+        }
+
+        // [UI 함수] 로그인 화면 보이기
+        function showLogin() {
+            dashboardView.classList.add('hidden');
+            appHeader.classList.add('hidden'); // 헤더 숨김
+            loginView.classList.remove('hidden');
+        }
     </script>
 </body>
 </html>
