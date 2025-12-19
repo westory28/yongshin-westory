@@ -15,33 +15,32 @@
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* 헤더 스타일 */
+        /* 헤더 스타일 커스텀 (WeStory 테마 유지) */
         header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
+        
         .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
-        .header-nav { display: flex; height: 100%; gap: 1.5rem; }
+        
+        /* PC 네비게이션 링크 스타일 */
         .nav-link { font-weight: 500; color: #6b7280; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .nav-link:hover { color: #111827; }
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
+        
+        /* 로고 스타일 */
         .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
         .logo-we { color: #2563eb; }
         .logo-story { color: #f59e0b; }
+
+        /* 로그아웃 버튼 스타일 */
         .btn-logout-text { color: #78716c; font-size: 0.875rem; font-weight: 700; padding: 0.5rem 0.75rem; border-radius: 0.25rem; background: transparent; border: none; cursor: pointer; transition: background 0.2s, color 0.2s; }
         .btn-logout-text:hover { color: #292524; background-color: #f5f5f4; }
 
-        /* 모바일 반응형 */
-        .mobile-menu-btn { display: none; margin-left: 0.5rem; font-size: 1.5rem; color: #374151; cursor: pointer; background: none; border: none; }
-        #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; }
+        /* 모바일 메뉴 스타일 (Tailwind와 혼용) */
         .mobile-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: #374151; font-weight: 500; border-bottom: 1px solid #f3f4f6; text-decoration: none; transition: background 0.2s; }
         .mobile-link:hover { background-color: #f9fafb; }
         .mobile-link.active { color: #2563eb; background-color: #eff6ff; font-weight: 700; }
         .mobile-icon { width: 20px; height: 20px; margin-right: 12px; fill: currentColor; }
 
-        @media (max-width: 768px) {
-            .header-nav { display: none; }
-            .mobile-menu-btn { display: block; }
-        }
-
-        /* 컨텐츠 스타일 */
+        /* 자가 채점 전용 스타일 */
         .score-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); border: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .omr-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #d1d5db; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 0.9rem; font-weight: bold; transition: all 0.2s; color: #6b7280; background-color: white; }
         .omr-btn:hover { background-color: #f3f4f6; border-color: #9ca3af; }
@@ -59,30 +58,52 @@
 <body class="text-stone-800">
 
     <header>
-        <div class="header-container">
-            <div class="logo-text" onclick="location.href='index-test.html'">
+        <div class="header-container relative">
+            <div class="logo-text" onclick="location.href='https://westory28.github.io/Bang-westory/index-test.html'">
                 <span class="logo-we">We</span><span class="logo-story">story</span>
             </div>
-            <nav class="header-nav">
-                <a href="student_quiz-2025-2sem.html" class="nav-link">역사 퀴즈</a>
-                <a href="student_quiz-history.html" class="nav-link">학습 기록</a>
-                <a href="student_yourscore.html" class="nav-link">나의 성적표</a>
-                <a href="student_markexam-2025-2sem.html" class="nav-link active">시험 채점</a>
+
+            <nav class="hidden lg:flex gap-6 h-full">
+                <a href="https://westory28.github.io/Bang-westory/student_quiz-2025-2sem.html" class="nav-link">역사 퀴즈</a>
+                <a href="https://westory28.github.io/Bang-westory/student_quiz-history.html" class="nav-link">학습 기록</a>
+                <a href="https://westory28.github.io/Bang-westory/student_yourscore.html" class="nav-link">나의 성적표</a>
+                <a href="https://westory28.github.io/Bang-westory/student_markexam-2025-2sem.html" class="nav-link active">시험 채점</a>
             </nav>
-            <div class="flex items-center">
-                <button onclick="app.logout()" class="btn-logout-text">로그아웃</button>
-                <button class="mobile-menu-btn" onclick="app.toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+
+            <div class="flex items-center gap-2">
+                <button onclick="app.logout()" class="btn-logout-text hidden lg:block">로그아웃</button>
+                <button class="lg:hidden text-2xl text-stone-600 p-2 focus:outline-none mobile-menu-btn" onclick="app.toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
-        <div id="mobile-menu">
-            <a href="student_quiz-2025-2sem.html" class="mobile-link"><svg class="mobile-icon" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>역사 퀴즈</a>
-            <a href="student_quiz-history.html" class="mobile-link"><svg class="mobile-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"></path></svg>학습 기록</a>
-            <a href="student_yourscore.html" class="mobile-link"><svg class="mobile-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM7.5 15.5H9v2H7.5v-2zm0-4H9v2H7.5v-2zm4.5 4H16v2h-4v-2zm0-4H16v2h-4v-2zm4.5 4H18v2h-1.5v-2zm0-4H18v2h-1.5v-2z"></path></svg>나의 성적표</a>
-            <a href="student_markexam-2025-2sem.html" class="mobile-link active"><svg class="mobile-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>시험 채점</a>
+
+        <div id="mobile-menu" class="hidden absolute top-[64px] left-0 w-full bg-white shadow-md border-b border-stone-200 z-40 lg:hidden">
+            <a href="https://westory28.github.io/Bang-westory/student_quiz-2025-2sem.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
+                역사 퀴즈
+            </a>
+            <a href="https://westory28.github.io/Bang-westory/student_quiz-history.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"></path></svg>
+                학습 기록
+            </a>
+            <a href="https://westory28.github.io/Bang-westory/student_yourscore.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM7.5 15.5H9v2H7.5v-2zm0-4H9v2H7.5v-2zm4.5 4H16v2h-4v-2zm0-4H16v2h-4v-2zm4.5 4H18v2h-1.5v-2zm0-4H18v2h-1.5v-2z"></path></svg>
+                나의 성적표
+            </a>
+            <a href="https://westory28.github.io/Bang-westory/student_markexam-2025-2sem.html" class="mobile-link active">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                시험 채점
+            </a>
+            <div class="border-t border-stone-100 p-2">
+                <button onclick="app.logout()" class="w-full text-left px-4 py-3 text-stone-500 font-bold hover:bg-stone-50 rounded">
+                    <i class="fas fa-sign-out-alt mr-3"></i> 로그아웃
+                </button>
+            </div>
         </div>
     </header>
 
-    <div class="sticky top-[70px] z-40 px-4 py-2 pointer-events-none">
+    <div class="sticky top-[70px] z-30 px-4 py-2 pointer-events-none">
         <div class="max-w-3xl mx-auto score-card rounded-full px-6 py-3 flex justify-between items-center pointer-events-auto">
             <span class="font-bold text-stone-600">내 점수</span>
             <div class="flex items-baseline">
@@ -134,23 +155,33 @@
             state: { totalScore: 0, maxScore: 0, examData: null, userMarks: {} },
 
             init: function() {
+                // 로그인 상태 체크
                 firebase.auth().onAuthStateChanged((user) => {
                     if (user) {
+                        // 이미 로그인이 되어 있으면 바로 데이터를 로드 (중복 로그인 절차 없음)
                         this.loadExamData();
                     } else {
+                        // 로그인이 안 되어 있으면 메인으로 이동
                         alert("로그인이 필요합니다.");
-                        location.href = 'index-test.html';
+                        location.href = 'https://westory28.github.io/Bang-westory/index-test.html';
                     }
                 });
             },
 
+            // [모바일 메뉴 토글 기능]
             toggleMobileMenu: function() {
                 const menu = document.getElementById('mobile-menu');
-                menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+                // hidden 클래스를 토글하여 보이기/숨기기 처리
+                menu.classList.toggle('hidden');
             },
-            logout: function() { firebase.auth().signOut().then(() => location.href='index-test.html'); },
 
+            logout: function() { 
+                firebase.auth().signOut().then(() => location.href='https://westory28.github.io/Bang-westory/index-test.html'); 
+            },
+
+            // 데이터 로드
             loadExamData: function() {
+                // 문서 ID: final_exam
                 db.collection('mark_exam_2025-2').doc('final_exam').get()
                     .then((doc) => {
                         if (doc.exists) {
@@ -250,63 +281,29 @@
                 `).join('');
             },
 
-            // [수정] 객관식 재선택 허용 로직
             checkObjective: function(qNo, selected, answer, score) {
-                const key = `obj-${qNo}`;
-                const prevMark = this.state.userMarks[key];
-                
-                // 같은거 또 누르면 무시
-                if(prevMark && prevMark.selected === selected) return;
-
+                if(this.state.userMarks[`obj-${qNo}`]) return;
                 const row = document.getElementById(`obj-row-${qNo}`);
                 const buttons = row.querySelectorAll('.omr-btn');
                 const badge = document.getElementById(`res-badge-${qNo}`);
-
-                // 이미 마킹된게 있었다면 점수 및 스타일 초기화
-                if(prevMark) {
-                    if(prevMark.isCorrect) this.addScore(-Number(score)); // 기존 점수 차감
-                    
-                    // 스타일 전체 초기화 (해당 줄)
-                    buttons.forEach(btn => {
-                        btn.classList.remove('correct', 'wrong');
-                        btn.style.borderColor = "";
-                        btn.style.color = "";
-                        btn.style.borderWidth = "";
-                    });
-                }
-
-                // 새로운 선택 처리
                 const isCorrect = (Number(selected) === Number(answer));
-                
+
                 buttons.forEach((btn, idx) => {
                     const btnNum = idx + 1;
-                    if(btnNum === Number(selected)) {
-                        btn.classList.add(isCorrect ? 'correct' : 'wrong');
-                    }
-                    // 틀렸을 때 정답 표시 (초록 테두리)
+                    if(btnNum === Number(selected)) btn.classList.add(isCorrect ? 'correct' : 'wrong');
                     if(!isCorrect && btnNum === Number(answer)) {
-                        btn.style.borderColor = "#22c55e"; 
-                        btn.style.color = "#22c55e"; 
-                        btn.style.borderWidth = "2px";
+                        btn.style.borderColor = "#22c55e"; btn.style.color = "#22c55e"; btn.style.borderWidth = "2px";
                     }
                 });
-
-                if(isCorrect) { 
-                    badge.innerHTML = '<i class="fas fa-circle res-o text-xs"></i>'; 
-                    this.addScore(Number(score)); 
-                } else { 
-                    badge.innerHTML = '<i class="fas fa-times res-x"></i>'; 
-                }
-
-                // 상태 저장 (선택한 번호와 정답여부 저장)
-                this.state.userMarks[key] = { selected: selected, isCorrect: isCorrect };
+                if(isCorrect) { badge.innerHTML = '<i class="fas fa-circle res-o text-xs"></i>'; this.addScore(Number(score)); } 
+                else { badge.innerHTML = '<i class="fas fa-times res-x"></i>'; }
+                this.state.userMarks[`obj-${qNo}`] = true;
             },
 
             revealSubjective: function(id) {
                 document.getElementById(`${id}-actions`).style.display = 'none';
                 document.getElementById(`${id}-check`).classList.remove('hidden');
             },
-
             gradeSubjective: function(id, score, isCorrect) {
                 if(this.state.userMarks[id]) return;
                 const badge = document.getElementById(`${id}-badge`);
@@ -316,36 +313,31 @@
                 else { badge.innerHTML = '<i class="fas fa-times res-x"></i>'; }
                 this.state.userMarks[id] = true;
             },
-
-            // [수정] 점수 증감 애니메이션 (마이너스 점수도 처리 가능)
             addScore: function(points) {
                 const el = document.getElementById('current-score');
                 const start = this.state.totalScore;
                 this.state.totalScore += points;
                 const end = this.state.totalScore;
-                
-                // 증가/감소 방향 결정
-                const increment = end > start ? 1 : -1;
-                
                 let current = start;
                 const step = () => {
-                    if(current !== end) {
-                        current += increment;
-                        el.innerText = current;
-                        requestAnimationFrame(step);
-                    } else {
-                        el.innerText = end;
-                    }
+                    if(current < end) { current++; el.innerText = current; requestAnimationFrame(step); } 
+                    else { el.innerText = end; }
                 };
                 requestAnimationFrame(step);
             }
         };
 
         window.onload = function() { app.init(); };
+
+        // [모바일 메뉴 닫기 기능] 메뉴 외부 영역 클릭 시 닫기
         document.addEventListener('click', function(e) {
             const menu = document.getElementById('mobile-menu');
             const btn = document.querySelector('.mobile-menu-btn');
-            if (!menu.contains(e.target) && !btn.contains(e.target)) { menu.style.display = 'none'; }
+            
+            // 메뉴가 열려있고, 클릭한 타겟이 메뉴나 버튼 내부가 아닐 경우
+            if (!menu.classList.contains('hidden') && !menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
         });
     </script>
 </body>
