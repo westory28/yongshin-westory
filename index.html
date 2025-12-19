@@ -199,7 +199,7 @@
     </footer>
 
     <script>
-        // ✅ 선생님의 Firebase 프로젝트 설정값 적용 완료
+        // ✅ 선생님의 Firebase 프로젝트 설정값
         const firebaseConfig = {
             apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
             authDomain: "history-quiz-yongsin.firebaseapp.com",
@@ -211,13 +211,15 @@
         };
 
         // Firebase 초기화
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        let currentUser = null; // 현재 로그인된 유저 객체 저장
+        let currentUser = null; 
 
-        // 1. 로그인 상태 감지 (페이지 켜질 때 자동 실행)
+        // 1. 로그인 상태 감지
         auth.onAuthStateChanged(async (user) => {
             const loadingScreen = document.getElementById('loading-screen');
             const loginView = document.getElementById('login-view');
@@ -225,87 +227,85 @@
             const mainHeader = document.getElementById('main-header');
 
             if (user) {
-                // 로그인 된 상태 (구글 인증 성공)
-                console.log("로그인 확인됨:", user.email);
+                console.log("로그인 ID:", user.uid);
                 currentUser = user;
                 
-                // Firestore DB에서 이미 등록된 학생인지 확인
+                // ★ 중요 수정: 'students' -> 'users'로 변경 (DB 규칙과 일치시킴)
                 try {
-                    const userDoc = await db.collection('students').doc(user.uid).get();
+                    const userDoc = await db.collection('users').doc(user.uid).get();
 
                     if (userDoc.exists) {
-                        // A. 이미 가입된 학생 -> 바로 대시보드로 이동
+                        // A. 기존 회원 -> 대시보드 진입
                         const userData = userDoc.data();
-                        document.getElementById('greeting-text').innerHTML = `반갑습니다, ${userData.name} 학생님 👋`;
+                        
+                        // 이름이 있으면 이름 표시, 없으면 이메일 표시
+                        const displayName = userData.name || user.email;
+                        document.getElementById('greeting-text').innerHTML = `반갑습니다, ${displayName} 학생님 👋`;
                         
                         loginView.classList.add('hidden');
                         dashboardView.classList.remove('hidden');
                         mainHeader.classList.remove('hidden');
                     } else {
-                        // B. 신규 학생 (DB에 없음) -> 정보 입력 모달 띄우기
+                        // B. 신규 회원 -> 정보 입력 모달 띄우기
+                        console.log("DB에 정보 없음 (신규가입)");
                         document.getElementById('signup-modal').classList.remove('hidden');
                         
-                        // 배경 처리는 로그인 화면 유지 (모달 뒤에 보이게)
                         loginView.classList.remove('hidden'); 
                         dashboardView.classList.add('hidden');
                         mainHeader.classList.add('hidden');
                     }
                 } catch (error) {
                     console.error("DB 조회 오류:", error);
-                    alert("데이터를 불러오는 중 문제가 발생했습니다.");
+                    alert("데이터 로드 실패: " + error.message);
                 }
             } else {
                 // 로그아웃 상태
-                console.log("로그아웃 상태임");
                 loginView.classList.remove('hidden');
                 dashboardView.classList.add('hidden');
                 mainHeader.classList.add('hidden');
                 document.getElementById('signup-modal').classList.add('hidden');
             }
-            // 로딩 화면 종료
             loadingScreen.style.display = 'none';
         });
 
-        // 2. 구글 로그인 버튼 클릭 시
+        // 2. 구글 로그인
         function handleGoogleLogin() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            // 팝업으로 로그인 시도
             auth.signInWithPopup(provider)
                 .then((result) => {
-                    // 성공 시 onAuthStateChanged가 자동으로 처리함
                     console.log("구글 로그인 성공");
                 }).catch((error) => {
                     console.error("로그인 에러:", error);
-                    alert("로그인에 실패했습니다. 다시 시도해주세요.");
+                    alert("로그인 실패: " + error.message);
                 });
         }
 
-        // 3. 로그아웃 버튼 클릭 시
+        // 3. 로그아웃
         function handleLogout() {
             auth.signOut().then(() => {
-                alert("안녕히 가세요! 로그아웃 되었습니다.");
-                location.reload(); // 화면 새로고침으로 초기화
+                alert("로그아웃 되었습니다.");
+                location.reload(); 
             }).catch((error) => {
                 console.error("로그아웃 실패:", error);
             });
         }
 
-        // 4. 신규 학생 정보 저장 (모달창 버튼)
+        // 4. 정보 저장 (users 컬렉션 사용)
         function saveStudentInfo() {
             const grade = document.getElementById('input-grade').value;
             const classNum = document.getElementById('input-class').value;
             const number = document.getElementById('input-number').value;
             const name = document.getElementById('input-name').value;
 
-            // 빈칸 검사
             if (!grade || !classNum || !number || !name) {
-                alert("모든 정보를 빠짐없이 입력해주세요.");
+                alert("모든 정보를 입력해주세요.");
                 return;
             }
 
             if (currentUser) {
-                // Firestore 'students' 컬렉션에 문서 생성 (문서 ID = User UID)
-                db.collection('students').doc(currentUser.uid).set({
+                // ★ 중요 수정: 'students' -> 'users'로 변경
+                // merge: true 옵션을 넣어 기존 데이터가 있어도 안전하게 업데이트
+                db.collection('users').doc(currentUser.uid).set({
                     email: currentUser.email,
                     grade: grade,
                     class: classNum,
@@ -313,14 +313,12 @@
                     name: name,
                     joinDate: new Date(),
                     lastLogin: new Date()
-                }).then(() => {
+                }, { merge: true }).then(() => {
                     alert("가입을 환영합니다! " + name + " 학생.");
-                    document.getElementById('signup-modal').classList.add('hidden');
-                    // 대시보드로 이동하기 위해 새로고침 (가장 깔끔한 반영)
-                    location.reload();
+                    location.reload(); // 새로고침하여 대시보드로 이동
                 }).catch((error) => {
-                    console.error("정보 저장 실패:", error);
-                    alert("정보 저장 중 오류가 발생했습니다. 선생님께 문의하세요.");
+                    console.error("저장 실패:", error);
+                    alert("저장 중 오류가 발생했습니다: " + error.message);
                 });
             }
         }
