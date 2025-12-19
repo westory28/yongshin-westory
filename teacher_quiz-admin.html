@@ -16,7 +16,7 @@
     <style>
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f9fafb; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* --- [헤더 스타일: 반응형 적용] --- */
+        /* --- [헤더 스타일: 모바일 반응형 강화] --- */
         header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
         .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
         
@@ -25,24 +25,26 @@
         .logo-we { color: #2563eb; }
         .logo-story { color: #f59e0b; }
 
-        /* PC용 네비게이션 (1000px 이상에서만 보임) */
+        /* PC용 네비게이션 (1024px 이상에서만 보임) */
         .desktop-nav { display: flex; height: 100%; }
-        .nav-link { font-weight: 500; color: #6b7280; margin: 0 1rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
+        .nav-link { font-weight: 500; color: #6b7280; margin: 0 0.8rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; white-space: nowrap; }
         .nav-link:hover { color: #111827; }
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
 
-        /* 모바일 햄버거 버튼 (1000px 미만에서만 보임) */
-        .mobile-menu-btn { display: none; margin-left: 1rem; font-size: 1.5rem; color: #374151; cursor: pointer; }
+        /* 모바일 햄버거 버튼 (1024px 미만에서만 보임) */
+        .mobile-menu-btn { display: none; margin-left: 1rem; font-size: 1.5rem; color: #374151; cursor: pointer; padding: 0.5rem; }
         
         /* 모바일 드롭다운 메뉴 */
-        #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; }
+        #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; animation: slideDown 0.2s ease-out; }
         .mobile-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: #374151; font-weight: 500; border-bottom: 1px solid #f3f4f6; text-decoration: none; transition: background 0.2s; }
         .mobile-link:hover { background-color: #f9fafb; }
         .mobile-link.active { color: #2563eb; background-color: #eff6ff; font-weight: 700; }
         .mobile-icon { width: 20px; height: 20px; margin-right: 12px; fill: currentColor; }
 
-        /* 반응형 미디어 쿼리 (1000px 기준) */
-        @media (max-width: 1000px) {
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 반응형 미디어 쿼리 (1024px 기준) */
+        @media (max-width: 1024px) {
             .desktop-nav { display: none; }
             .mobile-menu-btn { display: block; }
         }
@@ -56,26 +58,27 @@
         .page-btn.active { background-color: #4b5563; color: white; border-color: #4b5563; font-weight: bold; }
 
         /* 로딩 오버레이 */
-        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; }
+        #loading-overlay { display: flex; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: #4b5563; }
     </style>
 </head>
 <body class="text-stone-800">
 
     <div id="loading-overlay">
-        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-white border-solid mb-4"></div>
-        <p class="text-xl font-bold">데이터 불러오는 중...</p>
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 border-solid mb-4"></div>
+        <p class="text-xl font-bold">WeStory 로딩 중...</p>
     </div>
 
     <header>
         <div class="header-container">
-            <div class="logo-text" onclick="location.href='index-test.html'">
+            <div class="logo-text" onclick="location.href='https://westory28.github.io/Bang-westory/teacher-test.html'">
                 <span class="logo-we">We</span><span class="logo-story">story</span>
             </div>
 
             <nav class="desktop-nav">
-                <a href="teacher_quiz-admin.html" class="nav-link active">역사 퀴즈 대시보드</a>
-                <a href="teacher_student-list-admin.html" class="nav-link">학생 관리</a>
-                <a href="teacher_yourscore-admin.html" class="nav-link">성적 산출 관리</a>
+                <a href="https://westory28.github.io/Bang-westory/teacher_quiz-admin.html" class="nav-link active">역사 퀴즈 대시보드</a>
+                <a href="https://westory28.github.io/Bang-westory/teacher_student-list-admin.html" class="nav-link">학생 관리</a>
+                <a href="https://westory28.github.io/Bang-westory/teacher_yourscore-admin.html" class="nav-link">성적 산출 관리</a>
+                <a href="https://westory28.github.io/Bang-westory/teacher_markexam-2025-2sem.html" class="nav-link">시험 채점 관리</a>
             </nav>
 
             <div class="flex items-center">
@@ -89,22 +92,26 @@
         </div>
 
         <div id="mobile-menu">
-            <a href="teacher_quiz-admin.html" class="mobile-link active">
+            <a href="https://westory28.github.io/Bang-westory/teacher_quiz-admin.html" class="mobile-link active">
                 <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path></svg>
                 역사 퀴즈 대시보드
             </a>
-            <a href="teacher_student-list-admin.html" class="mobile-link">
+            <a href="https://westory28.github.io/Bang-westory/teacher_student-list-admin.html" class="mobile-link">
                 <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"></path></svg>
                 학생 관리
             </a>
-            <a href="teacher_yourscore-admin.html" class="mobile-link">
+            <a href="https://westory28.github.io/Bang-westory/teacher_yourscore-admin.html" class="mobile-link">
                 <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-6 1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5.67-1.5 1.5-1.5zM7.5 15.5H9v2H7.5v-2zm0-4H9v2H7.5v-2zm4.5 4H16v2h-4v-2zm0-4H16v2h-4v-2zm4.5 4H18v2h-1.5v-2zm0-4H18v2h-1.5v-2z"></path></svg>
                 성적 산출 관리
+            </a>
+            <a href="https://westory28.github.io/Bang-westory/teacher_markexam-2025-2sem.html" class="mobile-link">
+                <svg class="mobile-icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                시험 채점 관리
             </a>
         </div>
     </header>
 
-    <div id="view-login-screen" style="display: flex;" class="flex-1 items-center justify-center flex-col bg-stone-50 p-4">
+    <div id="view-login-screen" style="display: none;" class="flex-1 items-center justify-center flex-col bg-stone-50 p-4">
         <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full text-center border border-stone-200">
             <h1 class="text-2xl font-bold mb-2 text-stone-800">교사 인증</h1>
             <p class="text-stone-500 mb-8 text-sm">WeStory 교사 대시보드입니다.<br>구글 계정으로 로그인하세요.</p>
@@ -237,13 +244,21 @@
             state: { allQuestions:[], logs:[], logPage: 1, logsPerPage: 50 },
             
             init: function() {
+                // 로그인 화면을 기본으로 숨기고 로딩 오버레이만 띄운 상태에서 시작
+                document.getElementById('view-login-screen').style.display = 'none';
+                document.getElementById('view-dashboard').style.display = 'none';
+                this.showLoading(true);
+
                 firebase.auth().onAuthStateChanged((user) => {
+                    this.showLoading(false); // 로딩 끝
                     if (user && user.email === TEACHER_EMAIL) {
+                        // 로그인 된 상태 -> 바로 대시보드
                         document.getElementById('view-login-screen').style.display = 'none';
                         document.getElementById('view-dashboard').style.display = 'block';
                         this.loadQuestions();
                         this.setTab('log');
                     } else {
+                        // 로그인 안 된 상태 -> 로그인 화면 표시
                         if(user) { alert("권한이 없습니다."); firebase.auth().signOut(); }
                         document.getElementById('view-login-screen').style.display = 'flex';
                         document.getElementById('view-dashboard').style.display = 'none';
@@ -435,7 +450,9 @@
         document.addEventListener('click', function(e) {
             const menu = document.getElementById('mobile-menu');
             const btn = document.querySelector('.mobile-menu-btn');
-            if (!menu.contains(e.target) && !btn.contains(e.target)) { menu.style.display = 'none'; }
+            if (menu.style.display === 'block' && !menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.style.display = 'none';
+            }
         });
     </script>
 </body>
