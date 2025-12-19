@@ -18,28 +18,23 @@
         /* 헤더 스타일 */
         header { background-color: white; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 50; height: 64px; }
         .header-container { max-width: 80rem; margin: 0 auto; padding: 0 1.5rem; height: 100%; display: flex; align-items: center; justify-content: space-between; }
-        
-        /* 로고 스타일 */
         .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; }
         .logo-we { color: #2563eb; } .logo-story { color: #f59e0b; }
 
-        /* 네비게이션 (데스크탑) - 1100px 이상에서 보임 */
+        /* 네비게이션 */
         .desktop-nav { display: flex; height: 100%; }
         .nav-link { font-weight: 500; color: #6b7280; margin: 0 0.8rem; text-decoration: none; font-size: 0.95rem; height: 100%; display: inline-flex; align-items: center; border-bottom: 3px solid transparent; transition: all 0.2s; }
         .nav-link:hover { color: #111827; }
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
 
-        /* 모바일 햄버거 버튼 - 1100px 이하에서 보임 */
+        /* 모바일 메뉴 */
         .mobile-menu-btn { display: none; margin-left: 1rem; font-size: 1.5rem; color: #374151; cursor: pointer; }
-        
-        /* 모바일 메뉴 박스 */
         #mobile-menu { display: none; background-color: white; border-bottom: 1px solid #e5e7eb; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: absolute; top: 64px; left: 0; width: 100%; z-index: 49; }
         .mobile-link { display: flex; align-items: center; padding: 1rem 1.5rem; color: #374151; font-weight: 500; border-bottom: 1px solid #f3f4f6; text-decoration: none; transition: background 0.2s; }
         .mobile-link:hover { background-color: #f9fafb; }
         .mobile-link.active { color: #2563eb; background-color: #eff6ff; font-weight: 700; }
         .mobile-icon { width: 20px; height: 20px; margin-right: 12px; fill: currentColor; }
 
-        /* 반응형 기준점 (1100px) */
         @media (max-width: 1100px) { 
             .desktop-nav { display: none; }
             .mobile-menu-btn { display: block; }
@@ -51,11 +46,11 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; font-weight: bold; color: #6b7280; background: white;
             cursor: pointer; transition: all 0.2s;
+            flex-shrink: 0; /* 버튼 크기 줄어듦 방지 */
         }
         .choice-btn:hover { background-color: #f3f4f6; }
         .choice-btn.selected {
-            background-color: #ef4444; /* 붉은색 (정답 표시) */
-            color: white; border-color: #ef4444;
+            background-color: #ef4444; color: white; border-color: #ef4444;
         }
 
         /* 로딩 오버레이 */
@@ -71,7 +66,7 @@
 
     <header>
         <div class="header-container">
-            <div class="logo-text" onclick="location.href='teacher.html'">
+            <div class="logo-text" onclick="location.href='teacher-test.html'">
                 <span class="logo-we">We</span><span class="logo-story">story</span>
             </div>
 
@@ -79,7 +74,8 @@
                 <a href="teacher_quiz-admin.html" class="nav-link">역사 퀴즈 대시보드</a>
                 <a href="teacher_student-list-admin.html" class="nav-link">학생 관리</a>
                 <a href="teacher_yourscore-admin.html" class="nav-link">성적 산출 관리</a>
-                <a href="teacher_markexam-2025-2sem.html" class="nav-link active">시험 채점 관리</a> </nav>
+                <a href="teacher_markexam-2025-2sem.html" class="nav-link active">시험 채점 관리</a>
+            </nav>
 
             <div class="flex items-center">
                 <button onclick="app.logout()" class="text-stone-500 hover:text-stone-800 text-sm font-bold py-2 px-3 rounded hover:bg-stone-100 transition">
@@ -113,8 +109,8 @@
 
     <div id="view-dashboard" class="flex-1 max-w-[95%] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8" style="display:none;">
         
-        <div class="bg-white p-6 rounded shadow border border-stone-200 mb-8">
-            <div class="flex justify-between items-end mb-4 border-b pb-2">
+        <div class="bg-white p-6 rounded shadow border border-stone-200 mb-24">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 border-b pb-2 gap-2">
                 <h2 class="font-bold text-xl text-stone-800 flex items-center">
                     <i class="fas fa-edit text-gray-600 mr-2"></i> 정답 및 채점 기준 설정
                 </h2>
@@ -133,7 +129,7 @@
                         </button>
                     </div>
 
-                    <div class="flex gap-2 text-xs font-bold text-stone-500 mb-2 px-2 items-center">
+                    <div class="hidden sm:flex gap-2 text-xs font-bold text-stone-500 mb-2 px-2 items-center">
                         <span class="w-16 text-center">번호</span>
                         <span class="w-40 text-center">정답 선택</span>
                         <span class="w-16 text-center">배점</span>
@@ -162,13 +158,13 @@
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-end items-center gap-6 border-t pt-6 bg-white sticky bottom-0 z-10">
-                <div class="text-right">
-                    <p class="text-sm text-stone-500">총 문항: <span id="total-count" class="font-bold text-stone-800">0</span>개</p>
-                    <p class="text-xl">총점: <span id="total-score" class="font-bold text-red-600 text-2xl">0</span>점</p>
+            <div class="fixed bottom-0 left-0 w-full bg-white border-t p-4 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-between items-center px-6 lg:px-8">
+                <div class="text-left">
+                    <p class="text-xs text-stone-500">총 문항: <span id="total-count" class="font-bold text-stone-800">0</span>개</p>
+                    <p class="text-lg">총점: <span id="total-score" class="font-bold text-red-600 text-2xl">0</span>점</p>
                 </div>
-                <button onclick="configApp.saveToDB()" class="bg-stone-800 hover:bg-stone-900 text-white px-8 py-3 rounded-lg font-bold shadow-lg transition transform hover:scale-105 flex items-center">
-                    <i class="fas fa-cloud-upload-alt mr-2"></i> 정답 및 기준 DB 저장
+                <button onclick="configApp.saveToDB()" class="bg-stone-800 hover:bg-stone-900 text-white px-6 py-3 rounded-lg font-bold shadow-lg transition transform active:scale-95 flex items-center">
+                    <i class="fas fa-cloud-upload-alt mr-2"></i> <span class="hidden sm:inline">정답 및 기준 </span>DB 저장
                 </button>
             </div>
         </div>
@@ -190,18 +186,12 @@
 
         const app = {
             init: function() {
-                // 로그인 상태 감지 (자동 로그인 처리)
                 firebase.auth().onAuthStateChanged((user) => {
                     if (user && user.email === TEACHER_EMAIL) {
-                        // 이미 로그인 되어 있으면 로그인 창 숨기고 바로 대시보드 표시
                         document.getElementById('view-login-screen').style.display = 'none';
                         document.getElementById('view-dashboard').style.display = 'block';
-                        
-                        // DB에서 기존 저장된 데이터 불러오기
                         configApp.loadFromDB(); 
-
                     } else {
-                        // 로그아웃 상태라면 로그인 화면 표시
                         if(user) { alert("권한이 없습니다."); firebase.auth().signOut(); }
                         document.getElementById('view-login-screen').style.display = 'flex';
                         document.getElementById('view-dashboard').style.display = 'none';
@@ -218,25 +208,18 @@
         };
 
         const configApp = {
-            data: {
-                objective: [], 
-                subjective: []
-            },
+            data: { objective: [], subjective: [] },
 
-            // --- DB 데이터 불러오기 ---
             loadFromDB: function() {
                 app.showLoading(true);
-                // mark_exam_2025-2 컬렉션의 final_exam 문서 조회
                 db.collection("mark_exam_2025-2").doc("final_exam").get()
                     .then((doc) => {
                         if (doc.exists) {
                             const loadedData = doc.data();
                             this.data.objective = loadedData.objective || [];
                             this.data.subjective = loadedData.subjective || [];
-                            
                             this.renderObjective();
                             this.renderSubjective();
-                            console.log("기존 데이터 로드 완료");
                         } else {
                             this.renderObjective();
                             this.renderSubjective();
@@ -249,14 +232,8 @@
                     });
             },
 
-            // [객관식] 로직
             addObjective: function() {
-                this.data.objective.push({ 
-                    id: this.data.objective.length + 1, 
-                    score: 5,       
-                    answer: 0,      
-                    explain: "" 
-                });
+                this.data.objective.push({ id: this.data.objective.length + 1, score: 5, answer: 0, explain: "" });
                 this.renderObjective();
             },
             
@@ -279,6 +256,7 @@
                 }
             },
 
+            // --- [핵심] 모바일 대응 렌더링 함수 ---
             renderObjective: function() {
                 const container = document.getElementById('config-objective-list');
                 if(this.data.objective.length === 0) {
@@ -288,12 +266,27 @@
                 
                 container.innerHTML = this.data.objective.map((item, idx) => `
                     <div class="bg-white p-4 rounded border border-gray-200 shadow-sm hover:shadow-md transition">
-                        <div class="flex items-center gap-4 mb-3">
-                            <span class="font-bold text-stone-700 text-sm w-12 text-center bg-stone-100 py-1.5 rounded">
-                                ${idx+1}번
-                            </span>
+                        
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
                             
-                            <div class="flex gap-2">
+                            <div class="flex justify-between items-center w-full sm:w-auto">
+                                <span class="font-bold text-stone-700 text-sm w-12 text-center bg-stone-100 py-1.5 rounded">
+                                    ${idx+1}번
+                                </span>
+                                
+                                <div class="flex items-center gap-2 sm:hidden">
+                                    <div class="flex items-center relative">
+                                        <input type="number" class="border border-stone-300 rounded p-1 w-14 text-center font-bold text-blue-600 focus:outline-none"
+                                            value="${item.score}" onchange="configApp.updateObjField(${idx}, 'score', this.value)">
+                                        <span class="text-xs text-stone-400 ml-1">점</span>
+                                    </div>
+                                    <button onclick="configApp.removeObjective(${idx})" class="text-gray-300 hover:text-red-500 px-2">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-2 justify-center w-full sm:w-auto sm:justify-start">
                                 ${[1,2,3,4,5].map(num => `
                                     <button onclick="configApp.selectObjAnswer(${idx}, ${num})" 
                                             class="choice-btn ${item.answer === num ? 'selected' : ''}">
@@ -302,13 +295,13 @@
                                 `).join('')}
                             </div>
 
-                            <div class="flex items-center relative ml-auto">
+                            <div class="hidden sm:flex items-center relative ml-auto">
                                 <input type="number" class="border border-stone-300 rounded p-1 w-16 text-center font-bold text-blue-600 focus:outline-none focus:border-blue-500"
                                     value="${item.score}" onchange="configApp.updateObjField(${idx}, 'score', this.value)">
                                 <span class="text-xs text-stone-400 ml-1">점</span>
                             </div>
 
-                            <button onclick="configApp.removeObjective(${idx})" class="text-gray-300 hover:text-red-500 px-2">
+                            <button onclick="configApp.removeObjective(${idx})" class="hidden sm:block text-gray-300 hover:text-red-500 px-2">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -325,7 +318,6 @@
                 this.updateTotal();
             },
 
-            // [서술형] 로직
             addSubjParent: function() {
                 this.data.subjective.push({ id: this.data.subjective.length + 1, subItems: [] });
                 this.renderSubjective();
@@ -365,7 +357,7 @@
                         <div class="flex justify-between items-center mb-3 border-b pb-2">
                             <span class="font-bold text-indigo-700">서술형 큰 ${pIdx+1}번</span>
                             <div class="space-x-1">
-                                <button onclick="configApp.addSubjItem(${pIdx})" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100 font-bold">+ 소문항 추가</button>
+                                <button onclick="configApp.addSubjItem(${pIdx})" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded hover:bg-indigo-100 font-bold">+ 소문항</button>
                                 <button onclick="configApp.removeSubjParent(${pIdx})" class="text-xs text-red-400 hover:text-red-600 px-1"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
@@ -435,7 +427,6 @@
 
         window.onload = function() { app.init(); };
         
-        // 메뉴 외부 클릭 시 닫기
         document.addEventListener('click', function(e) {
             const menu = document.getElementById('mobile-menu');
             const btn = document.querySelector('.mobile-menu-btn');
