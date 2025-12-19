@@ -4,67 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Westory: 우리들의 이야기</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+
     <style>
         /* 1. 기본 설정 */
         body { 
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; 
             background-color: #f8f9fa; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh;
+            margin: 0; display: flex; flex-direction: column; min-height: 100vh;
         }
-        
         a { text-decoration: none; color: inherit; }
         .hidden { display: none !important; }
 
-        /* 2. 상단바 (초기에는 숨김 - 로그인 후 등장) */
+        /* 2. 상단바 */
         header {
-            background-color: #fff;
-            padding: 16px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background-color: #fff; padding: 16px 40px;
+            display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            position: sticky; top: 0; z-index: 100;
         }
-
-        .header-logo { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; text-decoration: none; }
-        .we { color: #1a73e8; }   /* 파란색 */
-        .story { color: #f9ab00; } /* 노란색 */
-
+        .header-logo { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
+        .we { color: #1a73e8; } .story { color: #f9ab00; }
         .header-btn {
-            background-color: #e4e6eb; 
-            color: #050505;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s;
+            background-color: #e4e6eb; color: #050505; padding: 8px 16px; border-radius: 20px;
+            font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: background 0.2s;
         }
         .header-btn:hover { background-color: #d8dadf; }
 
-        /* 3. 메인 컨텐츠 영역 */
+        /* 3. 메인 컨텐츠 */
         main { flex: 1; display: flex; flex-direction: column; width: 100%; }
 
-        /* --- [화면 A] 로그인 뷰 --- */
+        /* [화면 A] 로그인 뷰 */
         #login-view { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            text-align: center; 
-            padding: 20px; 
+            flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; 
         }
-        
         .main-logo { font-size: 4rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
         .main-subtitle { font-size: 1.6rem; color: #606770; margin-bottom: 50px; font-weight: 500; }
-        
         .google-login-btn { 
             background: #fff; border: 1px solid #dadce0; padding: 14px 36px; border-radius: 40px; 
             font-size: 18px; font-weight: 600; color: #3c4043; cursor: pointer; display: flex; align-items: center; gap: 12px; 
@@ -72,91 +50,84 @@
         }
         .google-login-btn:hover { background: #f7f8f8; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transform: translateY(-1px); }
 
-        /* --- [화면 B] 학생 대시보드 --- */
+        /* [화면 B] 학생 대시보드 */
         #dashboard-view { max-width: 1000px; margin: 40px auto; padding: 0 20px; width: 100%; box-sizing: border-box; }
-        
         .welcome-msg { font-size: 28px; font-weight: 700; margin-bottom: 40px; color: #1c1e21; }
-        
-        /* PC 화면: 그리드 레이아웃 (카드형) */
         .card-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
         
         .menu-card {
             background: white; border-radius: 12px; padding: 40px 30px; text-align: center; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #ddd;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;
-            cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; cursor: pointer;
         }
         .menu-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); border-color: #1a73e8; }
-        
         .card-icon { width: 60px; height: 60px; background: #e8f0fe; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 20px; flex-shrink: 0; }
-        
-        /* 텍스트 정렬을 위해 div로 감쌈 */
         .card-text-wrap { display: flex; flex-direction: column; }
         .card-title { font-size: 20px; font-weight: 700; margin-bottom: 10px; color: #202124; }
         .card-desc { color: #5f6368; font-size: 15px; line-height: 1.5; word-break: keep-all; }
 
-        /* --- [모바일 최적화] 화면 폭 768px 이하일 때 리스트 뷰로 변경 --- */
+        /* [화면 C] 정보 입력 모달 (회원가입) */
+        #signup-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 200;
+        }
+        .modal-content {
+            background: white; padding: 40px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .modal-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #1c1e21; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 5px; color: #606770; }
+        .input-group input { 
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box;
+        }
+        .save-btn {
+            background: #1a73e8; color: white; border: none; padding: 14px; width: 100%; border-radius: 8px;
+            font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px;
+        }
+        .save-btn:hover { background: #1557b0; }
+
+        /* 모바일 최적화 */
         @media (max-width: 768px) {
-            header { padding: 12px 20px; } /* 헤더 여백 축소 */
+            header { padding: 12px 20px; }
             .header-logo { font-size: 20px; }
-            
             #dashboard-view { margin: 20px auto; }
             .welcome-msg { font-size: 22px; margin-bottom: 20px; }
-
-            /* 1열로 변경 */
             .card-container { grid-template-columns: 1fr; gap: 12px; }
-
-            /* 카드 스타일 -> 가로형 리스트 바(Bar)로 변경 */
             .menu-card {
-                flex-direction: row; /* 가로 정렬 */
-                justify-content: flex-start; /* 왼쪽 정렬 */
-                padding: 20px; /* 내부 여백 축소 */
-                text-align: left; /* 텍스트 왼쪽 정렬 */
-                align-items: center;
+                flex-direction: row; justify-content: flex-start; padding: 20px; text-align: left;
             }
-
-            .menu-card:hover { transform: none; /* 모바일은 호버 효과 제거 또는 약하게 */ }
-
-            /* 아이콘 크기 및 위치 조정 */
-            .card-icon {
-                width: 48px; height: 48px; font-size: 24px;
-                margin-bottom: 0; /* 아래 여백 제거 */
-                margin-right: 20px; /* 오른쪽 여백 추가 */
-            }
-
+            .menu-card:hover { transform: none; }
+            .card-icon { width: 48px; height: 48px; font-size: 24px; margin-bottom: 0; margin-right: 20px; }
             .card-title { font-size: 18px; margin-bottom: 4px; }
             .card-desc { font-size: 13px; }
         }
 
-        /* 4. 푸터 */
-        footer {
-            text-align: center;
-            padding: 30px;
-            color: #65676b;
-            font-size: 13px;
-            border-top: 1px solid #e4e6eb;
-            background: #f8f9fa;
-            margin-top: auto;
-        }
+        /* 로딩 스피너 */
+        #loading-screen { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index: 300; display: flex; justify-content: center; align-items: center; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #1a73e8; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
+    <div id="loading-screen"><div class="loader"></div></div>
+
     <header id="main-header" class="hidden">
-        <a href="https://westory28.github.io/Bang-westory/index.html" class="header-logo">
+        <a href="https://westory28.github.io/Bang-westory/index-test.html" class="header-logo">
             <span class="we">We</span><span class="story">story</span>
         </a>
         <button class="header-btn" onclick="handleLogout()">로그아웃</button>
     </header>
 
     <main>
-        <div id="login-view">
+        <div id="login-view" class="hidden">
             <div class="main-logo">
                 <span class="we">We</span><span class="story">story</span>
             </div>
             <div class="main-subtitle">: 우리들의 이야기</div>
             
-            <button class="google-login-btn" onclick="handleLogin()">
+            <button class="google-login-btn" onclick="handleGoogleLogin()">
                 <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" width="24" alt="G">
                 Google 계정으로 시작하기
             </button>
@@ -173,7 +144,6 @@
                         <div class="card-desc">이번 학기 배운 내용을<br>퀴즈로 확인해보세요.</div>
                     </div>
                 </a>
-                
                 <a href="https://westory28.github.io/Bang-westory/student_quiz-history.html" class="menu-card">
                     <div class="card-icon">📊</div>
                     <div class="card-text-wrap">
@@ -181,7 +151,6 @@
                         <div class="card-desc">나의 지난 퀴즈 결과와<br>오답 노트를 확인합니다.</div>
                     </div>
                 </a>
-                
                 <a href="https://westory28.github.io/Bang-westory/student_yourscore.html" class="menu-card">
                     <div class="card-icon">📑</div>
                     <div class="card-text-wrap">
@@ -189,7 +158,6 @@
                         <div class="card-desc">수행평가 점수와<br>예상 등급을 관리하세요.</div>
                     </div>
                 </a>
-
                 <a href="https://westory28.github.io/Bang-westory/student_markexam-2025-2sem.html" class="menu-card">
                     <div class="card-icon">✅</div>
                     <div class="card-text-wrap">
@@ -201,25 +169,160 @@
         </div>
     </main>
 
+    <div id="signup-modal" class="hidden">
+        <div class="modal-content">
+            <div class="modal-title">학생 정보 입력 📝</div>
+            <p style="color:#666; margin-bottom:20px; font-size:14px;">원활한 학습 관리를 위해<br>정보를 정확히 입력해주세요.</p>
+            
+            <div class="input-group">
+                <label>학년</label>
+                <input type="number" id="input-grade" placeholder="예: 2">
+            </div>
+            <div class="input-group">
+                <label>반</label>
+                <input type="number" id="input-class" placeholder="예: 5">
+            </div>
+            <div class="input-group">
+                <label>번호</label>
+                <input type="number" id="input-number" placeholder="예: 15">
+            </div>
+            <div class="input-group">
+                <label>이름</label>
+                <input type="text" id="input-name" placeholder="예: 김역사">
+            </div>
+            <button class="save-btn" onclick="saveStudentInfo()">저장하고 시작하기</button>
+        </div>
+    </div>
+
     <footer>
         Copyright © 역사교사 방재석. All rights reserved.
     </footer>
 
     <script>
-        function handleLogin() {
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('dashboard-view').classList.remove('hidden');
-            document.getElementById('main-header').classList.remove('hidden');
-            
-            // 학생 이름 예시
-            const studentName = "방재석"; 
-            document.getElementById('greeting-text').innerHTML = `반갑습니다, ${studentName} 학생님 👋`;
+        // ✅ 선생님의 Firebase 프로젝트 설정값 적용 완료
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
+            authDomain: "history-quiz-yongsin.firebaseapp.com",
+            projectId: "history-quiz-yongsin",
+            storageBucket: "history-quiz-yongsin.firebasestorage.app",
+            messagingSenderId: "177587430482",
+            appId: "1:177587430482:web:d79cc145c11e335cc3ab8b",
+            measurementId: "G-LHN97D7R2R"
+        };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null; // 현재 로그인된 유저 객체 저장
+
+        // 1. 로그인 상태 감지 (페이지 켜질 때 자동 실행)
+        auth.onAuthStateChanged(async (user) => {
+            const loadingScreen = document.getElementById('loading-screen');
+            const loginView = document.getElementById('login-view');
+            const dashboardView = document.getElementById('dashboard-view');
+            const mainHeader = document.getElementById('main-header');
+
+            if (user) {
+                // 로그인 된 상태 (구글 인증 성공)
+                console.log("로그인 확인됨:", user.email);
+                currentUser = user;
+                
+                // Firestore DB에서 이미 등록된 학생인지 확인
+                try {
+                    const userDoc = await db.collection('students').doc(user.uid).get();
+
+                    if (userDoc.exists) {
+                        // A. 이미 가입된 학생 -> 바로 대시보드로 이동
+                        const userData = userDoc.data();
+                        document.getElementById('greeting-text').innerHTML = `반갑습니다, ${userData.name} 학생님 👋`;
+                        
+                        loginView.classList.add('hidden');
+                        dashboardView.classList.remove('hidden');
+                        mainHeader.classList.remove('hidden');
+                    } else {
+                        // B. 신규 학생 (DB에 없음) -> 정보 입력 모달 띄우기
+                        document.getElementById('signup-modal').classList.remove('hidden');
+                        
+                        // 배경 처리는 로그인 화면 유지 (모달 뒤에 보이게)
+                        loginView.classList.remove('hidden'); 
+                        dashboardView.classList.add('hidden');
+                        mainHeader.classList.add('hidden');
+                    }
+                } catch (error) {
+                    console.error("DB 조회 오류:", error);
+                    alert("데이터를 불러오는 중 문제가 발생했습니다.");
+                }
+            } else {
+                // 로그아웃 상태
+                console.log("로그아웃 상태임");
+                loginView.classList.remove('hidden');
+                dashboardView.classList.add('hidden');
+                mainHeader.classList.add('hidden');
+                document.getElementById('signup-modal').classList.add('hidden');
+            }
+            // 로딩 화면 종료
+            loadingScreen.style.display = 'none';
+        });
+
+        // 2. 구글 로그인 버튼 클릭 시
+        function handleGoogleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            // 팝업으로 로그인 시도
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // 성공 시 onAuthStateChanged가 자동으로 처리함
+                    console.log("구글 로그인 성공");
+                }).catch((error) => {
+                    console.error("로그인 에러:", error);
+                    alert("로그인에 실패했습니다. 다시 시도해주세요.");
+                });
         }
 
+        // 3. 로그아웃 버튼 클릭 시
         function handleLogout() {
-            document.getElementById('dashboard-view').classList.add('hidden');
-            document.getElementById('login-view').classList.remove('hidden');
-            document.getElementById('main-header').classList.add('hidden');
+            auth.signOut().then(() => {
+                alert("안녕히 가세요! 로그아웃 되었습니다.");
+                location.reload(); // 화면 새로고침으로 초기화
+            }).catch((error) => {
+                console.error("로그아웃 실패:", error);
+            });
+        }
+
+        // 4. 신규 학생 정보 저장 (모달창 버튼)
+        function saveStudentInfo() {
+            const grade = document.getElementById('input-grade').value;
+            const classNum = document.getElementById('input-class').value;
+            const number = document.getElementById('input-number').value;
+            const name = document.getElementById('input-name').value;
+
+            // 빈칸 검사
+            if (!grade || !classNum || !number || !name) {
+                alert("모든 정보를 빠짐없이 입력해주세요.");
+                return;
+            }
+
+            if (currentUser) {
+                // Firestore 'students' 컬렉션에 문서 생성 (문서 ID = User UID)
+                db.collection('students').doc(currentUser.uid).set({
+                    email: currentUser.email,
+                    grade: grade,
+                    class: classNum,
+                    number: number,
+                    name: name,
+                    joinDate: new Date(),
+                    lastLogin: new Date()
+                }).then(() => {
+                    alert("가입을 환영합니다! " + name + " 학생.");
+                    document.getElementById('signup-modal').classList.add('hidden');
+                    // 대시보드로 이동하기 위해 새로고침 (가장 깔끔한 반영)
+                    location.reload();
+                }).catch((error) => {
+                    console.error("정보 저장 실패:", error);
+                    alert("정보 저장 중 오류가 발생했습니다. 선생님께 문의하세요.");
+                });
+            }
         }
     </script>
 </body>
