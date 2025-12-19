@@ -12,7 +12,6 @@
         /* [레이아웃 공통] */
         html, body { height: 100%; margin: 0; padding: 0; }
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f5f7fa; color: #333; display: flex; flex-direction: column; }
-        
         .hidden { display: none !important; }
 
         /* 로딩 화면 */
@@ -26,44 +25,42 @@
         #appSection { display: flex; flex-direction: column; flex: 1; min-height: 100vh; width: 100%; }
 
         /* =========================================
-           [★ 헤더 스타일 - 강력한 중앙 정렬 적용 ★]
+           [★ 헤더 스타일 - Grid 레이아웃으로 중앙 강제 정렬 ★]
            ========================================= */
         header { 
             background-color: white; 
             border-bottom: 1px solid #e5e7eb; 
-            position: sticky; top: 0; z-index: 100; height: 64px; flex-shrink: 0; 
-            
-            /* ★ 핵심: 부모(header)가 자식(container)을 강제로 가운데 정렬 */
-            display: flex; 
-            justify-content: center; 
-            width: 100%;
+            position: sticky; top: 0; z-index: 100; height: 64px; flex-shrink: 0;
+            width: 100%; 
         }
         
         .header-container { 
-            /* 너비 제한 및 패딩 설정 (본문과 동일하게 맞춤) */
-            width: 100%;
-            max-width: 1200px; 
-            padding: 0 20px; 
-            height: 100%; 
-            display: flex; align-items: center; justify-content: space-between; 
-            box-sizing: border-box; /* 패딩이 너비에 포함되도록 강제 */
+            max-width: 1200px; margin: 0 auto; padding: 0 20px; height: 100%; 
+            
+            /* [Grid 핵심] 좌-중-우 3단 분리 */
+            display: grid;
+            grid-template-columns: 1fr auto 1fr; /* 양쪽은 남는 공간, 가운데는 내용물만큼 */
+            align-items: center;
         }
         
-        /* 로고 */
-        .logo-text { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; cursor: pointer; display: flex; align-items: center; z-index: 101; }
+        /* 1. 왼쪽: 로고 (왼쪽 정렬) */
+        .logo-area { justify-self: start; display: flex; align-items: center; cursor: pointer; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; z-index: 101; }
         .logo-we { color: #2563eb; }
         .logo-story { color: #f59e0b; }
 
-        /* 데스크탑 네비게이션 */
-        .desktop-nav { display: flex; height: 100%; gap: 1.5rem; align-items: center; }
+        /* 2. 중앙: 네비게이션 (가운데 정렬) */
+        .desktop-nav { justify-self: center; display: flex; height: 100%; gap: 2rem; align-items: center; }
         
         .nav-link { 
-            font-weight: 500; color: #6b7280; text-decoration: none; font-size: 0.95rem; 
-            height: 100%; display: inline-flex; align-items: center; 
+            font-weight: 500; color: #6b7280; text-decoration: none; font-size: 1rem; 
+            height: 64px; display: inline-flex; align-items: center; /* 헤더 높이만큼 꽉 채우기 */
             border-bottom: 3px solid transparent; transition: all 0.2s; 
         }
         .nav-link:hover { color: #111827; }
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
+
+        /* 3. 오른쪽: 로그아웃 & 햄버거 (오른쪽 정렬) */
+        .header-right { justify-self: end; display: flex; align-items: center; }
 
         /* 로그아웃 버튼 */
         .btn-logout-text { 
@@ -101,20 +98,13 @@
         @media (max-width: 1024px) {
             .desktop-nav { display: none; }
             .mobile-menu-btn { display: block; }
-            .btn-logout-text { display: none; }
+            .btn-logout-text { display: none; } /* 데스크탑 로그아웃 숨김 */
         }
 
         /* =========================================
            [컨텐츠 영역 스타일]
            ========================================= */
-        .container { 
-            flex: 1; 
-            width: 100%; 
-            max-width: 1200px; /* 헤더와 동일한 최대 너비 */
-            margin: 0 auto;    /* 중앙 정렬 */
-            padding: 40px 20px;/* 헤더와 동일한 패딩 */
-            box-sizing: border-box; 
-        }
+        .container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 40px 20px; box-sizing: border-box; }
 
         .page-header { margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; }
         .page-title { font-size: 24px; font-weight: 700; color: #111; margin: 0; }
@@ -273,7 +263,7 @@
 
         <header>
             <div class="header-container">
-                <div class="logo-text" onclick="location.href='https://westory28.github.io/Bang-westory/index-test.html'">
+                <div class="logo-area" onclick="location.href='https://westory28.github.io/Bang-westory/index-test.html'">
                     <span class="logo-we">We</span><span class="logo-story">story</span>
                 </div>
 
@@ -282,12 +272,14 @@
                     <a href="https://westory28.github.io/Bang-westory/student_quiz-history.html" class="nav-link">학습 기록</a>
                     <a href="https://westory28.github.io/Bang-westory/student_yourscore.html" class="nav-link active">나의 성적표</a>
                     <a href="https://westory28.github.io/Bang-westory/student_markexam-2025-2sem.html" class="nav-link">시험 채점</a>
-                    <button onclick="logout()" class="btn-logout-text">로그아웃</button>
                 </nav>
 
-                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
-                    <i class="fas fa-bars"></i>
-                </button>
+                <div class="header-right">
+                    <button onclick="logout()" class="btn-logout-text">로그아웃</button>
+                    <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
             </div>
 
             <div id="mobileMenu" class="mobile-menu">
