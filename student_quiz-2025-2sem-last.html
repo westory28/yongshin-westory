@@ -14,7 +14,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 배경색 이슈 해결: body 전체에 배경색 적용 */
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f5f5f4; }
         .serif { font-family: 'Noto Serif KR', serif; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
@@ -41,20 +40,18 @@
         #image-zoom-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; justify-content: center; align-items: center; cursor: zoom-out; }
         #image-zoom-content { max-width: 95%; max-height: 95%; border-radius: 4px; }
         
-        /* 네비게이션 스타일 (크기 확대) */
-        .nav-item { position: relative; display: flex; align-items: center; height: 100%; padding: 0 8px; font-weight: bold; color: #57534e; transition: color 0.2s; white-space: nowrap; font-size: 1rem; /* text-base 크기 */ }
+        .nav-item { position: relative; display: flex; align-items: center; height: 100%; padding: 0 8px; font-weight: bold; color: #57534e; transition: color 0.2s; white-space: nowrap; font-size: 1rem; }
         .nav-item:hover { color: #1c1917; }
         .nav-item.active { color: #2563eb; }
         .nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background-color: #2563eb; }
         
-        /* 모바일 메뉴 아이템 스타일 */
         .mobile-nav-item { display: block; padding: 12px 16px; font-weight: bold; color: #57534e; border-radius: 8px; transition: background-color 0.2s; font-size: 1rem; }
         .mobile-nav-item:hover { background-color: #f5f5f4; }
         .mobile-nav-item.active { background-color: #eff6ff; color: #2563eb; }
     </style>
 </head>
-<body class="text-stone-800 min-h-screen flex flex-col bg-stone-50"> <div id="loading-overlay"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-600 border-solid mb-4"></div><p class="text-xl font-bold text-stone-700" id="loading-text">인증 확인 중...</p></div>
-    
+<body class="text-stone-800 min-h-screen flex flex-col bg-stone-50">
+    <div id="loading-overlay"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-amber-600 border-solid mb-4"></div><p class="text-xl font-bold text-stone-700" id="loading-text">인증 확인 중...</p></div>
     <div id="image-zoom-modal" onclick="document.getElementById('image-zoom-modal').style.display='none'"><img id="image-zoom-content" src=""></div>
 
     <header class="bg-white border-b border-stone-200 sticky top-0 z-40 h-16">
@@ -161,7 +158,7 @@
                     <button onclick="document.getElementById('review-section').classList.toggle('hidden')" class="bg-white border-2 border-stone-200 text-stone-700 font-bold py-3 rounded hover:bg-stone-50">오답노트</button>
                     <button onclick="location.reload()" class="bg-stone-900 text-white font-bold py-3 rounded hover:bg-stone-700 shadow-lg">다시 도전</button>
                 </div>
-                <button onclick="location.href='student.html'" class="w-full mt-3 bg-white border border-stone-300 text-stone-700 font-bold py-3 rounded-lg hover:bg-stone-50 transition shadow-sm">
+                <button onclick="location.href='student_quiz-history.html'" class="w-full mt-3 bg-white border border-stone-300 text-stone-700 font-bold py-3 rounded-lg hover:bg-stone-50 transition shadow-sm">
                     📊 내 기록장 보기
                 </button>
             </div>
@@ -179,7 +176,6 @@
     </footer>
 
     <script>
-        // 선생님의 설정값 반영
         const firebaseConfig = {
             apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
             authDomain: "history-quiz-yongsin.firebaseapp.com",
@@ -202,7 +198,6 @@
             init: function() { 
                 window.addEventListener('beforeunload', (e) => { if (this.state.isQuizActive) { e.preventDefault(); e.returnValue = ''; } });
                 
-                // 모바일 메뉴 외부 클릭 시 닫기
                 document.addEventListener('click', (e) => {
                     const menu = document.getElementById('mobile-menu');
                     const btn = document.getElementById('mobile-menu-btn');
@@ -216,32 +211,26 @@
 
                 this.updateVisitCount();
                 
-                // [중요] 로그인 감지 로직
                 firebase.auth().onAuthStateChanged((user) => {
                     if (user) {
-                        // 로그인 상태: 즉시 유저 정보 가져오기
                         this.state.currentUser = user;
                         this.checkUserProfile(user.uid);
                     } else {
-                        // 비로그인 상태: 알림 후 메인 페이지(index.html)로 튕겨내기
                         this.showLoading(false);
-                        // 잠시 로그인 뷰를 보여주거나 바로 리다이렉트
                         alert("로그인이 필요한 서비스입니다.\n메인 화면에서 로그인해주세요.");
                         location.href = 'index.html'; 
                     }
                 });
             },
 
-            // 모바일 메뉴 토글
             toggleMobileMenu: function() {
                 const menu = document.getElementById('mobile-menu');
                 menu.classList.toggle('hidden');
             },
 
-            // 로그아웃 처리
             handleLogout: function() {
                 firebase.auth().signOut().then(() => {
-                    location.href = 'index.html'; // 로그아웃 시 메인으로
+                    location.href = 'index.html'; 
                 });
             },
 
@@ -252,15 +241,11 @@
                 if (doc.exists) {
                     this.state.userProfile = doc.data();
                     const name = this.state.userProfile.name;
-                    
-                    // [UI 업데이트] 헤더 및 화면에 이름 표시
                     document.getElementById('user-info-display').innerText = `${this.state.userProfile.class}반 ${this.state.userProfile.number}번 ${name}`;
                     document.getElementById('header-user-msg').innerText = `${name} 학생, 화이팅!`;
                     document.getElementById('mobile-user-msg').innerText = `${name} 학생, 화이팅!`;
-                    
                     this.showView('view-ready');
                 } else {
-                    // 로그인 했으나 정보 등록이 안된 경우
                     this.showView('view-register');
                 }
                 this.showLoading(false);
@@ -286,12 +271,9 @@
                     const profile = { class: cls, number: num, name: name, email: this.state.currentUser.email };
                     await db.collection('users').doc(this.state.currentUser.uid).set(profile);
                     this.state.userProfile = profile;
-                    
-                    // 등록 후 UI 즉시 업데이트
                     document.getElementById('user-info-display').innerText = `${cls}반 ${num}번 ${name}`;
                     document.getElementById('header-user-msg').innerText = `${name} 학생, 화이팅!`;
                     document.getElementById('mobile-user-msg').innerText = `${name} 학생, 화이팅!`;
-                    
                     this.showView('view-ready');
                 } catch(e) {
                     if(e.code === 'failed-precondition') { alert("시스템 초기화가 필요합니다 (Index). 관리자에게 문의하세요."); } 
