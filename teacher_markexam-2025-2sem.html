@@ -79,7 +79,7 @@
             <div class="flex items-center gap-4">
                 <div id="teacher-info" class="hidden md:flex items-center gap-3">
                     <span class="text-sm font-bold text-stone-700">
-                        <span id="teacher-name-display" class="text-blue-600">선생님</span>, 화이팅!
+                        <span id="teacher-name-display" class="text-blue-600"></span> 선생님, 화이팅!
                     </span>
                     <span id="session-timer-badge" class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-mono font-bold shadow-sm">
                         60:00
@@ -97,7 +97,9 @@
 
         <div id="mobile-menu">
             <div class="p-4 bg-stone-50 border-b flex justify-between items-center md:hidden">
-                <span class="font-bold text-sm text-stone-700"><span id="mobile-teacher-name">선생님</span>, 화이팅!</span>
+                <span class="font-bold text-sm text-stone-700">
+                    <span id="mobile-teacher-name" class="text-blue-600"></span> 선생님, 화이팅!
+                </span>
                 <span id="mobile-timer-badge" class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-mono font-bold">60:00</span>
             </div>
             <a href="teacher_quiz-admin.html" class="mobile-link">역사 퀴즈 대시보드</a>
@@ -203,7 +205,8 @@
                     document.getElementById('view-dashboard').style.display = 'block';
 
                     // 3. 교사 이름 표시 (응원 문구)
-                    const teacherName = user.displayName || "선생님";
+                    // 수정됨: 이름이 없으면 빈 문자열로 처리하여 '선생님 선생님' 중복 방지
+                    const teacherName = user.displayName || "";
                     document.getElementById('teacher-name-display').innerText = teacherName;
                     document.getElementById('mobile-teacher-name').innerText = teacherName;
 
