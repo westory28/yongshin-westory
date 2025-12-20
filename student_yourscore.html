@@ -18,48 +18,42 @@
         #loadingOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; z-index: 9999; display: flex; justify-content: center; align-items: center;
-            font-size: 1.2rem; color: #666;
+            flex-direction: column; font-size: 1.2rem; color: #666;
         }
 
         /* 메인 래퍼 */
         #appSection { display: flex; flex-direction: column; flex: 1; min-height: 100vh; width: 100%; }
 
         /* =========================================
-           [헤더 스타일 - Grid 레이아웃 중앙 정렬]
+           [헤더 스타일 - Grid 중앙 정렬]
            ========================================= */
         header { 
             background-color: white; 
             border-bottom: 1px solid #e5e7eb; 
             position: sticky; top: 0; z-index: 100; height: 64px; flex-shrink: 0;
-            width: 100%; 
+            display: flex; justify-content: center; width: 100%;
         }
         
         .header-container { 
-            max-width: 1200px; margin: 0 auto; padding: 0 20px; height: 100%; 
-            display: grid;
-            grid-template-columns: 1fr auto 1fr; /* 좌-중-우 균형 */
-            align-items: center;
+            width: 100%; max-width: 1200px; padding: 0 20px; height: 100%; 
+            display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+            box-sizing: border-box;
         }
         
-        /* 1. 왼쪽: 로고 */
         .logo-area { justify-self: start; display: flex; align-items: center; cursor: pointer; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; z-index: 101; }
         .logo-we { color: #2563eb; }
         .logo-story { color: #f59e0b; }
 
-        /* 2. 중앙: 네비게이션 */
         .desktop-nav { justify-self: center; display: flex; height: 100%; gap: 2rem; align-items: center; }
-        
         .nav-link { 
             font-weight: 500; color: #6b7280; text-decoration: none; font-size: 1rem; 
-            height: 64px; display: inline-flex; align-items: center; 
+            height: 100%; display: inline-flex; align-items: center; 
             border-bottom: 3px solid transparent; transition: all 0.2s; 
         }
         .nav-link:hover { color: #111827; }
         .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 700; }
 
-        /* 3. 오른쪽: 로그아웃 & 햄버거 */
         .header-right { justify-self: end; display: flex; align-items: center; }
-
         .btn-logout-text { 
             color: #78716c; font-size: 0.875rem; font-weight: 700; padding: 0.5rem 0.75rem; 
             border-radius: 0.25rem; background: transparent; border: none; cursor: pointer; 
@@ -69,7 +63,7 @@
 
         .mobile-menu-btn { display: none; font-size: 1.5rem; color: #374151; background: none; border: none; cursor: pointer; padding: 5px; }
 
-        /* 모바일 메뉴 박스 */
+        /* 모바일 메뉴 */
         .mobile-menu {
             display: none; position: absolute; top: 64px; left: 0; width: 100%;
             background-color: white; border-bottom: 1px solid #e5e7eb;
@@ -97,12 +91,16 @@
         }
 
         /* =========================================
-           [컨텐츠 영역 스타일]
+           [컨텐츠 영역]
            ========================================= */
-        .container { flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 40px 20px; box-sizing: border-box; }
+        .container { 
+            flex: 1; width: 100%; max-width: 1200px; margin: 0 auto; 
+            padding: 40px 20px; box-sizing: border-box; 
+        }
 
         .page-header { margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 15px; }
         .page-title { font-size: 24px; font-weight: 700; color: #111; margin: 0; }
+        .user-greeting { font-size: 16px; color: #2563eb; margin-top: 5px; font-weight: 600; }
         
         .alert-box { 
             background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;
@@ -111,7 +109,6 @@
             word-break: keep-all;
         }
 
-        /* 필터 패널 */
         .control-panel {
             background-color: #fff; border-radius: 8px; padding: 20px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px;
@@ -119,32 +116,19 @@
         }
         .filter-group { display: flex; align-items: center; gap: 8px; }
         .filter-label { font-size: 14px; font-weight: bold; color: #555; white-space: nowrap; }
-        select { 
-            padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; 
-            border-radius: 4px; background: white; cursor: pointer; min-width: 100px;
-        }
+        select { padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; background: white; cursor: pointer; min-width: 100px; }
 
-        /* 그리드 */
         .dashboard-grid { display: grid; grid-template-columns: 1fr 340px; gap: 25px; }
         @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
-        /* 과목 카드 */
-        .subject-card { 
-            background: #fff; border-radius: 8px; margin-bottom: 15px; 
-            border: 1px solid #e1e4e8; border-left: 5px solid #ccc; 
-            transition: all 0.2s;
-        }
+        /* 카드 */
+        .subject-card { background: #fff; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e1e4e8; border-left: 5px solid #ccc; transition: all 0.2s; }
         .subject-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
-        
         .card-header { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .subject-name { font-size: 18px; font-weight: 700; color: #222; }
-        
         .score-info { text-align: right; }
         .total-score { font-size: 20px; font-weight: bold; color: #adb5bd; transition: color 0.3s;}
-        .grade-badge { 
-            display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; 
-            color: #fff; margin-left: 8px; vertical-align: middle; 
-        }
+        .grade-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: #fff; margin-left: 8px; vertical-align: middle; }
         .toggle-text { font-size: 12px; color: #999; margin-top: 4px; }
         .card-body { padding: 0 25px 25px 25px; display: none; background-color: #fafbfc; border-top: 1px solid #eee; }
         .card-body.expanded { display: block; }
@@ -160,7 +144,6 @@
         .chart-panel { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e1e4e8; height: fit-content; position: sticky; top: 84px; }
         .chart-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px;}
         .chart-wrapper { position: relative; height: 300px; width: 100%; }
-
         .grade-scale-bar { display: flex; height: 30px; border-radius: 6px; overflow: hidden; margin-top: 20px; font-weight: bold; color: white; text-shadow: 0 1px 1px rgba(0,0,0,0.2); font-size: 11px; }
         .scale-segment { flex: 1; display: flex; justify-content: center; align-items: center; }
         .scale-note { font-size: 11px; color: #666; margin-top: 10px; text-align: right; }
@@ -185,29 +168,14 @@
         .modal-title { font-size: 20px; font-weight: 800; color: #d97706; margin-bottom: 15px; }
         .modal-text { font-size: 15px; line-height: 1.6; color: #333; margin-bottom: 20px; word-break: keep-all; }
         .sub-text { font-size: 13px; color: #6b7280; display: block; margin-top: 8px; background: #f3f4f6; padding: 8px; border-radius: 4px;}
-        
         .modal-check-area { margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s; }
         .modal-check-area:hover { background: #f9fafb; }
         .modal-check-area input { width: 18px; height: 18px; cursor: pointer; accent-color: #2563eb; }
-        
-        .btn-confirm {
-            background-color: #2563eb; color: white; border: none; padding: 14px 0; width: 100%;
-            border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s;
-        }
+        .btn-confirm { background-color: #2563eb; color: white; border: none; padding: 14px 0; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
         .btn-confirm:disabled { background-color: #d1d5db; cursor: not-allowed; color: #9ca3af; }
         .btn-confirm:not(:disabled):hover { background-color: #1d4ed8; transform: translateY(-1px); }
 
-        /* 푸터 */
         .main-footer { text-align: center; padding: 30px 0; color: #9ca3af; font-size: 13px; border-top: 1px solid #eee; background-color: #fff; margin-top: auto; }
-
-        /* 로그인 섹션 */
-        #loginSection { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 100%; max-width: 400px; text-align: center; background: #fff; padding: 50px; 
-            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-        }
-        .btn-google { background-color: #fff; color: #444; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; font-size: 15px; width: 100%; cursor: pointer; border-radius: 4px; margin-top: 20px; transition: background 0.2s; }
-        .btn-google:hover { background-color: #f8f9fa; }
 
         /* 색상 유틸 */
         .bg-A { background-color: #fa5252; } 
@@ -225,15 +193,6 @@
             <i class="fas fa-circle-notch fa-spin" style="font-size:2rem; color:#2563eb; margin-bottom:10px;"></i><br>
             로딩 중...
         </div>
-    </div>
-
-    <div id="loginSection" class="hidden">
-        <h2 style="margin-bottom:10px;">성적 관리 시스템</h2>
-        <p style="color:#666; font-size:14px;">학교 구글 계정으로 로그인해주세요.</p>
-        <button class="btn-google" onclick="loginWithGoogle()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" width="18">
-            Google 계정으로 로그인
-        </button>
     </div>
 
     <div id="appSection" class="hidden">
@@ -290,6 +249,7 @@
         <div class="container">
             <div class="page-header">
                 <h1 class="page-title">나의 성적표</h1>
+                <div id="userNameArea" class="user-greeting">학생 정보를 불러오는 중...</div>
             </div>
 
             <div class="alert-box">
@@ -361,17 +321,19 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        // ★ Firestore 추가 Import: doc, getDoc
+        import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
+        // ★ 선생님의 새로운 Firebase Config 적용
         const firebaseConfig = {
           apiKey: "AIzaSyAOlPQ5PFmL0zxmGrGcuEBnqBXisph7kPU",
           authDomain: "history-quiz-yongsin.firebaseapp.com",
           projectId: "history-quiz-yongsin",
           storageBucket: "history-quiz-yongsin.firebasestorage.app",
           messagingSenderId: "177587430482",
-          appId: "1:177587430482:web:1188e0f661368040c3ab8b",
-          measurementId: "G-YG2SLS45D8"
+          appId: "1:177587430482:web:d79cc145c11e335cc3ab8b",
+          measurementId: "G-LHN97D7R2R"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -382,20 +344,17 @@
         let myChart = null;
         const FIXED_SUBJECT_ORDER = ['국어', '영어', '수학', '과학', '역사', '기가', '한문', '일본어', '미술', '체육'];
 
-        // ★ 등급 계산 함수 (일반과목 vs 예체능 구분)
+        // 등급 계산 (예체능 구분)
         function getGradeInfo(score, hasData, subjectName) {
             if (!hasData) return { grade: '-', colorCode: '#adb5bd', class: 'bg-none', text: '미입력' }; 
             
-            // 예체능 과목 (음악, 미술, 체육)
             const isArtsPE = ['음악', '미술', '체육'].includes(subjectName);
 
             if (isArtsPE) {
-                // A: 80~100 (빨강), B: 60~79 (노랑), C: ~59 (파랑)
                 if (score >= 80) return { grade: 'A', colorCode: '#fa5252', class: 'bg-A', text: `${score}점` };
-                if (score >= 60) return { grade: 'B', colorCode: '#fab005', class: 'bg-C', text: `${score}점` }; // 노랑(C색상) 활용
-                return { grade: 'C', colorCode: '#339af0', class: 'bg-E', text: `${score}점` }; // 파랑(E색상) 활용
+                if (score >= 60) return { grade: 'B', colorCode: '#fab005', class: 'bg-C', text: `${score}점` }; 
+                return { grade: 'C', colorCode: '#339af0', class: 'bg-E', text: `${score}점` }; 
             } else {
-                // 일반 과목 (5단계)
                 if (score >= 90) return { grade: 'A', colorCode: '#fa5252', class: 'bg-A', text: `${score}점` };
                 if (score >= 80) return { grade: 'B', colorCode: '#fd7e14', class: 'bg-B', text: `${score}점` };
                 if (score >= 70) return { grade: 'C', colorCode: '#fab005', class: 'bg-C', text: `${score}점` };
@@ -404,17 +363,11 @@
             }
         }
 
-        // 모바일 메뉴 토글
         window.toggleMobileMenu = () => {
             const menu = document.getElementById('mobileMenu');
-            if (menu.style.display === 'flex') {
-                menu.style.display = 'none';
-            } else {
-                menu.style.display = 'flex';
-            }
+            if (menu.style.display === 'flex') { menu.style.display = 'none'; } else { menu.style.display = 'flex'; }
         };
 
-        // 외부 클릭 시 모바일 메뉴 닫기
         document.addEventListener('click', (e) => {
             const menu = document.getElementById('mobileMenu');
             const btn = document.querySelector('.mobile-menu-btn');
@@ -423,17 +376,34 @@
             }
         });
 
+        // ★ 로그인 상태 감지 및 처리 (핵심 로직)
         onAuthStateChanged(auth, async (user) => {
-            document.getElementById('loadingOverlay').style.display = 'none'; // 로딩 끝
+            document.getElementById('loadingOverlay').style.display = 'none'; 
 
             if (user) {
-                document.getElementById('loginSection').classList.add('hidden');
+                // 로그인 됨: 앱 표시
                 document.getElementById('appSection').classList.remove('hidden');
-                document.getElementById('warningModal').classList.remove('hidden');
+                document.getElementById('warningModal').classList.remove('hidden'); // 동의 팝업 표시
+                
+                // ★ 사용자 이름 가져오기 및 표시
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    let userName = user.displayName || "학생"; // 기본값
+                    
+                    if (userDoc.exists() && userDoc.data().name) {
+                        userName = userDoc.data().name;
+                    }
+                    document.getElementById('userNameArea').innerText = `${userName} 학생, 화이팅!`;
+                } catch (e) {
+                    console.error("이름 가져오기 실패:", e);
+                    document.getElementById('userNameArea').innerText = "환영합니다!";
+                }
+
                 loadAllData();
             } else {
-                document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('appSection').classList.add('hidden');
+                // ★ 로그인 안 됨: 메인으로 튕겨내기
+                alert("로그인이 필요한 서비스입니다.\n메인 화면으로 이동합니다.");
+                location.href = "index.html"; 
             }
         });
 
@@ -442,8 +412,7 @@
         checkbox.addEventListener('change', (e) => { btnStart.disabled = !e.target.checked; });
         btnStart.addEventListener('click', () => { document.getElementById('warningModal').classList.add('hidden'); });
 
-        window.loginWithGoogle = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { alert("로그인 실패"); } };
-        window.logout = async () => { if(confirm("로그아웃 하시겠습니까?")) { await signOut(auth); location.reload(); } };
+        window.logout = async () => { if(confirm("로그아웃 하시겠습니까?")) { await signOut(auth); location.href = 'index.html'; } };
 
         async function loadAllData() {
             try {
@@ -524,7 +493,6 @@
 
             filteredPlans.forEach(plan => {
                 const { currentScore, hasData } = plan;
-                // ★ 과목명 전달하여 등급 로직 분기
                 const info = getGradeInfo(currentScore, hasData, plan.subject);
 
                 chartLabels.push(plan.subject);
@@ -586,8 +554,6 @@
             const plan = allGradingPlans.find(p => p.id === planId);
             if(!plan) return;
             const { score, hasData } = calculateTotal(plan);
-            
-            // ★ 과목명 전달
             const info = getGradeInfo(score, hasData, plan.subject);
 
             const textEl = document.getElementById(`score_text_${planId}`);
