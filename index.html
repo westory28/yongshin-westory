@@ -89,36 +89,39 @@
         }
         .save-btn:hover { background: #1557b0; }
 
-        /* ============================ */
-        /* ★ 모바일 최적화 수정된 부분 ★ */
-        /* ============================ */
+        /* 4. 푸터 (가운데 정렬 수정됨) */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #65676b;
+            font-size: 13px;
+            border-top: 1px solid #e4e6eb;
+            background: #f8f9fa;
+            margin-top: auto;
+            width: 100%; /* 너비 꽉 채우기 */
+            box-sizing: border-box; /* 패딩 포함 너비 계산 */
+        }
+
+        /* 모바일 최적화 */
         @media (max-width: 768px) {
             header { padding: 12px 20px; }
             .header-logo { font-size: 20px; }
             #dashboard-view { margin: 20px auto; }
             .welcome-msg { font-size: 22px; margin-bottom: 20px; }
             
-            /* 카드 간격(Gap)을 넓혀서 겹침 방지 */
             .card-container { grid-template-columns: 1fr; gap: 16px; } 
 
             .menu-card {
                 flex-direction: row; 
                 justify-content: flex-start; 
                 text-align: left;
-                
-                /* 높이 축소를 위해 패딩 감소 */
                 padding: 16px 20px; 
-                
-                /* PC의 높이 100% 설정을 해제하고 내용물만큼만 차지하게 함 */
                 height: auto; 
-                
-                /* 겹침 방지를 위해 그림자 축소 */
                 box-shadow: 0 2px 4px rgba(0,0,0,0.05);
             }
             
             .menu-card:hover { transform: none; }
             
-            /* 아이콘 크기 살짝 축소하여 높이 줄임 */
             .card-icon { 
                 width: 44px; height: 44px; font-size: 22px; 
                 margin-bottom: 0; margin-right: 16px; 
